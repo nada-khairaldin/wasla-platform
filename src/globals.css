@@ -1,0 +1,242 @@
+/* ─── Google Fonts: Cairo ─────────────────────────────────────────────────── */
+@import "@fontsource/cairo/400.css";
+@import "@fontsource/cairo/500.css";
+@import "@fontsource/cairo/600.css";
+@import "@fontsource/cairo/700.css";
+@import "@fontsource/cairo/800.css";
+@import "@fontsource/cairo/900.css";
+
+@import "swiper/css";
+@import "swiper/css/navigation";
+@import "swiper/css/pagination";
+
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+/* ─── CSS Variables ─────────────────── */
+
+@theme {
+  /* --- Primary --- */
+  --color-white: #ffff;
+
+  --color-primary-50: #e9eef2;
+  --color-primary-100: #bacad5;
+  --color-primary-200: #99b0c1;
+  --color-primary-300: #6a8ca5;
+  --color-primary-400: #4d7694;
+  --color-primary-500: #215479;
+  --color-primary-600: #1e4c6e;
+  --color-primary-700: #173c56;
+  --color-primary-800: #122e43;
+  --color-primary-900: #0e2333;
+  --color-primary-hover: #d4af37;
+
+  /* --- Secondary --- */
+  --color-secondary-50: #fdfaf3;
+  --color-secondary-100: #faf0d9;
+  --color-secondary-200: #f8e9c7;
+  --color-secondary-300: #f4dfad;
+  --color-secondary-400: #f2d99d;
+  --color-secondary-500: #efcf85;
+  --color-secondary-600: #d9bc79;
+  --color-secondary-700: #aa935e;
+  --color-secondary-800: #837249;
+  --color-secondary-900: #645738;
+
+  /* --- Info --- */
+  --color-info-50: #e8f1fd;
+  --color-info-100: #b6d3fa;
+  --color-info-200: #93bdf8;
+  --color-info-300: #629ff4;
+  --color-info-400: #448df2;
+  --color-info-500: #1570ef;
+  --color-info-600: #1366d9;
+  --color-info-700: #0f50aa;
+  --color-info-800: #0c3e83;
+  --color-info-900: #092f64;
+
+  /* --- Warning --- */
+  --color-warning-50: #fef4e6;
+  --color-warning-100: #fdddb3;
+  --color-warning-200: #fbcc8e;
+  --color-warning-300: #fab55a;
+  --color-warning-400: #f9a63a;
+  --color-warning-500: #f79009;
+  --color-warning-600: #e18308;
+  --color-warning-700: #af6606;
+  --color-warning-800: #884f05;
+  --color-warning-900: #683c04;
+
+  /* --- Success --- */
+  --color-success-50: #e6f4ee;
+  --color-success-100: #b2deca;
+  --color-success-200: #8dceb1;
+  --color-success-300: #59b78d;
+  --color-success-400: #39a977;
+  --color-success-500: #079455;
+  --color-success-600: #06874d;
+  --color-success-700: #05693c;
+  --color-success-800: #04512f;
+  --color-success-900: #033e24;
+
+  /* --- Neutral --- */
+  --color-neutral-50: #edeeef;
+  --color-neutral-100: #c8cbce;
+  --color-neutral-200: #adb2b6;
+  --color-neutral-300: #888e95;
+  --color-neutral-400: #717981;
+  --color-neutral-500: #4d5761;
+  --color-neutral-600: #464f58;
+  --color-neutral-700: #373e45;
+  --color-neutral-800: #2a3035;
+  --color-neutral-900: #202529;
+
+  /* --- Error --- */
+  --color-error-50: #fbeae9;
+  --color-error-100: #f3beba;
+  --color-error-200: #ee9e98;
+  --color-error-300: #e6726a;
+  --color-error-400: #e1574d;
+  --color-error-500: #d92d20;
+  --color-error-600: #c5291d;
+  --color-error-700: #9a2017;
+  --color-error-800: #771912;
+  --color-error-900: #5b130d;
+
+  /* --- Font --- */
+  --font-family-primary: "Cairo", sans-serif;
+
+  /* --- Radius --- */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-4xl: 32px;
+  --radius-5xl: 48px;
+  --radius-full: 9999px;
+
+  /* --- Spacing --- */
+  --space-xxs: 2px;
+  --space-xs2: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-base: 16px;
+  --space-md: 20px;
+  --space-lg: 24px;
+  --space-xl: 28px;
+  --space-xl2: 32px;
+  --space-xl3: 40px;
+  --space-xl4: 48px;
+  --space-xl5: 60px;
+  --space-xl6: 72px;
+}
+
+/* ─── Base Styles ─────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: var(--font-family-primary);
+  }
+
+  body {
+    font-family: "Cairo", sans-serif;
+    color: var(--color-neutral-800);
+    background-color: white;
+  }
+}
+
+/* ─── Typography Utilities ────────────────────────────────────────────────── */
+@layer utilities {
+  .text-title-1 {
+    @apply text-[72px] leading-[88px] tracking-[-0.8px];
+  }
+  .text-title-2 {
+    @apply text-[64px] leading-[76px] tracking-[-0.8px];
+  }
+  .text-title-3 {
+    @apply text-[56px] leading-[68px] tracking-[-0.6px];
+  }
+
+  .text-h1 {
+    @apply text-[56px] leading-[68px] tracking-[-0.5px];
+  }
+  .text-h2 {
+    @apply text-[48px] leading-[58px] tracking-[-0.4px];
+  }
+  .text-h3 {
+    @apply text-[40px] leading-[48px] tracking-[-0.3px];
+  }
+  .text-h4 {
+    @apply text-[32px] leading-[38px] tracking-[-0.2px];
+  }
+  .text-h5 {
+    @apply text-[24px] leading-[30px] tracking-[-0.15px];
+  }
+  .text-h6 {
+    @apply text-[20px] leading-[24px] tracking-[0px];
+  }
+
+  .text-label-1 {
+    @apply text-[16px] leading-[22px] tracking-[-0.18px];
+  }
+  .text-label-2 {
+    @apply text-[14px] leading-[20px] tracking-[-0.16px];
+  }
+  .text-label-3 {
+    @apply text-[12px] leading-[16px] tracking-[-0.12px];
+  }
+
+  .text-body-1 {
+    @apply text-[18px] leading-[28px];
+  }
+  .text-body-2 {
+    @apply text-[16px] leading-[24px];
+  }
+  .text-body-3 {
+    @apply text-[14px] leading-[20px];
+  }
+  .text-body-4 {
+    @apply text-[12px] leading-[16px];
+  }
+
+  .text-caption-1 {
+    @apply text-[10px] leading-[12px];
+  }
+  .text-caption-2 {
+    @apply text-[9px]  leading-[10px];
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.swiper-bullet {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 9999px;
+  display: inline-block;
+  margin: 0 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.swiper-bullet-active {
+  width: 24px;
+  background: white;
+  border-radius: 9999px;
+}
+.swiper-pagination {
+  bottom: 16px !important;
+}
