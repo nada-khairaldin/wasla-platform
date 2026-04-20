@@ -2,9 +2,9 @@ import Image from "next/image";
 import { useState } from "react";
 
 const avatars = [
-  { id: 1, src: "/images/avatars/avatar1.jpg", alt: "عضو 1" },
-  { id: 2, src: "/images/avatars/avatar2.png", alt: "عضو 2" },
-  { id: 3, src: "/images/avatars/avatar3.jpg", alt: "عضو 3" },
+  { id: 1, src: "/images/avatars/avatar1.webp", alt: "عضو 1" },
+  { id: 2, src: "/images/avatars/avatar2.webp", alt: "عضو 2" },
+  { id: 3, src: "/images/avatars/avatar3.webp", alt: "عضو 3" },
 ];
 
 export default function AvatarContainer() {

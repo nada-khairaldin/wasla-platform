@@ -4,11 +4,16 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
-const images = ["/images/landing/hero1.png", "/images/landing/hero1.png", "/images/landing/hero1.png"];
+const images = [
+  "/images/landing/hero1.webp",
+  "/images/landing/hero1.webp",
+  "/images/landing/hero1.webp",
+];
 
 export default function HeroSlider() {
- const [prevEl, setPrevEl] = useState<HTMLButtonElement | null>(null);
+  const [prevEl, setPrevEl] = useState<HTMLButtonElement | null>(null);
   const [nextEl, setNextEl] = useState<HTMLButtonElement | null>(null);
 
   return (
@@ -23,6 +28,7 @@ export default function HeroSlider() {
                    opacity-0 group-hover:opacity-100
                    hover:bg-white hover:text-black
                    transition-all duration-300 ease-in-out shadow-lg"
+                   aria-label="السابق"
       >
         <ChevronLeft size={18} strokeWidth={1.5} />
       </button>
@@ -36,6 +42,7 @@ export default function HeroSlider() {
                    opacity-0 group-hover:opacity-100
                    hover:bg-white hover:text-black
                    transition-all duration-300 ease-in-out shadow-lg"
+                    aria-label="التالي"
       >
         <ChevronRight size={18} strokeWidth={1.5} />
       </button>
@@ -57,10 +64,15 @@ export default function HeroSlider() {
       >
         {images.map((src, i) => (
           <SwiperSlide key={i}>
-            <div
-              className="w-full h-full bg-center bg-cover"
-              style={{ backgroundImage: `url(${src})` }}
-            />
+            <div className="relative w-full h-full">
+              <Image
+                src={src}
+                alt="hero image"
+                fill
+                className="object-cover rounded-3xl md:rounded-5xl"
+                priority={i === 0} 
+              />
+            </div>
           </SwiperSlide>
         ))}
       </Swiper>

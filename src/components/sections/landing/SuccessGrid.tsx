@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, PanInfo, Variants } from "framer-motion";
+import Image from "next/image";
 
 const galleryImages = [
-  { id: 1, url: "/images/landing/medical.jpg" },
-  { id: 2, url: "/images/landing/repair.png" },
-  { id: 3, url: "/images/landing/planting.png" },
-  { id: 4, url: "/images/landing/onlineService.png" },
-  { id: 5, url: "/images/landing/teaching.jpg" },
+  { id: 1, url: "/images/landing/medical.webp" },
+  { id: 2, url: "/images/landing/repair.webp" },
+  { id: 3, url: "/images/landing/planting.webp" },
+  { id: 4, url: "/images/landing/onlineService.webp" },
+  { id: 5, url: "/images/landing/teaching.webp" },
 ];
 
 const gridPositions: Record<number, React.CSSProperties> = {
@@ -43,7 +44,6 @@ export default function SuccessGrid() {
       });
     }
   };
-
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -112,10 +112,15 @@ export default function SuccessGrid() {
                 whileDrag={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
               >
-                <div
-                  className="w-full h-full bg-cover bg-center transition-transform duration-700 hover:scale-110"
-                  style={{ backgroundImage: `url(${img.url})` }}
-                />
+                <div className="relative w-full h-full overflow-hidden rounded-3xl">
+                  <Image
+                    src={img.url}
+                    alt="gallery image"
+                    fill
+                    className="object-cover transition-transform duration-700 hover:scale-110"
+                    sizes="(max-width: 768px) 320px, 33vw"
+                  />
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>

@@ -10,9 +10,9 @@ function FeatureCard({ feature }: { feature: Feature }) {
       </div>
 
       <div className="flex flex-col gap-sm">
-        <h5 className="font-semibold text-h6 text-neutral-50 break-words">
+        <h3 className="font-semibold text-h6 text-neutral-50 break-words">
           {feature.title}
-        </h5>
+        </h3>
         <p className="text-body-4 text-neutral-50 leading-relaxed whitespace-normal break-words">
           {feature.description}
         </p>

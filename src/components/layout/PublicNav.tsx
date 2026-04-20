@@ -20,7 +20,7 @@ export default function PublicNav() {
       </div>
       <div className=" hidden md:flex gap-xs2 lg:gap-sm items-center">
         <Link href="/login" className="w-full">
-          <Button variant="filled" className="text-label-2 lg:text-label-1">
+          <Button variant="filled" className="text-label-2 lg:text-label-1" aria-label="سجل دخولك الآن لبدء تبادل المهارات">
             سجل دخول
           </Button>
         </Link>
@@ -28,6 +28,7 @@ export default function PublicNav() {
           <Button
             variant="outline"
             className="rounded-full px-lg text-label-2 lg:text-label-1"
+            aria-label="انضم إلينا الآن مجاناً لبدء تبادل المهارات"
           >
             ابدأ مجاناً
           </Button>
@@ -38,6 +39,7 @@ export default function PublicNav() {
       <button
         className="md:hidden p-xs rounded-xl hover:bg-neutral-50 shadow-sm transition-all border border-neutral-100"
         onClick={() => setMenuOpen(true)}
+        aria-label="افتح قائمة التنقل الرئيسية"
       >
         <Menu size={24} className="text-neutral-800" />
       </button>
@@ -79,6 +81,7 @@ export default function PublicNav() {
               <Button
                 className="w-full rounded-xl shadow-md"
                 onClick={() => setMenuOpen(false)}
+                aria-label="سجل دخولك الآن لبدء تبادل المهارات"
               >
                 ابدأ مجاناً
               </Button>
@@ -88,6 +91,7 @@ export default function PublicNav() {
                 variant="outline"
                 className="w-full rounded-xl"
                 onClick={() => setMenuOpen(false)}
+                aria-label="انضم إلينا الآن مجاناً لبدء تبادل المهارات"
               >
                 سجل دخول
               </Button>

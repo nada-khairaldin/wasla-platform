@@ -68,8 +68,8 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="border-t border-neutral-200 mt-xl5 pt-xl2 text-center md:text-right ">
-        <p className="text-sm text-neutral-200">
+      <div className="border-t border-neutral-100 mt-xl5 pt-xl2 text-center md:text-right ">
+        <p className="text-sm text-neutral-100">
           © {new Date().getFullYear()} منصة وصلة. جميع الحقوق محفوظة
         </p>
       </div>

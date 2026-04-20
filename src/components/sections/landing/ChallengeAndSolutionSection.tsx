@@ -19,9 +19,9 @@ function ChallengeAndSolutionSection() {
             <TriangleAlert className="text-secondary-500" size={24} />
           </div>
           <div className="space-y-2">
-            <h5 className="text-h6 md:text-h5 font-bold text-primary-500">
+            <h3 className="text-h6 md:text-h5 font-bold text-primary-500">
               التحدي
-            </h5>
+            </h3>
             <p className="text-body-3 md:text-body-1 text-neutral-500 leading-relaxed">
               يواجه كثيرون صعوبة في الوصول إلى فرص عمل أو موارد مالية رغم
               امتلاكهم مهاراتٍ قيّمة، وقد زادت آثار الحرب من تعقيد هذه الفرص.
@@ -34,9 +34,9 @@ function ChallengeAndSolutionSection() {
             <BadgeCheck className="text-white" size={24} />
           </div>
           <div className="space-y-2">
-            <h5 className="text-h6 md:text-h5 font-bold text-primary-500">
+            <h3 className="text-h6 md:text-h5 font-bold text-primary-500">
               حل وصلة
-            </h5>
+            </h3>
             <p className="text-body-3 md:text-body-1 text-neutral-500 leading-relaxed">
               توفّر &quot;وصلة&quot; بيئة لتبادل المهارات بدل الدفع؛ تقدّم ما تتقنه وتحصل
               على ما تحتاجه، حيث يصبح وقتك ذا قيمة حقيقية في دعم المجتمع وتعزيز

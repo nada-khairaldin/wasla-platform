@@ -70,7 +70,7 @@ function Hero() {
           className="flex flex-col items-center justify-center sm:flex-row gap-sm sm:gap-xl2 w-full"
         >
           <Link href="/signup">
-            <Button size="lg" variant="filled">
+            <Button size="lg" variant="filled" aria-label="انضم إلينا الآن مجاناً لبدء تبادل المهارات">
               ابدأ مجانًا
             </Button>
           </Link>
@@ -80,6 +80,7 @@ function Hero() {
             variant="outline"
             className="group flex items-center gap-sm justify-center"
             onClick={(e) => scrollToSection(e, "how-it-works")}
+            aria-label="تعرف على كيفية البدء"
           >
             اكتشف كيف تبدأ
             <motion.span

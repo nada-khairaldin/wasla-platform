@@ -48,6 +48,7 @@ const CategorySection = () => {
           <button
             onClick={() => setShowAll(true)}
             className="group flex items-center gap-sm text-neutral-500 hover:text-primary-600 font-bold transition-all"
+            aria-label="عرض جميع الخدمات والمهارات المتاحة"
           >
             <span>عرض جميع الفئات</span>
             <ChevronLeft className="text-xs group-hover:-translate-x-1 transition-transform" />
@@ -102,6 +103,7 @@ const CategorySection = () => {
                   <button
                     onClick={() => setShowAll(false)}
                     className="p-xs bg-slate-100 hover:bg-red-50 rounded-full transition-colors"
+                    aria-label="إغلاق جميع الفئات"
                   >
                     <X size={24} />
                   </button>
@@ -156,6 +158,7 @@ const CategorySection = () => {
                 <button
                   onClick={() => setSelectedCat(null)}
                   className="absolute top-6 left-6 p-2 bg-slate-100 hover:bg-red-50 rounded-full transition-colors"
+                  aria-label="إغلاق تفاصيل الفئة المختارة"
                 >
                   <X size={24} />
                 </button>
@@ -181,6 +184,7 @@ const CategorySection = () => {
                         variant="filled"
                         size="lg"
                         className="w-full rounded-xl gap-sm"
+                        aria-label={`انضم إلينا الآن مجاناً لبدء تبادل المهارات في فئة ${selectedCat}`}
                       >
                         <LogIn size={26} /> انضم إلينا الآن مجاناً
                       </Button>
