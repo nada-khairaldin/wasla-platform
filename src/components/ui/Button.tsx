@@ -15,6 +15,7 @@ const variantClasses: Record<Variant, string> = {
 };
 
 function Button({
+  type = "button",
   children,
   size = "sm",
   variant = "filled",
@@ -24,6 +25,7 @@ function Button({
   className = "",
 }: {
   children: React.ReactNode;
+  type?: "button" | "submit" | "reset";
   size?: Size;
   variant?: Variant;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -35,6 +37,7 @@ function Button({
     <button
       onClick={onClick}
       disabled={disabled || loading}
+      type = {type}
       className={`
         rounded-3xl text-center  transition-all duration-200 flex items-center justify-center hover:-translate-y-[5px]
         ${sizeClasses[size]}
