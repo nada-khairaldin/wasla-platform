@@ -16,7 +16,7 @@ const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     "Content-Type": "application/json",
-      withCredentials:true,
+    withCredentials: true,
   },
 });
 
@@ -35,11 +35,29 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+
+        const { accessToken } = res.data;
+        localStorage.setItem("token", accessToken);
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        localStorage.removeItem("token");
+        window.location.href = "/auth/login";
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   },
 );

@@ -77,7 +77,7 @@ export default function PublicNav() {
 
           {/* Action Buttons at bottom */}
           <div className="flex flex-col gap-sm pt-lg border-t border-neutral-100/50">
-            <Link href="/login" className="w-full">
+            <Link href="/signup" className="w-full">
               <Button
                 className="w-full rounded-xl shadow-md"
                 onClick={() => setMenuOpen(false)}
@@ -86,7 +86,7 @@ export default function PublicNav() {
                 ابدأ مجاناً
               </Button>
             </Link>
-            <Link href="/signup" className="w-full">
+            <Link href="/login" className="w-full">
               <Button
                 variant="outline"
                 className="w-full rounded-xl"

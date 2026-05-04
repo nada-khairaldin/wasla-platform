@@ -75,14 +75,20 @@ function ConfirmationPage() {
   const goToStepOne = () => router.push("/signup/basic-info");
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center pt-6 px-4 md:px-8">
-      <div className="absolute top-4 right-4 md:top-8 md:right-8 scale-75 md:scale-100">
-        <Logo />
-      </div>
+<div className="min-h-screen bg-white flex flex-col items-center px-base">
+  {/* الهيدر: يأخذ عرض الشاشة ويضع الشعار في أقصى اليمين */}
+  <header className="w-full flex  p-4 md:p-8">
+    <div className="scale-75 md:scale-100">
+      <Logo />
+    </div>
+  </header>
 
-      <div className="w-full max-w-[750px] mt-xl6 lg:mt-xl7">
-        <Stepper currentStep={3} />
-      </div>
+
+  <main className="w-full max-w-[750px] px-4 mt-sm md:mt-8">
+    <Stepper currentStep={3} />
+  </main>
+
+
 
       <div className="flex flex-col items-center w-full max-w-[474px] gap-[18px] mb-10 -mt-3xl md:mt-0">
         <div className="flex items-center gap-4">

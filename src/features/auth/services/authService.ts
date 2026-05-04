@@ -1,5 +1,9 @@
 import { apiRequest } from "@/src/services/api";
-import { SignupFormData, LoginFormData } from "../schemas/authSchema";
+import {
+  SignupFormData,
+  LoginFormData,
+  ForgotPasswordFormData,
+} from "../schemas/authSchema";
 import { AuthResponse } from "../types";
 
 export const authServices = {
@@ -18,6 +22,14 @@ export const authServices = {
       method: "POST",
       url: "/auth/login",
       payload: userData,
+    });
+  },
+
+  forgotPassword: (email: string) => {
+    return apiRequest<void, { email: string }>({
+      method: "POST",
+      url: "/auth/forget-password",
+      payload: { email }, 
     });
   },
 };

@@ -17,7 +17,6 @@ function LoginForm() {
   const handleLogin = async (formData: LoginFormData) => {
     setIsLoading(true);
 
-    // لا نحتاج try/catch لأن apiRequest تعالج الخطأ داخلياً
     const { data, error } = await authServices.login(formData);
 
     if (error) {
@@ -33,7 +32,6 @@ function LoginForm() {
       return;
     }
     if (data) {
-      // هنا نضمن أن البيانات وصلت بنجاح
       const { access_Token, user } = data;
       localStorage.setItem("token", access_Token);
 
