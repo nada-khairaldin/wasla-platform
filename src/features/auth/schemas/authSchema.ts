@@ -70,6 +70,8 @@ export const skillsSchema = z.object({
     .array(z.string())
     .min(1, "يرجى اختيار مهارة واحدة على الأقل تحتاجها")
     .max(5, "يرجى اختيار خمس مهارات كحد أقصى"),
+  bio: z.string().trim()
+.max(500, "السيرة الذاتية يجب أن لا تتجاوز 500 حرف").optional(), 
 });
 
 export const signupSchema = z.intersection(basicInfoSchema, skillsSchema);

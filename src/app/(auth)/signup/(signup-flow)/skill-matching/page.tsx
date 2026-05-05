@@ -5,22 +5,23 @@ import AuthWrapper from "../../../../../features/auth/components/AuthWrapper";
 import SkillMatchingForm from "../../../../../features/auth/components/SkillMatchingForm";
 import Stepper from "../../../../../features/auth/components/Stepper";
 import { useEffect, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, FileText } from "lucide-react";
 import { skillsSchema } from "../../../../../features/auth/schemas/authSchema";
 import {
   useSignupActions,
   useSignupStore,
 } from "../../../../../features/auth/store/useSignupStore";
+import BioInput from "../../../../../features/auth/components/BioInput";
 
 function Page() {
   const data = useSignupStore((state) => state.formData);
   const router = useRouter();
 
-useEffect(() => {
-  if (!data.email) { 
-    router.replace('/signup/basic-info');
-  }
-}, [data, router]);
+  useEffect(() => {
+    if (!data.email) {
+      router.replace("/signup/basic-info");
+    }
+  }, [data, router]);
 
   const savedOfferedSkills = useSignupStore(
     (state) => state.formData.offeredSkills,
@@ -28,6 +29,7 @@ useEffect(() => {
   const savedRequiredSkills = useSignupStore(
     (state) => state.formData.requiredSkills,
   );
+  const savedBio = useSignupStore((state) => state.formData.bio);
 
   const [offeredSkills, setOfferedSkills] = useState<string[]>(
     savedOfferedSkills || [],
@@ -35,9 +37,13 @@ useEffect(() => {
   const [requiredSkills, setRequiredSkills] = useState<string[]>(
     savedRequiredSkills || [],
   );
-  const [errors, setErrors] = useState<{ offered?: string; required?: string }>(
-    {},
-  );
+  const [bio, setBio] = useState<string>(savedBio || "");
+
+  const [errors, setErrors] = useState<{
+    offered?: string;
+    required?: string;
+    bio?: string;
+  }>({});
 
   const { setStepData } = useSignupActions();
 
@@ -45,69 +51,85 @@ useEffect(() => {
     const dataToValidate = {
       offeredSkills: offeredSkills,
       requiredSkills: requiredSkills,
+      bio: bio,
     };
+
     const result = skillsSchema.safeParse(dataToValidate);
 
     if (!result.success) {
       const allErrors = result.error!.issues;
+
       const offerError = allErrors.find((e) =>
         e.path.includes("offeredSkills"),
       )?.message;
-      const requiredSkills = allErrors.find((e) =>
+      const reqError = allErrors.find((e) =>
         e.path.includes("requiredSkills"),
       )?.message;
+      const bioError = allErrors.find((e) => e.path.includes("bio"))?.message;
 
       setErrors({
         offered: offerError,
-        required: requiredSkills,
+        required: reqError,
+        bio: bioError,
       });
       return;
     }
-    setStepData(result.data);
+
+    setStepData({ ...result.data, bio });
     router.push("/signup/confirmation");
   }
 
   return (
     <div>
       <AuthWrapper
-        src={"/images/features/auth/skill-matching-bg.png"}
+        src={"/images/features/auth/skill-matching.png"}
         alt={"skill matching background image"}
       >
         <Stepper currentStep={2} />
-        <div className="space-y-10">
-          <div className="text-center mb-6">
-            <h3 className="text-slate-500 font-medium">ساعدنا في مطابقتك</h3>
+
+        <div className="space-y-8 mt-6">
+          <div className="text-center">
+            <h3 className="text-slate-500 font-medium text-sm md:text-base">
+              ساعدنا في مطابقتك بشكل أدق
+            </h3>
           </div>
 
-          <SkillMatchingForm
-            label="المهارات التي أقدمها"
-            selectedSkills={offeredSkills}
-            onSkillsChange={setOfferedSkills}
-          />
-          {errors.offered && (
-            <p className="text-red-500 text-sm mt-2">{errors.offered}</p>
-          )}
+          <div>
+            <SkillMatchingForm
+              label="المهارات التي أقدمها"
+              selectedSkills={offeredSkills}
+              onSkillsChange={setOfferedSkills}
+            />
+            {errors.offered && (
+              <p className="text-red-500 text-xs mt-2 mr-2">{errors.offered}</p>
+            )}
+          </div>
 
-          <SkillMatchingForm
-            label="المهارات التي أحتاجها"
-            selectedSkills={requiredSkills}
-            onSkillsChange={setRequiredSkills}
-          />
-          {errors.required && (
-            <p className="text-red-500 text-sm mt-2">{errors.required}</p>
-          )}
+          <div>
+            <SkillMatchingForm
+              label="المهارات التي أحتاجها"
+              selectedSkills={requiredSkills}
+              onSkillsChange={setRequiredSkills}
+            />
+            {errors.required && (
+              <p className="text-red-500 text-xs mt-2 mr-2">
+                {errors.required}
+              </p>
+            )}
+          </div>
 
-          <div className="flex flex-col gap-4 pt-6 w-full">
+          <BioInput value={bio} onChange={setBio} error={errors.bio} />
+          <div className="flex flex-col gap-4 pt-4 w-full">
             <Button
               variant="filled"
-              className="w-full"
+              className="w-full h-12 text-lg"
               onClick={handleContinue}
             >
               استمرار
             </Button>
             <Button
               variant="outline"
-              className="w-full flex items-center justify-center gap-2 h-12 text-neutral-600 font-medium "
+              className="w-full flex items-center justify-center gap-2 h-12 text-neutral-600 font-medium"
               onClick={() => router.back()}
             >
               <ChevronRight size={20} />

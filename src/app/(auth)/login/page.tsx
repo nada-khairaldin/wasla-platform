@@ -3,7 +3,7 @@ import AuthWrapper from './../../../features/auth/components/AuthWrapper';
 
 function Page() {
   return (
-  <AuthWrapper src={"/images/features/auth/login-bg.png"} alt={"Login background image"}>
+  <AuthWrapper src={"/images/features/auth/login.png"} alt={"Login background image"}>
     <LoginForm />
   </AuthWrapper>
   );

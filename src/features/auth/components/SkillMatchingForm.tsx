@@ -79,7 +79,7 @@ function SkillMatchingForm({
   </div>
 )}
 
-{/* منطقة المقترحات وإضافة مهارة جديدة */}
+
 <div className="flex flex-wrap gap-sm">
   {suggestedSkills.map((skill) => (
     <button
@@ -93,7 +93,7 @@ function SkillMatchingForm({
 
         {addNewSkill ? (
           <button
-            className="flex items-center space-between text-white rounded-3xl p-base gap-sm bg-primary-500 border hover:bg-primary-700 transition-colors duration-200"
+            className="flex items-center space-between text-white rounded-3xl p-base gap-sm bg-primary-500 border hover:bg-primary-700 transition-colors duration-200 active:scale-90"
             onClick={() => setAddNewSkill(false)}
           >
             <span>أضف مهارة</span> <Plus />
@@ -118,7 +118,7 @@ function SkillMatchingForm({
               <button
                 type="button"
                 onClick={() => handleAddNew()}
-                className="absolute left-sm top-1/2 transform -translate-y-1/2 p-1 bg-primary-500 text-white hover:bg-primary-700 rounded-full transition-colors"
+                className="absolute left-sm top-1/2 transform -translate-y-1/2 p-1 bg-primary-500 text-white hover:bg-primary-700 rounded-full transition-colors active:scale-90"
               >
                 <Check size={20} strokeWidth={3} />
               </button>

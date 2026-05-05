@@ -15,6 +15,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BasicInfoSchema, basicInfoSchema } from "../schemas/authSchema";
 import { useRouter } from "next/navigation";
+import  Link from 'next/link';
+
 
 const GAZA_CITIES = [
   "غزة",
@@ -91,7 +93,6 @@ function BasicInfoForm() {
           <select
             id="location"
             {...register("city")}
-            onChange={(e) => setSelectedCity(e.target.value)}
             className={`w-full rounded-xl border-none p-4 pr-12 outline-none focus:ring-1 focus:ring-neutral-200 transition-all bg-neutral-50 text-right appearance-none 
       ${selectedCity === "" ? "text-neutral-400" : "text-neutral-900"}`}
             dir="rtl"
@@ -107,7 +108,6 @@ function BasicInfoForm() {
           </select>
         </div>
 
-        {/* رسالة الخطأ تظهر الآن خارج حاوية الأيقونة فلا تؤثر عليها */}
         {errors.city && (
           <p className="text-red-500 text-sm mt-1 text-right">
             {errors.city.message}
@@ -144,9 +144,21 @@ function BasicInfoForm() {
         error={errors.confirmPassword?.message}
       />
 
-      <Button type="submit" size="lg" variant="filled" className="mt-xl">
-        استمرار
-      </Button>
+      <div className="flex flex-col gap-4 mt-xl">
+        <Button type="submit" size="lg" variant="filled">
+          استمرار
+        </Button>
+
+        <p className="text-center text-neutral-700">
+          لديك حساب بالفعل؟{" "}
+          <Link
+            href="/login"
+            className="text-primary-500 font-bold hover:underline active:scale-95 transition-transform inline-block"
+          >
+            تسجيل الدخول
+          </Link>
+        </p>
+      </div>
     </form>
   );
 }

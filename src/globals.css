@@ -240,3 +240,22 @@
 .swiper-pagination {
   bottom: 16px !important;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px; 
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; 
+  margin: 10px 0; 
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db; 
+  border-radius: 10px; 
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; 
+}
+

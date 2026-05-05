@@ -1,6 +1,6 @@
 "use client";
 
-import { useState , useEffect} from "react";
+import { useState, useEffect } from "react";
 import {
   Check,
   User,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { motion } from "framer-motion"; // استيراد المكتبة
 
 import Logo from "../../../../../components/ui/Logo";
 import Stepper from "./../../../../../features/auth/components/Stepper";
@@ -29,7 +30,7 @@ function ConfirmationPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
- const data = useSignupStore((state) => state.formData);
+  const data = useSignupStore((state) => state.formData);
 
   useEffect(() => {
     if (!data.email) { 
@@ -56,15 +57,13 @@ function ConfirmationPage() {
         return;
       }
       if (resData) {
-        console.log("البيانات القادمة من السيرفر:", resData);
-        const { access_Token, user } = resData;
+        const { access_Token } = resData;
         localStorage.setItem("token", access_Token);
         resetSignup();
         router.push("/auth/success");
       }
     } catch (err) {
       toast.error("حدث خطأ غير متوقع، يرجى المحاولة لاحقاً");
-      console.error("Signup Error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -75,22 +74,25 @@ function ConfirmationPage() {
   const goToStepOne = () => router.push("/signup/basic-info");
 
   return (
-<div className="min-h-screen bg-white flex flex-col items-center px-base">
-  {/* الهيدر: يأخذ عرض الشاشة ويضع الشعار في أقصى اليمين */}
-  <header className="w-full flex  p-4 md:p-8">
-    <div className="scale-75 md:scale-100">
-      <Logo />
-    </div>
-  </header>
+    // أضفنا motion.div هنا لتغليف الصفحة كاملة وحركتها عند الدخول
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-white flex flex-col items-center px-base overflow-x-hidden"
+    >
+      <header className="w-full flex p-4 md:p-8">
+        <div className="scale-75 md:scale-100">
+          <Logo />
+        </div>
+      </header>
 
+      <main className="w-full max-w-[750px] px-4 mt-sm md:mt-8">
+        <Stepper currentStep={3} />
+      </main>
 
-  <main className="w-full max-w-[750px] px-4 mt-sm md:mt-8">
-    <Stepper currentStep={3} />
-  </main>
-
-
-
-      <div className="flex flex-col items-center w-full max-w-[474px] gap-[18px] mb-10 -mt-3xl md:mt-0">
+      {/* قسم الهدية والساعات */}
+      <div className="flex flex-col items-center w-full max-w-[474px] gap-[18px] mb-10 mt-8 md:mt-12">
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-[75px] h-[75px] border-[3px] border-success-500 rounded-full flex items-center justify-center bg-white shadow-sm">
@@ -98,7 +100,7 @@ function ConfirmationPage() {
                 5
               </span>
             </div>
-            <div className="absolute w-[30px] h-[30px] flex justify-center items-center -bottom-1 -right-1 bg-success-50 rounded-full shadow-sm">
+            <div className="absolute w-[30px] h-[30px] flex justify-center items-center -bottom-1 -right-1 bg-success-50 rounded-full shadow-sm border border-success-100">
               <Check size={15} className="text-success-500 stroke-[4]" />
             </div>
           </div>
@@ -125,23 +127,18 @@ function ConfirmationPage() {
         </div>
       </div>
 
+      {/* قسم التلخيص */}
       <div className="flex flex-col items-start w-full max-w-[653px] gap-[20px] mb-12">
         <h4 className="text-[#374151] text-xl font-bold self-start mr-2">
-          تلخيص:
+          تلخيص البيانات:
         </h4>
 
-        <div
-          className={`w-full relative group rounded-2xl transition-all ${isUsernameError ? "ring-2 ring-red-500 bg-red-50" : ""}`}
-        >
+        {/* Username Item */}
+        <div className={`w-full relative group rounded-2xl transition-all ${isUsernameError ? "ring-2 ring-red-500 bg-red-50" : ""}`}>
           <SummaryItem
             label="اسم المستخدم"
             value={formData.username || " "}
-            icon={
-              <User
-                size={20}
-                className={isUsernameError ? "text-red-500" : ""}
-              />
-            }
+            icon={<User size={20} className={isUsernameError ? "text-red-500" : ""} />}
           />
           <button
             onClick={goToStepOne}
@@ -151,15 +148,12 @@ function ConfirmationPage() {
           </button>
         </div>
 
-        <div
-          className={`w-full relative group rounded-2xl transition-all ${isEmailError ? "ring-2 ring-red-500 bg-red-50" : ""}`}
-        >
+        {/* Email Item */}
+        <div className={`w-full relative group rounded-2xl transition-all ${isEmailError ? "ring-2 ring-red-500 bg-red-50" : ""}`}>
           <SummaryItem
             label="البريد الإلكتروني"
             value={formData.email || " "}
-            icon={
-              <Mail size={20} className={isEmailError ? "text-red-500" : ""} />
-            }
+            icon={<Mail size={20} className={isEmailError ? "text-red-500" : ""} />}
           />
           <button
             onClick={goToStepOne}
@@ -181,12 +175,15 @@ function ConfirmationPage() {
           icon={<Code2 size={20} />}
         />
 
+        {/* Server Errors Handling */}
         {serverError && (
-          <div className="w-full p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-1 text-red-700 text-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-1 text-red-700 text-sm"
+          >
             <p>{serverError}</p>
-
-            {(serverError.includes("البريد") ||
-              serverError.includes("اسم المستخدم")) && (
+            {(serverError.includes("البريد") || serverError.includes("اسم المستخدم")) && (
               <button
                 onClick={goToStepOne}
                 className="text-red-800 underline font-bold mt-1 text-right w-fit hover:cursor-pointer"
@@ -194,10 +191,11 @@ function ConfirmationPage() {
                 اضغط هنا للعودة وتعديل البيانات
               </button>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
 
+      {/* Buttons Section */}
       <div className="w-full max-w-[653px] space-y-4 mb-16">
         <Button
           variant="filled"
@@ -225,7 +223,7 @@ function ConfirmationPage() {
           <span>رجوع لتعديل المهارات</span>
         </Button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

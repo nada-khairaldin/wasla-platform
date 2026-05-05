@@ -4,7 +4,10 @@ import Button from "../../../components/ui/Button";
 import InputField from "./InputField";
 import { authServices } from "../services/authService";
 import { useState } from "react";
-import {loginSchema,LoginFormData,} from "@/src/features/auth/schemas/authSchema";
+import {
+  loginSchema,
+  LoginFormData,
+} from "@/src/features/auth/schemas/authSchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -80,15 +83,17 @@ function LoginForm() {
         />
         <Link
           href="/forgot-password"
-          className="text-sm text-gray-500  self-end mt-sm hover:underline"
+          className="text-sm text-gray-500 self-end mt-sm hover:underline transition-all duration-200 active:scale-95 active:opacity-70 select-none"
         >
           هل نسيت كلمة المرور؟
         </Link>
+
         {errors.root?.serverError && (
           <p className="text-red-500 text-sm mb-4 text-center animate-shake">
             {errors.root.serverError.message}
           </p>
         )}
+
         <Button
           type="submit"
           size="lg"
@@ -103,12 +108,12 @@ function LoginForm() {
           ليس لديك حساب؟{" "}
           <Link
             href="/signup"
-            className="text-primary-500 cursor-pointer hover:underline"
+            className="text-primary-500 cursor-pointer hover:underline transition-all duration-200 active:text-primary-700 active:scale-95 inline-block select-none font-bold"
           >
             أنشئ حساب جديد
           </Link>
         </p>
-
+        
         <div className="relative flex items-center py-4">
           <div className="flex-grow border-t border-gray-300"></div>
           <span className="flex-shrink mx-4 text-gray-400">أو</span>

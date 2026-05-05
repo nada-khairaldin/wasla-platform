@@ -14,6 +14,7 @@ import {
   forgotPasswordSchema,
 } from "../../../features/auth/schemas/authSchema";
 import { authServices } from "../../../features/auth/services/authService";
+import Link from "next/link";
 
 function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +67,8 @@ function ForgotPasswordPage() {
               هل نسيت كلمة المرور؟
             </h1>
             <p className="text-neutral-600 text-center text-xs md:text-sm mb-6 md:mb-8 leading-relaxed max-w-[90%] md:max-w-full">
-              أدخل بريدك الإلكتروني وسأرسل لك رابطاً لإعادة تعيين كلمة المرور الخاصة بك
+              أدخل بريدك الإلكتروني وسأرسل لك رابطاً لإعادة تعيين كلمة المرور
+              الخاصة بك
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="w-full">
@@ -94,14 +96,13 @@ function ForgotPasswordPage() {
                 أرسل رابط كلمة المرور
               </Button>
             </form>
-
-            <a
+            <Link
               href="/login"
-              className="flex items-center gap-2 text-primary-500 font-semibold hover:underline text-sm md:text-base"
+              className="flex items-center gap-2 text-primary-500 font-semibold hover:underline text-sm md:text-base transition-all duration-200 active:scale-95 active:opacity-80 select-none"
             >
               <ArrowRight className="w-5 h-5" />
               العودة لتسجيل الدخول
-            </a>
+            </Link>
           </>
         ) : (
           <div className="flex flex-col items-center text-center animate-in fade-in zoom-in duration-500 w-full">
@@ -109,36 +110,42 @@ function ForgotPasswordPage() {
               <CheckCircle2 className="w-10 h-10 md:w-12 md:h-12 text-green-600" />
             </div>
 
-            <h1 className="text-xl md:text-2xl font-bold text-neutral-900 mb-3">تفقد بريدك الإلكتروني</h1>
-            
+            <h1 className="text-xl md:text-2xl font-bold text-neutral-900 mb-3">
+              تفقد بريدك الإلكتروني
+            </h1>
+
             <div className="bg-white/60 border border-primary-100 rounded-2xl p-4 mb-6 w-full shadow-sm">
               <p className="text-neutral-600 text-xs md:text-sm leading-relaxed">
                 لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى:
-                <span className="block font-bold text-primary-600 mt-2 text-sm md:text-base break-all" dir="ltr">
+                <span
+                  className="block font-bold text-primary-600 mt-2 text-sm md:text-base break-all"
+                  dir="ltr"
+                >
                   {userEmail}
                 </span>
               </p>
             </div>
 
             <p className="text-neutral-500 text-[10px] md:text-xs mb-8 max-w-[90%]">
-              إذا لم تجد الرسالة في غضون دقيقتين، يرجى التحقق من مجلد البريد المهمل (Junk/Spam).
+              إذا لم تجد الرسالة في غضون دقيقتين، يرجى التحقق من مجلد البريد
+              المهمل (Junk/Spam).
             </p>
 
-            <Button 
-              variant="outline" 
-              onClick={() => setIsSuccess(false)} 
+            <Button
+              variant="outline"
+              onClick={() => setIsSuccess(false)}
               className="w-full mb-6 py-3"
             >
               إعادة المحاولة بإيميل آخر
             </Button>
 
-            <a
+            <Link
               href="/login"
-              className="flex items-center gap-2 text-primary-500 font-semibold hover:underline text-sm"
+              className="flex items-center gap-2 text-primary-500 font-semibold hover:underline text-sm transition-all duration-200 active:scale-95 active:opacity-80 select-none"
             >
               <ArrowRight className="w-5 h-5" />
               العودة لتسجيل الدخول
-            </a>
+            </Link>
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, ArrowRight, CheckCircle2  } from "lucide-react";
+import { Lock, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import * as z from "zod";
@@ -12,17 +12,20 @@ import Logo from "../../../components/ui/Logo";
 import InputField from "../../../features/auth/components/InputField";
 import Button from "../../../components/ui/Button";
 import { authServices } from "../../../features/auth/services/authService";
-import { ResetPasswordFormData, resetPasswordSchema } from "../../../features/auth/schemas/authSchema";
-
+import {
+  ResetPasswordFormData,
+  resetPasswordSchema,
+} from "../../../features/auth/schemas/authSchema";
+import Link from "next/link";
 
 function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // const searchParams = useSearchParams();
   const router = useRouter();
-  // const token = searchParams.get("token"); 
+  // const token = searchParams.get("token");
 
   const {
     register,
@@ -33,7 +36,7 @@ function ResetPasswordPage() {
     mode: "onBlur",
   });
 
- /* const onSubmit = async (data: ResetPasswordFormData) => {
+  /* const onSubmit = async (data: ResetPasswordFormData) => {
     if (!token) {
       toast.error("رابط غير صالح أو منتهي الصلاحية");
       return;
@@ -70,23 +73,25 @@ function ResetPasswordPage() {
               <Lock className="w-8 h-8 text-neutral-400" />
             </div>
 
-            <h1 className="text-2xl font-bold text-neutral-900 mb-2">إعادة تعيين كلمة المرور</h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-2">
+              إعادة تعيين كلمة المرور
+            </h1>
             <p className="text-neutral-600 text-center text-sm mb-8">
               أدخل كلمة المرور الجديدة الخاصة بك لتتمكن من الدخول إلى حسابك
             </p>
 
-            <form  className="w-full space-y-5">
-                <InputField
-                  id="password"
-                  type= "password"
-                  label="كلمة المرور الجديدة"
-                  placeholder="********"
-                  icon={<Lock className="w-5 h-5" />}
-                  {...register("password")}
-                  error={errors.password?.message}
-                  className="bg-white/70"
-                />
-            
+            <form className="w-full space-y-5">
+              <InputField
+                id="password"
+                type="password"
+                label="كلمة المرور الجديدة"
+                placeholder="********"
+                icon={<Lock className="w-5 h-5" />}
+                {...register("password")}
+                error={errors.password?.message}
+                className="bg-white/70"
+              />
+
               <InputField
                 id="confirmPassword"
                 type="password"
@@ -115,13 +120,16 @@ function ResetPasswordPage() {
               <CheckCircle2 className="w-12 h-12 text-green-600" />
             </div>
 
-            <h1 className="text-2xl font-bold text-neutral-900 mb-4">تم التحديث بنجاح!</h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-4">
+              تم التحديث بنجاح!
+            </h1>
             <p className="text-neutral-600 text-sm mb-8 leading-relaxed">
-              لقد تم تغيير كلمة المرور الخاصة بك بنجاح. يمكنك الآن استخدام كلمة المرور الجديدة لتسجيل الدخول.
+              لقد تم تغيير كلمة المرور الخاصة بك بنجاح. يمكنك الآن استخدام كلمة
+              المرور الجديدة لتسجيل الدخول.
             </p>
 
-            <Button 
-              variant="filled" 
+            <Button
+              variant="filled"
               className="w-full mb-4"
               onClick={() => router.push("/login")}
             >
@@ -130,10 +138,13 @@ function ResetPasswordPage() {
           </div>
         )}
 
-        <a href="/login" className="flex items-center gap-2 text-primary-500 font-semibold hover:underline mt-6 text-sm">
+        <Link
+          href="/login"
+          className="flex items-center gap-2 text-primary-500 font-semibold mt-6 hover:underline transition-all active:scale-95"
+        >
           <ArrowRight className="w-5 h-5" />
           العودة لتسجيل الدخول
-        </a>
+        </Link>
       </div>
     </div>
   );
