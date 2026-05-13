@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { scrollToSection } from "@/src/utils/scroll";
+import { scrollToSection } from "@/src/utils";
 import Logo from "../ui/Logo";
 
 const Footer = () => {

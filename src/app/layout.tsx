@@ -1,5 +1,6 @@
 import "@/src/globals.css";
 import { Toaster } from "react-hot-toast";
+import Providers from "../components/ui/Providers";
 export const metadata = {
   title: {
     default: "منصة وصلة | بنك الوقت في غزة",
@@ -39,8 +40,10 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body>
+        <Providers>
         <Toaster position="top-center" reverseOrder={false} />
         {children}
+        </Providers>
       </body>
     </html>
   );

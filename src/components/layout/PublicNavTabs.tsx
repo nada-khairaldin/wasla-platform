@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { scrollToSection } from "../../utils/scroll";
+import { scrollToSection } from "../../utils";
 
 const tabs = [
   { name: "الرئيسية", id: "hero" },
@@ -26,7 +26,7 @@ export default function PublicNavTabs({
       threshold: 0,
     };
 
-    const observerCallback = (entries : IntersectionObserverEntry[]) => {
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           setActiveTab(entry.target.id);

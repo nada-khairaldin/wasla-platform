@@ -1,14 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 
-function Logo({ isFooter = false }: { isFooter?: boolean }) {
+function Logo({ isFooter = false , className = "" }: { isFooter?: boolean; className?: string }) {
   return (
     <Link href="/">
       <div
         className={
           isFooter
             ? "relative w-14 h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 bg-white rounded-2xl flex items-center justify-center p-2 md:p-3"
-            : ""
+            : className
         }
       >
         <Image

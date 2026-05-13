@@ -11,15 +11,17 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { useAuthActions } from "../store/useAuthStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 function LoginForm() {
+  console.log("login")
   const router = useRouter();
+  const { setAuth } = useAuthActions();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
-
   const handleLogin = async (formData: LoginFormData) => {
     setIsLoading(true);
-
     const { data, error } = await authServices.login(formData);
 
     if (error) {
@@ -35,11 +37,16 @@ function LoginForm() {
       return;
     }
     if (data) {
-      const { access_Token, user } = data;
-      localStorage.setItem("token", access_Token);
+      const { accessToken } = data;
 
-      toast.success(`مرحباً بك ${user.username}`);
-      router.push("/home");
+      setAuth(accessToken);
+      router.replace("/home");
+
+      await queryClient.invalidateQueries({
+        queryKey: ["currentUser"],
+      });
+
+
     }
 
     setIsLoading(false);
@@ -113,7 +120,7 @@ function LoginForm() {
             أنشئ حساب جديد
           </Link>
         </p>
-        
+
         <div className="relative flex items-center py-4">
           <div className="flex-grow border-t border-gray-300"></div>
           <span className="flex-shrink mx-4 text-gray-400">أو</span>

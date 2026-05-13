@@ -13,28 +13,35 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { motion } from "framer-motion"; // استيراد المكتبة
+import { motion } from "framer-motion";
 
 import Logo from "../../../../../components/ui/Logo";
 import Stepper from "./../../../../../features/auth/components/Stepper";
 import Button from "./../../../../../components/ui/Button";
 import SummaryItem from "../../../../../features/auth/components/SummaryItem";
 
-import { useSignupActions, useSignupStore } from "@/src/features/auth/store/useSignupStore";
+import {
+  useSignupActions,
+  useSignupStore,
+} from "@/src/features/auth/store/useSignupStore";
 import { authServices } from "../../../../../features/auth/services/authService";
 import { SignupFormData } from "../../../../../features/auth/schemas/authSchema";
+import { useAuthActions } from "../../../../../features/auth/store/useAuthStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 function ConfirmationPage() {
   const { formData } = useSignupStore();
   const { resetSignup } = useSignupActions();
+  const { setAuth } = useAuthActions();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const data = useSignupStore((state) => state.formData);
 
   useEffect(() => {
-    if (!data.email) { 
-      router.replace('/signup/basic-info');
+    if (!data.email) {
+      router.replace("/signup/basic-info");
     }
   }, [data, router]);
 
@@ -57,10 +64,13 @@ function ConfirmationPage() {
         return;
       }
       if (resData) {
-        const { access_Token } = resData;
-        localStorage.setItem("token", access_Token);
+        const { accessToken } = resData;
+        setAuth(accessToken);
+        await queryClient.invalidateQueries({
+          queryKey: ["currentUser"],
+        });
         resetSignup();
-        router.push("/auth/success");
+        router.replace("/home");
       }
     } catch (err) {
       toast.error("حدث خطأ غير متوقع، يرجى المحاولة لاحقاً");
@@ -74,8 +84,7 @@ function ConfirmationPage() {
   const goToStepOne = () => router.push("/signup/basic-info");
 
   return (
-    // أضفنا motion.div هنا لتغليف الصفحة كاملة وحركتها عند الدخول
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
@@ -91,7 +100,6 @@ function ConfirmationPage() {
         <Stepper currentStep={3} />
       </main>
 
-      {/* قسم الهدية والساعات */}
       <div className="flex flex-col items-center w-full max-w-[474px] gap-[18px] mb-10 mt-8 md:mt-12">
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -127,18 +135,23 @@ function ConfirmationPage() {
         </div>
       </div>
 
-      {/* قسم التلخيص */}
       <div className="flex flex-col items-start w-full max-w-[653px] gap-[20px] mb-12">
         <h4 className="text-[#374151] text-xl font-bold self-start mr-2">
           تلخيص البيانات:
         </h4>
 
-        {/* Username Item */}
-        <div className={`w-full relative group rounded-2xl transition-all ${isUsernameError ? "ring-2 ring-red-500 bg-red-50" : ""}`}>
+        <div
+          className={`w-full relative group rounded-2xl transition-all ${isUsernameError ? "ring-2 ring-red-500 bg-red-50" : ""}`}
+        >
           <SummaryItem
             label="اسم المستخدم"
             value={formData.username || " "}
-            icon={<User size={20} className={isUsernameError ? "text-red-500" : ""} />}
+            icon={
+              <User
+                size={20}
+                className={isUsernameError ? "text-red-500" : ""}
+              />
+            }
           />
           <button
             onClick={goToStepOne}
@@ -148,12 +161,15 @@ function ConfirmationPage() {
           </button>
         </div>
 
-        {/* Email Item */}
-        <div className={`w-full relative group rounded-2xl transition-all ${isEmailError ? "ring-2 ring-red-500 bg-red-50" : ""}`}>
+        <div
+          className={`w-full relative group rounded-2xl transition-all ${isEmailError ? "ring-2 ring-red-500 bg-red-50" : ""}`}
+        >
           <SummaryItem
             label="البريد الإلكتروني"
             value={formData.email || " "}
-            icon={<Mail size={20} className={isEmailError ? "text-red-500" : ""} />}
+            icon={
+              <Mail size={20} className={isEmailError ? "text-red-500" : ""} />
+            }
           />
           <button
             onClick={goToStepOne}
@@ -175,15 +191,15 @@ function ConfirmationPage() {
           icon={<Code2 size={20} />}
         />
 
-        {/* Server Errors Handling */}
         {serverError && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="w-full p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-1 text-red-700 text-sm"
           >
             <p>{serverError}</p>
-            {(serverError.includes("البريد") || serverError.includes("اسم المستخدم")) && (
+            {(serverError.includes("البريد") ||
+              serverError.includes("اسم المستخدم")) && (
               <button
                 onClick={goToStepOne}
                 className="text-red-800 underline font-bold mt-1 text-right w-fit hover:cursor-pointer"
@@ -195,7 +211,6 @@ function ConfirmationPage() {
         )}
       </div>
 
-      {/* Buttons Section */}
       <div className="w-full max-w-[653px] space-y-4 mb-16">
         <Button
           variant="filled"

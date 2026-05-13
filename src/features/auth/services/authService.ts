@@ -29,7 +29,14 @@ export const authServices = {
     return apiRequest<void, { email: string }>({
       method: "POST",
       url: "/auth/forget-password",
-      payload: { email }, 
+      payload: { email },
+    });
+  },
+
+  getCurrentUser: () => {
+    return apiRequest({
+      method: "GET",
+      url: "/auth/me",
     });
   },
 };

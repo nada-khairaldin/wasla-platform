@@ -6,7 +6,7 @@ import AvatarContainer from "../../ui/AvatarContainer";
 import { MoveLeft } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import Link from "next/link";
-import { scrollToSection } from "@/src/utils/scroll";
+import { scrollToSection } from "@/src/utils";
 
 function Hero() {
   const containerVariants: Variants = {
@@ -59,7 +59,8 @@ function Hero() {
           <div className="text-body-3 sm:text-body-2 md:text-h6 max-w-[620px] font-regular text-neutral-500 leading-relaxed">
             <p>
               في وصلة، الوقت هو العملة الوحيدة. ساعة من البرمجة تساوي ساعة من
-              التصميم.  <br />انضم إلى مجتمع أكاديمي يتبادل المعرفة بلا قيود مالية.
+              التصميم. <br />
+              انضم إلى مجتمع أكاديمي يتبادل المعرفة بلا قيود مالية.
             </p>
           </div>
           <AvatarContainer />
@@ -70,7 +71,11 @@ function Hero() {
           className="flex flex-col items-center justify-center sm:flex-row gap-sm sm:gap-xl2 w-full"
         >
           <Link href="/signup">
-            <Button size="lg" variant="filled" aria-label="انضم إلينا الآن مجاناً لبدء تبادل المهارات">
+            <Button
+              size="lg"
+              variant="filled"
+              aria-label="انضم إلينا الآن مجاناً لبدء تبادل المهارات"
+            >
               ابدأ مجانًا
             </Button>
           </Link>
