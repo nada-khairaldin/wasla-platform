@@ -20,37 +20,38 @@ function LoginForm() {
   const { setAuth } = useAuthActions();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
-  const handleLogin = async (formData: LoginFormData) => {
-    setIsLoading(true);
-    const { data, error } = await authServices.login(formData);
+  // const handleLogin = async (formData: LoginFormData) => {
+  //   setIsLoading(true);
+  //   const { data, error } = await authServices.login(formData);
 
-    if (error) {
-      let translatedError = error;
-      if (error.toLowerCase().includes("invalid credentials"))
-        translatedError =
-          "خطأ في البريد الإلكتروني أو كلمة المرور. يرجى المحاولة مرة أخرى.";
-      setError("root.serverError", {
-        type: "manual",
-        message: translatedError,
-      });
-      setIsLoading(false);
-      return;
-    }
-    if (data) {
-      const { accessToken } = data;
+  //   if (error) {
+  //     let translatedError = error;
+  //     if (error.toLowerCase().includes("invalid credentials"))
+  //       translatedError =
+  //         "خطأ في البريد الإلكتروني أو كلمة المرور. يرجى المحاولة مرة أخرى.";
+  //     setError("root.serverError", {
+  //       type: "manual",
+  //       message: translatedError,
+  //     });
+  //     setIsLoading(false);
+  //     return;
+  //   }
+  //   if (data) {
+  //     const { accessToken } = data;
 
-      setAuth(accessToken);
-      router.replace("/home");
+  //     setAuth(accessToken);
+  //     router.replace("/home");
 
-      await queryClient.invalidateQueries({
-        queryKey: ["currentUser"],
-      });
+  //     await queryClient.invalidateQueries({
+  //       queryKey: ["currentUser"],
+  //     });
 
 
-    }
+  //   }
 
-    setIsLoading(false);
-  };
+  //   setIsLoading(false);
+  // };
+  const handleLogin = () => {router.replace("/home");}
 
   const {
     register,

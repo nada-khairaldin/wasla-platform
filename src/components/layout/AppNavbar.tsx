@@ -6,7 +6,7 @@ import { UserAccount } from "./UserAccount";
 import DesktopPublicNavLinks from "./DesktopPublicNavLinks";
 import SearchBar from "./../../features/search/components/SearchBar";
 import MobilePublicSidebar from "./MobilePublicSidebar";
-import Skeleton from "../ui/Skeleton";
+import {Skeleton} from "../ui/Skeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
 const NAV_LINKS = [
@@ -23,7 +23,7 @@ export default function AppNavbar() {
   return (
     <>
       <div
-        className={`fixed inset-0 z-[60] transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 z-60 transition-all duration-300 md:hidden ${
           sidebarOpen
             ? "bg-white/20 backdrop-blur-md opacity-100 visible"
             : "opacity-0 invisible"
@@ -32,7 +32,7 @@ export default function AppNavbar() {
       />
 
       <nav
-        className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-50 px-4 md:px-8 lg:px-16"
+        className="sticky top-0 z-50 bg-white/80 backdrop-blur-md  px-4 md:px-8 lg:px-16"
         dir="rtl"
       >
         <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-center py-3 md:h-[75px] justify-between gap-3 md:gap-4">
