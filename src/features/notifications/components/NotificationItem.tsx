@@ -1,5 +1,5 @@
 import { ChevronLeft } from "lucide-react";
-import { Notification } from "../NotificationTypes ";
+import { Notification } from "../notificationTypes ";
 import { NotificationIcon } from "./NotificationIcon";
 
 interface NotificationItemProps {

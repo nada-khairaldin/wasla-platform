@@ -1,5 +1,5 @@
 import { FileText, CheckCircle, MessageCircle, Star, Briefcase } from "lucide-react";
-import { Notification } from "../NotificationTypes ";
+import { Notification } from "../notificationTypes ";
 
 interface NotificationIconProps {
   iconType: Notification["iconType"];
