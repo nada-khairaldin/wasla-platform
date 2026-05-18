@@ -1,13 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Bell, MessageSquare, Menu, X, Search } from "lucide-react";
 import Logo from "./../ui/Logo";
 import { UserAccount } from "./UserAccount";
 import DesktopPublicNavLinks from "./DesktopPublicNavLinks";
 import SearchBar from "./../../features/search/components/SearchBar";
 import MobilePublicSidebar from "./MobilePublicSidebar";
-import {Skeleton} from "../ui/Skeleton";
+import { Skeleton } from "../ui/Skeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { MessagesPanel } from "../../features/notifications/components/MessagesPanel";
+import { NotificationsPanel } from "../../features/notifications/components/NotificationsPanel";
+import { MOCK_NOTIFICATIONS } from "../../features/notifications/data/notifications.data";
 
 const NAV_LINKS = [
   { label: "الرئيسية", href: "/home" },
@@ -18,7 +21,27 @@ const NAV_LINKS = [
 export default function AppNavbar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: user, isLoading } = useCurrentUser();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [msgOpen, setMsgOpen] = useState(false);
   const username = user?.Username ?? "User";
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const msgRef = useRef<HTMLButtonElement>(null);
+
+  const unreadNotifCount = MOCK_NOTIFICATIONS.filter(
+    (n) => !n.isRead && n.category !== "messages",
+  ).length;
+
+  const unreadMsgCount = MOCK_NOTIFICATIONS.filter(
+    (n) => !n.isRead && n.category === "messages",
+  ).length;
+
+  function toggleNotif() {
+    setNotifOpen((prev) => !prev);
+  }
+
+  function toggleMsg() {
+    setMsgOpen((prev) => !prev);
+  }
 
   return (
     <>
@@ -47,52 +70,119 @@ export default function AppNavbar() {
               <Logo />
             </div>
 
-          
             <div className="flex items-center gap-3 md:hidden">
-              <button className="relative p-1 text-neutral-500">
-                <MessageSquare size={24} />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-                  3
-                </span>
-              </button>
-              <button className="relative p-1 text-neutral-500">
-                <Bell size={24} />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
-                  3
-                </span>
-              </button>
+              <div className="relative">
+                <button
+                  ref={msgRef}
+                  onClick={toggleMsg}
+                  className={`relative p-2 rounded-xl transition-all ${
+                    msgOpen
+                      ? "bg-[#e9eef2] text-primary-400"
+                      : "text-neutral-500 hover:bg-neutral-50"
+                  }`}
+                >
+                  <MessageSquare size={22} strokeWidth={1.8} />
+                  {unreadMsgCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
+                      {unreadMsgCount}
+                    </span>
+                  )}
+                </button>
+                <MessagesPanel
+                  isOpen={msgOpen}
+                  onClose={() => setMsgOpen(false)}
+                  anchorRef={msgRef as React.RefObject<HTMLElement>}
+                />
+              </div>
+
+              {/* Bell button + panel */}
+              <div className="relative">
+                <button
+                  ref={bellRef}
+                  onClick={toggleNotif}
+                  className={`relative p-2 rounded-xl transition-all ${
+                    notifOpen
+                      ? "bg-[#e9eef2] text-primary-400"
+                      : "text-neutral-500 hover:bg-neutral-50"
+                  }`}
+                >
+                  <Bell size={22} strokeWidth={1.8} />
+                  {unreadNotifCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
+                      {unreadNotifCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationsPanel
+                  isOpen={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                  anchorRef={bellRef as React.RefObject<HTMLElement>}
+                />
+              </div>
             </div>
           </div>
           <div className="hidden lg:block w-64  mr-xl">
             <SearchBar />
           </div>
-         
+
           <div className="hidden md:flex items-center md:gap-6 lg:gap-10 mx-auto">
             <DesktopPublicNavLinks links={NAV_LINKS} />
           </div>
 
-       
           <div className="flex items-center gap-2 lg:gap-4 shrink-0">
-          
-
             <button className="hidden md:flex lg:hidden p-2 text-neutral-500 hover:bg-neutral-50 rounded-xl transition-all">
               <Search size={22} />
             </button>
 
-           
             <div className="hidden md:flex items-center gap-1 border-l border-neutral-100 pl-2">
-              <button className="relative p-2 text-neutral-500 hover:bg-neutral-50 rounded-xl transition-all">
-                <MessageSquare size={22} strokeWidth={1.8} />
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
-                  3
-                </span>
-              </button>
-              <button className="relative p-2 text-neutral-500 hover:bg-neutral-50 rounded-xl transition-all">
-                <Bell size={22} strokeWidth={1.8} />
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
-                  3
-                </span>
-              </button>
+              <div className="relative">
+                <button
+                  ref={msgRef}
+                  onClick={toggleMsg}
+                  className={`relative p-2 rounded-xl transition-all ${
+                    msgOpen
+                      ? "bg-[#e9eef2] text-primary-400"
+                      : "text-neutral-500 hover:bg-neutral-50"
+                  }`}
+                >
+                  <MessageSquare size={22} strokeWidth={1.8} />
+                  {unreadMsgCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
+                      {unreadMsgCount}
+                    </span>
+                  )}
+                </button>
+                <MessagesPanel
+                  isOpen={msgOpen}
+                  onClose={() => setMsgOpen(false)}
+                  anchorRef={msgRef as React.RefObject<HTMLElement>}
+                />
+              </div>
+
+              {/* Bell button + panel */}
+              <div className="relative">
+                <button
+                  ref={bellRef}
+                  onClick={toggleNotif}
+                  className={`relative p-2 rounded-xl transition-all ${
+                    notifOpen
+                      ? "bg-[#e9eef2] text-primary-400"
+                      : "text-neutral-500 hover:bg-neutral-50"
+                  }`}
+                >
+                  <Bell size={22} strokeWidth={1.8} />
+                  {unreadNotifCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
+                      {unreadNotifCount}
+                    </span>
+                  )}
+                </button>
+                <NotificationsPanel
+                  isOpen={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                  anchorRef={bellRef as React.RefObject<HTMLElement>}
+                />
+              </div>
             </div>
 
             <div className="hidden md:block">
