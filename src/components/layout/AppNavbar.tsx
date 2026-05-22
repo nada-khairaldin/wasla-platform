@@ -14,7 +14,7 @@ import { MOCK_NOTIFICATIONS } from "../../features/notifications/data/notificati
 
 const NAV_LINKS = [
   { label: "الرئيسية", href: "/home" },
-  { label: "عقودي", href: "/contracts" },
+  { label: "عقودي", href: "/my-contracts" },
   { label: "منشوراتي", href: "/my-posts" },
 ];
 

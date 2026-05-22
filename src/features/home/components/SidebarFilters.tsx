@@ -89,7 +89,7 @@ export const SidebarFilters = ({
   };
 
   const renderFilterForm = () => (
-    <div className="space-y-5 text-right font-cairo">
+    <div className="space-y-5 text-right ">
       <div className="flex items-center justify-between border-b pb-4 border-neutral-200">
         <h3 className="font-bold text-lg text-neutral-900">تصفية المنشورات</h3>
         {isMobileDrawer && onClose && (
@@ -199,7 +199,7 @@ export const SidebarFilters = ({
   }
 
   return (
-    <div className="bg-neutral-50 rounded-xl p-6 shadow-sm border border-neutral-100">
+    <div className="bg-neutral-50 rounded-xl p-6 shadow-sm ">
       {renderFilterForm()}
     </div>
   );

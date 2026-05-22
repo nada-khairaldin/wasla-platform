@@ -47,3 +47,4 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     iconType: "session",
   },
 ];
+
