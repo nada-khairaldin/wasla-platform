@@ -12,6 +12,7 @@ export default function PublicNav() {
 
   return (
     <nav className="pt-base pb-base px-base md:px-base lg:px-xl7 flex items-center justify-between  relative z-50 sticky top-0  bg-white md:bg-white/80 md:backdrop-blur-lg ">
+
       <Logo />
 
       {/* Desktop Navigation */}

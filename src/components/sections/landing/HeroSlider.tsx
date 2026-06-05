@@ -6,6 +6,10 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+
 const images = [
   "/images/landing/hero1.webp",
   "/images/landing/hero1.webp",
@@ -28,7 +32,7 @@ export default function HeroSlider() {
                    opacity-0 group-hover:opacity-100
                    hover:bg-white hover:text-black
                    transition-all duration-300 ease-in-out shadow-lg"
-                   aria-label="السابق"
+        aria-label="السابق"
       >
         <ChevronLeft size={18} strokeWidth={1.5} />
       </button>
@@ -42,7 +46,7 @@ export default function HeroSlider() {
                    opacity-0 group-hover:opacity-100
                    hover:bg-white hover:text-black
                    transition-all duration-300 ease-in-out shadow-lg"
-                    aria-label="التالي"
+        aria-label="التالي"
       >
         <ChevronRight size={18} strokeWidth={1.5} />
       </button>
@@ -70,7 +74,7 @@ export default function HeroSlider() {
                 alt="hero image"
                 fill
                 className="object-cover rounded-3xl md:rounded-5xl"
-                priority={i === 0} 
+                priority={i === 0}
               />
             </div>
           </SwiperSlide>

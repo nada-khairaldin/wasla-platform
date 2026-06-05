@@ -119,7 +119,6 @@ export const PostCard = ({ post }: { post: Post }) => {
         </div>
 
         <div className="flex-1 text-right space-y-3 pt-1 md:pt-0">
-          {/* تم استبدال group-hover بـ كلاس مخصص يتحكم به السلايدر الخارجي بنقاء */}
           <h4 className="font-bold text-lg md:text-xl text-primary-900 leading-snug card-title transition-colors">
             {post.title}
           </h4>
@@ -137,7 +136,7 @@ export const PostCard = ({ post }: { post: Post }) => {
             {post.description}
           </p>
 
-          {/* تم استبدال group-hover بالـ identification-arrow التي تعزل حركتها داخل السلايدر */}
+
           <div className="flex items-center gap-1 mt-2 text-primary-600 text-[11px] font-black transition-all duration-300 identification-arrow">
             <span>عرض التفاصيل الكاملة</span>
             <ChevronLeft size={14} />
