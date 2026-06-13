@@ -1,16 +1,17 @@
 "use client";
 import { useRef, useState } from "react";
 import { Bell, MessageSquare, Menu, X, Search } from "lucide-react";
-import Logo from "./../ui/Logo";
+import Logo from "../ui/Logo";
 import { UserAccount } from "./UserAccount";
-import DesktopPublicNavLinks from "./DesktopPublicNavLinks";
-import SearchBar from "./../../features/search/components/SearchBar";
-import MobilePublicSidebar from "./MobilePublicSidebar";
+import DesktopPublicNavLinks from "./DesktopProtectedNavLinks";
+import SearchBar from "../../features/search/components/SearchBar";
+import MobilePublicSidebar from "./MobileProtectedSidebar";
 import { Skeleton } from "../ui/Skeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { MessagesPanel } from "../../features/notifications/components/MessagesPanel";
 import { NotificationsPanel } from "../../features/notifications/components/NotificationsPanel";
 import { MOCK_NOTIFICATIONS } from "../../features/notifications/data/notifications.data";
+import { useUserProfile } from "../../hooks/useUserProfile";
 
 const NAV_LINKS = [
   { label: "الرئيسية", href: "/home" },
@@ -18,12 +19,18 @@ const NAV_LINKS = [
   { label: "منشوراتي", href: "/my-posts" },
 ];
 
-export default function AppNavbar() {
+export default function ProtectedAppNavbar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: user, isLoading } = useCurrentUser();
   const [notifOpen, setNotifOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
-  const username = user?.Username ?? "User";
+
+  const { data: currentUser, isLoading } = useCurrentUser();
+  const userId = currentUser?.user?.userId;
+  const { data: profileData, isLoading: isProfileLoading } =
+    useUserProfile(userId);
+  const username = profileData?.profile?.username ?? "User";
+  const points = profileData?.profile?.stats?.availableTimeCredits ?? 0;
+
   const bellRef = useRef<HTMLButtonElement>(null);
   const msgRef = useRef<HTMLButtonElement>(null);
 
@@ -189,10 +196,10 @@ export default function AppNavbar() {
               {isLoading ? (
                 <Skeleton />
               ) : (
-                user && (
+                profileData && (
                   <UserAccount
-                    username={user?.Username}
-                    points={`رصيدك ${user?.points ?? 0} نقطة`}
+                    username={username}
+                    points={`رصيدك ${points} ساعة`}
                   />
                 )
               )}
@@ -208,7 +215,7 @@ export default function AppNavbar() {
       <MobilePublicSidebar
         isOpen={sidebarOpen}
         username={username}
-        points={`رصيدك ${user?.points ?? 0} نقطة`}
+        points={`رصيدك ${points} ساعة`}
         onClose={() => setSidebarOpen(false)}
       />
     </>

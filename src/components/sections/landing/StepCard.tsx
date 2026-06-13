@@ -1,4 +1,4 @@
-import type { Step } from "../../../../types";
+import type { Step } from "../../../types";
 
 function StepCard({ step }: { step: Step }) {
   return (

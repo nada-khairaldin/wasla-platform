@@ -3,7 +3,8 @@ import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import { PostCard, Post } from "./PostCard";
+import { PostCard } from "./PostCard";
+import { Post } from "../type";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -12,24 +13,27 @@ import "swiper/css/pagination";
 const MOCK_RECOMMENDED: Post[] = Array(10)
   .fill(null)
   .map((_, i) => ({
-    id: `rec-${i}`,
+    id: i,
     title:
       i % 2 === 0
         ? "تصميم هوية بصرية لمتجر إلكتروني"
         : "مطلوب كاتب محتوى لمقالات تقنية",
     description:
       "نبحث عن محترف متخصص في بناء الهوية البصرية وشعارات المتاجر، يشمل ذلك اختيار الألوان والخطوط ودليل الاستخدام.",
-    type: i % 2 === 0 ? "عرض" : "طلب",
-    hours: i % 2 === 0 ? 5 : 12,
-    isOnline: i % 2 === 0,
-    location: "غزة، الرمال",
-    isRecommended: true,
-    author: {
-      id: `auth-${i}`,
-      name: i % 2 === 0 ? "أحمد السعيد" : "سارة علي",
-      time: "منذ ساعة",
+    category: i % 2 === 0 ? "OFFER" : "REQUEST",
+    assignedTimeCredits: i % 2 === 0 ? 5 : 12,
+    serviceMode: i % 2 === 0 ? "ONLINE" : "OFFLINE",
+    status: "PUBLISHED",
+    userId: i + 100,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * (i + 1)).toISOString(),
+    updatedAt: new Date().toISOString(),
+    user: {
+      id: i + 100,
+      username: i % 2 === 0 ? "أحمد السعيد" : "سارة علي",
+      email: `user${i}@example.com`,
+      full_name: i % 2 === 0 ? "أحمد السعيد" : "سارة علي",
+      profile_image: "https://i.pravatar.cc/150?img=" + i,
     },
-    category: i % 2 === 0 ? "البرمجة" : "التصميم",
   }));
 
 export const RecommendedCarousel = () => {
@@ -66,7 +70,7 @@ export const RecommendedCarousel = () => {
         {MOCK_RECOMMENDED.map((post) => (
           <SwiperSlide key={post.id} className="h-full py-2">
             <div className="custom-post-wrapper text-neutral-900">
-              <PostCard post={post} />
+              <PostCard post={post} isRecommended={true} />
             </div>
           </SwiperSlide>
         ))}
@@ -74,7 +78,6 @@ export const RecommendedCarousel = () => {
 
       <div className="custom-pagination flex justify-center gap-2 mt-2"></div>
 
-   
       <style jsx global>{`
         .custom-pagination .swiper-pagination-bullet {
           width: 8px;
@@ -102,7 +105,6 @@ export const RecommendedCarousel = () => {
         .custom-post-wrapper > div:hover {
           border-color: #efcf85 !important;
           box-shadow: 0 20px 40px rgba(239, 207, 133, 0.35) !important;
-
         }
 
         .custom-post-wrapper > div:hover .identification-arrow {

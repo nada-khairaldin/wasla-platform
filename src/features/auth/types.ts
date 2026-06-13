@@ -1,11 +1,11 @@
-export interface User {
+export interface UserLogin {
   id: string;
   email: string;
-  Username: string;
+  username: string;
 }
 
 export interface AuthResponse {
-  user: User;
+  user: UserLogin;
   accessToken: string;
 }
 

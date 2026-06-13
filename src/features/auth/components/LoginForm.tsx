@@ -15,43 +15,42 @@ import { useAuthActions } from "../store/useAuthStore";
 import { useQueryClient } from "@tanstack/react-query";
 
 function LoginForm() {
-  console.log("login")
   const router = useRouter();
   const { setAuth } = useAuthActions();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const handleLogin = async (formData: LoginFormData) => {
-    // setIsLoading(true);
-    // const { data, error } = await authServices.login(formData);
+    setIsLoading(true);
+    const { data, error } = await authServices.login(formData);
 
-    // if (error) {
-    //   let translatedError = error;
-    //   if (error.toLowerCase().includes("invalid credentials"))
-    //     translatedError =
-    //       "خطأ في البريد الإلكتروني أو كلمة المرور. يرجى المحاولة مرة أخرى.";
-    //   setError("root.serverError", {
-    //     type: "manual",
-    //     message: translatedError,
-    //   });
-    //   setIsLoading(false);
-    //   return;
-    // }
-    // if (data) {
-    //   const { accessToken } = data;
+    if (error) {
+      let translatedError = error;
+      if (error.toLowerCase().includes("invalid credentials"))
+        translatedError =
+          "خطأ في البريد الإلكتروني أو كلمة المرور. يرجى المحاولة مرة أخرى.";
+      setError("root.serverError", {
+        type: "manual",
+        message: translatedError,
+      });
+      setIsLoading(false);
+      return;
+    }
+    if (data) {
+      const { accessToken } = data;
 
-    //   setAuth(accessToken);
-    //   router.replace("/home");
+      setAuth(accessToken);
+      router.replace("/home");
 
-    //   await queryClient.invalidateQueries({
-    //     queryKey: ["currentUser"],
-    //   });
+      await queryClient.invalidateQueries({
+        queryKey: ["currentUser"],
+      });
 
 
-    // }
+    }
 
-    // setIsLoading(false);
+    setIsLoading(false);
   };
- 
+
 
   const {
     register,
@@ -113,7 +112,7 @@ function LoginForm() {
         </Button>
 
         <p className="text-center text-neutral-700">
-          ليس لديك حساب؟{" "}
+          ليس لديك حساب؟
           <Link
             href="/signup"
             className="text-primary-500 cursor-pointer hover:underline transition-all duration-200 active:text-primary-700 active:scale-95 inline-block select-none font-bold"

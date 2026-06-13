@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, Method } from "axios";
+import Cookies from "js-cookie";
 
 interface ApiRequestProps<P = unknown> {
   method: Method;
@@ -14,16 +15,16 @@ interface ApiResponse<T = unknown> {
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-    withCredentials: true,
   },
 });
 
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      const token = Cookies.get("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -37,9 +38,19 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    if (originalRequest.url?.includes("/auth/refresh")) {
+      Cookies.remove("token");
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.includes("/login")
+      ) {
+        window.location.href = "/login";
+      }
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
       try {
         const res = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
@@ -47,13 +58,20 @@ api.interceptors.response.use(
           { withCredentials: true },
         );
 
+        console.log("✅ Refresh response:", res.data);
         const { accessToken } = res.data;
-        localStorage.setItem("token", accessToken);
+        const { useAuthStore } =
+          await import("@/src/features/auth/store/useAuthStore");
+        useAuthStore.getState().actions.setAuth(accessToken);
+
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+
+        console.log("🚀 Retrying original request:", originalRequest.url);
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem("token");
-        window.location.href = "/auth/login";
+        console.log("❌ Refresh failed:", refreshError);
+        Cookies.remove("token");
         return Promise.reject(refreshError);
       }
     }
@@ -82,7 +100,6 @@ export const apiRequest = async <T = unknown, P = unknown>({
 
     if (axios.isAxiosError(error)) {
       const data = error.response?.data;
-
       errorMessage =
         data?.errors?.[0]?.message ||
         data?.message ||

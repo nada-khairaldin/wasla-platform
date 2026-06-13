@@ -36,7 +36,7 @@ export const authServices = {
   getCurrentUser: () => {
     return apiRequest({
       method: "GET",
-      url: "/auth/me",
+      url: "/me",
     });
   },
 };

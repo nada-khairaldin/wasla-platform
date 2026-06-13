@@ -1,22 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/src/services/api";
 import { authServices } from "../features/auth/services/authService";
+import { CurrentUser } from "../types";
 
-// const getCurrentUser = async () => {
-//   const { data, error } = await authServices.getCurrentUser();
-
-//   if (error) {
-//     throw new Error(error);
-//   }
-
-//   return data;
-// };
-
-const getCurrentUser =  async () => {
-return {
-    Username: "Nada",
-    points: 120,
-  };
+const getCurrentUser = async () => {
+  const { data, error } = await authServices.getCurrentUser();
+  if (error) throw new Error(error);
+  return data as CurrentUser;
 };
 
 export const useCurrentUser = () => {

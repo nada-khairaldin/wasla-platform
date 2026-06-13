@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { createPortal } from "react-dom"; 
+import { createPortal } from "react-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, PenLine, AlignRight } from "lucide-react";
 import Toggle from "./Toggle";
@@ -13,14 +13,24 @@ import {
   createServiceSchema,
 } from "../schemas/postSchema";
 import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useCreatePost } from "../hooks/useCreatePost";
+import { useUpdatePost } from "../hooks/useUpdatePost";
+import { CreatePostRequest, Post } from "../type";
 
-export function CreateServiceModal({
-  isOpen,
-  onClose,
-}: {
+interface PostFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-}) {
+  postToEdit?: Post | null;
+}
+
+export function PostFormModal({
+  isOpen,
+  onClose,
+  postToEdit,
+}: PostFormModalProps) {
+  const isEditMode = !!postToEdit;
+
   const {
     register,
     handleSubmit,
@@ -40,38 +50,75 @@ export function CreateServiceModal({
   });
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen && postToEdit) {
+      reset({
+        serviceType: postToEdit.category === "REQUEST" ? "request" : "offer",
+        title: postToEdit.title,
+        description: postToEdit.description,
+        category: postToEdit.category,
+        deliveryType:
+          postToEdit.serviceMode?.toLowerCase() === "online"
+            ? "online"
+            : "offline",
+        hours: postToEdit.assignedTimeCredits || 12,
+      });
+    } else if (!isOpen) {
       reset();
     }
-  }, [isOpen, reset]);
-
+  }, [isOpen, postToEdit, reset]);
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
-    
     return () => {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
 
+  const { mutate: createPost, isPending: isCreating } = useCreatePost();
+  const { mutate: updatePost, isPending: isUpdating } = useUpdatePost();
 
   const onSubmit = async (data: CreateServiceFormData) => {
-    try {
-      console.log("البيانات صالحة وجاهزة للـ API:", data);
-      onClose();
-    } catch (error) {
-      console.error("خطأ أثناء النشر:", error);
+    const payload: CreatePostRequest = {
+      title: data.title,
+      description: data.description,
+      category: data.serviceType === "offer" ? "OFFER" : "REQUEST",
+      serviceMode: data.deliveryType === "online" ? "ONLINE" : "OFFLINE",
+      assignedTimeCredits: data.hours,
+      status: "PUBLISHED",
+    };
+
+    if (isEditMode && postToEdit) {
+      updatePost(
+        { postId: postToEdit.id, postData: payload },
+        {
+          onSuccess: () => {
+            toast.success("تم تحديث الخدمة بنجاح!");
+            onClose();
+          },
+          onError: (err: Error) => {
+            toast.error(err.message || "حدث خطأ أثناء تعديل الخدمة");
+          },
+        },
+      );
+    } else {
+      createPost(payload, {
+        onSuccess: () => {
+          toast.success("تم نشر الخدمة بنجاح!");
+          reset();
+          onClose();
+        },
+        onError: (err: Error) => {
+          toast.error(err.message || "حدث خطأ أثناء نشر الخدمة");
+        },
+      });
     }
   };
 
-  
   if (!isOpen || typeof window === "undefined") return null;
-
 
   return createPortal(
     <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 sm:p-6">
-      
       <div
         className="fixed inset-0 bg-primary-900/60 backdrop-blur-md animate-in fade-in duration-300 z-10"
         onClick={onClose}
@@ -92,10 +139,12 @@ export function CreateServiceModal({
             <X size={20} />
           </button>
           <h2 className="text-2xl md:text-3xl font-black text-primary-900 font-cairo mb-2 mt-2">
-            انشاء خدمة
+            {isEditMode ? "تعديل الخدمة" : "إنشاء خدمة"}
           </h2>
           <p className="text-primary-400 text-sm font-medium">
-            شارك خبرتك أو اطلب خدمة كل ساعة تمنحك رصيداً زمنياً واحداً.
+            {isEditMode
+              ? "قم بتحديث تفاصيل منشورك الزمني لتتناسب مع متطلباتك الحالية."
+              : "شارك خبرتك أو اطلب خدمة كل ساعة تمنحك رصيداً زمنياً واحداً."}
           </p>
         </div>
 
@@ -166,11 +215,6 @@ export function CreateServiceModal({
                 />
               )}
             />
-            {errors.category && (
-              <p className="text-error-500 text-sm mt-1 text-right">
-                {errors.category.message}
-              </p>
-            )}
           </div>
 
           <div className="flex flex-col gap-3 w-full">
@@ -223,15 +267,19 @@ export function CreateServiceModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isCreating || isUpdating || isSubmitting}
               className="py-4 rounded-2xl font-cairo font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-600/20 transition-all active:scale-95 disabled:opacity-50"
             >
-              {isSubmitting ? "جاري النشر..." : "نشر الخدمة الآن"}
+              {isCreating || isUpdating || isSubmitting
+                ? "جاري الحفظ..."
+                : isEditMode
+                  ? "حفظ التعديلات"
+                  : "نشر الخدمة الآن"}
             </button>
           </div>
         </div>
       </form>
     </div>,
-    document.body
+    document.body,
   );
 }

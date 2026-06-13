@@ -8,7 +8,7 @@ import {
   BrainCircuit,
 } from "lucide-react";
 import FeatureCard from "./FeatureCard";
-import type { Feature } from "../../../../types";
+import type { Feature } from "../../../types";
 
 const features: Feature[] = [
   {

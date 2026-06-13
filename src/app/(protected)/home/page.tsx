@@ -6,29 +6,11 @@ import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { BalanceCard } from "../../../features/home/components/BalanceCard";
 import { SidebarFilters } from "../../../features/home/components/SidebarFilters";
 import { RecommendedCarousel } from "../../../features/posts/components/RecommendedCarousel";
-import { Post, PostCard } from "../../../features/posts/components/PostCard";
 import { ChevronLeft, ChevronRight, Sparkles, Funnel } from "lucide-react";
-
-const MOCK_LATEST_POSTS: Post[] = Array(55)
-  .fill(null)
-  .map((_, i) => ({
-    id: `latest-${i}`,
-    title:
-      i % 2 === 0
-        ? "مطلوب مصمم واجهات UI/UX لتطبيق توصيل"
-        : "خبير سيو (SEO) لرفع ترتيب موقع عقارات",
-    description:
-      "نبحث عن مستقل لديه خبرة لا تقل عن 3 سنوات في التعامل مع مشاريع مشابهة، العمل يتضمن تحليل المنافسين وبناء هيكلية واضحة.",
-    type: i % 2 === 0 ? "طلب" : "عرض",
-    category: i % 3 === 0 ? "البرمجة" : i % 3 === 1 ? "التصميم" : "التسويق",
-    hours: (i % 20) + 1,
-    isOnline: true,
-    author: {
-      id: `auth-${i}`,
-      name: i % 2 === 0 ? "خالد منصور" : "سارة أحمد",
-      time: "منذ 5 دقائق",
-    },
-  }));
+import { PostCard } from "../../../features/posts/components/PostCard";
+import { usePosts } from "../../../features/posts/hooks";
+import { Skeleton } from "../../../components/ui/Skeleton";
+import { useUserProfile } from "../../../hooks/useUserProfile";
 
 interface FilterCriteria {
   type: string;
@@ -37,7 +19,15 @@ interface FilterCriteria {
 }
 
 export default function HomePage() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: currentUser, isLoading } = useCurrentUser();
+  const userId = currentUser?.user?.userId;
+  const { data: profileData, isLoading: isProfileLoading } = useUserProfile(userId);
+
+  const points = profileData?.profile?.stats?.availableTimeCredits ?? 0;
+  const username = profileData?.profile?.username ?? "User";
+
+  const { data: postsData, isLoading: isPostsLoading } = usePosts();
+  const posts = postsData ?? [];
 
   const [activeFilters, setActiveFilters] = useState<FilterCriteria>({
     type: "الكل",
@@ -55,19 +45,23 @@ export default function HomePage() {
   };
 
   const filteredPosts = useMemo(() => {
-    return MOCK_LATEST_POSTS.filter((post) => {
+    return posts.filter((post) => {
+      const postType = post.category === "REQUEST" ? "طلب" : "عرض";
       const matchesType =
-        activeFilters.type === "الكل" || post.type === activeFilters.type;
+        activeFilters.type === "الكل" || postType === activeFilters.type;
+
       const matchesCategory =
         activeFilters.categories.length === 0 ||
         activeFilters.categories.some(
-          (cat) => cat.trim() === post.category.trim(),
+          (cat) => post.title.includes(cat) || post.description.includes(cat),
         );
-      const matchesHours = (post.hours || 0) <= activeFilters.hours;
+
+      const matchesHours =
+        (post.assignedTimeCredits || 0) <= activeFilters.hours;
 
       return matchesType && matchesCategory && matchesHours;
     });
-  }, [activeFilters]);
+  }, [posts, activeFilters]);
 
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
@@ -81,11 +75,11 @@ export default function HomePage() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-10 pt-8">
         <div className="grid grid-cols-12 gap-6 items-stretch mb-8">
           <aside className="col-span-12 md:col-span-4 lg:col-span-3">
-            <BalanceCard points={user?.points} isLoading={isLoading} />
+            <BalanceCard points={points} isLoading={isProfileLoading} />
           </aside>
 
           <div className="col-span-12 md:col-span-8 lg:col-span-9">
-            <HeroSection user={user} isLoading={isLoading} />
+            <HeroSection user={username} isLoading={isLoading} />
           </div>
         </div>
 
@@ -116,7 +110,10 @@ export default function HomePage() {
             />
           </aside>
 
-          <div id="latest-posts-section" className="space-y-8 col-span-12 lg:col-span-9">
+          <div
+            id="latest-posts-section"
+            className="space-y-8 col-span-12 lg:col-span-9"
+          >
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
                 <div className="w-1.5 h-8 bg-primary-600 rounded-full"></div>
@@ -133,13 +130,35 @@ export default function HomePage() {
               </button>
             </div>
 
-           <div  className="grid gap-6">
-              {currentPosts.length > 0 ? (
+            <div className="grid gap-6">
+              {isPostsLoading ? (
+                Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-neutral-50 p-6 rounded-xl space-y-4 animate-pulse"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="w-16 h-6 bg-neutral-200 rounded-full" />
+                        <div className="w-10 h-10 bg-neutral-200 rounded-full" />
+                      </div>
+                      <div className="flex gap-4 items-center">
+                        <div className="w-12 h-12 bg-neutral-200 rounded-full" />
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-neutral-200 rounded w-1/3" />
+                          <div className="h-3 bg-neutral-200 rounded w-1/4" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-neutral-200 rounded w-3/4" />
+                        <div className="h-4 bg-neutral-200 rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))
+              ) : currentPosts.length > 0 ? (
                 currentPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={{ ...post, isRecommended: false }}
-                  />
+                  <PostCard key={post.id} post={post} />
                 ))
               ) : (
                 <div className="text-center py-24 bg-neutral-50 rounded-[32px] border-2 border-dashed border-neutral-200">

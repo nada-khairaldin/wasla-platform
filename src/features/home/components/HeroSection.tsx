@@ -7,7 +7,7 @@ import { CreateServiceTrigger } from "../../posts/components/CreateServiceTrigge
 import { scrollToSection } from "../../../utils";
 
 interface HeroSectionProps {
-  user?: { Username: string } | null;
+  user?: string | null;
   isLoading: boolean;
 }
 
@@ -45,7 +45,7 @@ export default function HeroSection({ user, isLoading }: HeroSectionProps) {
 
       <div className="flex-1 md:w-1/2 space-y-3 md:space-y-4 text-center md:text-right z-10 w-full order-2 md:order-1 min-w-0">
         <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-neutral-800 leading-tight truncate">
-          مرحباً، {user?.Username || "بك"} 👋
+          مرحباً، {user || "بك"} 👋
         </h1>
         <h2 className="text-base md:text-lg lg:text-xl font-bold text-primary-500">
           تعلّم، شارك، وتواصل

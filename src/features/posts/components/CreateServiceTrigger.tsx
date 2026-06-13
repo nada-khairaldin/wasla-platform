@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PlusCircle } from "lucide-react";
 import Button from "@/src/components/ui/Button"; 
-import { CreateServiceModal } from "./CreateServiceModal";
+import { PostFormModal } from "./PostFormModal";
 
 export const CreateServiceTrigger = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +20,7 @@ export const CreateServiceTrigger = () => {
         انشر خدمة
       </Button>
 
-      <CreateServiceModal 
+      <PostFormModal 
         isOpen={isOpen} 
         onClose={() => setIsOpen(false)} 
       />

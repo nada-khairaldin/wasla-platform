@@ -1,6 +1,6 @@
 import StepCard from "./StepCard";
 import { UserPlus, Search, Repeat2 } from "lucide-react";
-import type { Step } from "../../../../types";
+import type { Step } from "../../../types";
 import { motion, Variants } from "framer-motion";
 
 const steps: Step[] = [
