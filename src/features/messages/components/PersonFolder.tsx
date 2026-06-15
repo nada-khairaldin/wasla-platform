@@ -39,7 +39,9 @@ export function PersonFolder({
           initials={folder.initials}
           colorClass={folder.avatarColor}
           size="md"
+          isOnline={folder.isOnline}
         />
+
 
         {/* Name */}
         <div className="flex-1 min-w-0">

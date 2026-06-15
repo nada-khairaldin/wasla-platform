@@ -9,6 +9,7 @@ import {
   Bookmark,
   MessageCircle,
   Star,
+  ArrowLeft,
 } from "lucide-react";
 import Button from "@/src/components/ui/Button";
 import DetailItem from "@/src/features/posts/components/DetailItem";
@@ -19,6 +20,7 @@ import {
 } from "@/src/features/posts/hooks";
 import { Skeleton } from "../../../../components/ui/Skeleton";
 import { useCurrentUser } from "../../../../hooks/useCurrentUser";
+import { useCreateConversation, useConversationForPost } from "@/src/features/messages/hooks";
 
 export default function ServiceDetailPage() {
   const router = useRouter();
@@ -30,11 +32,26 @@ export default function ServiceDetailPage() {
   const { mutate: toggleSave } = useSaveToggle();
   const { data: currentUser } = useCurrentUser();
   const isSaved = savedPosts?.some((sp) => sp.postId === postId) ?? false;
-  const isOwnPost = postId === Number(currentUser?.user?.userId);
+  const isOwnPost = post?.userId === Number(currentUser?.user?.userId);
+  const { hasConversation, conversationId } = useConversationForPost(postId);
+  const createConversation = useCreateConversation();
 
   const handleSave = () => {
     if (!postId) return;
     toggleSave({ postId, isSavedBefore: isSaved });
+  };
+
+  const handleContact = async () => {
+    if (hasConversation && conversationId) {
+      router.push(`/messages?conversationId=${conversationId}`);
+    } else {
+      try {
+        const conversation = await createConversation.mutateAsync(postId);
+        router.push(`/messages?conversationId=${conversation.id}`);
+      } catch {
+        // Handle error silently
+      }
+    }
   };
 
   if (isPostLoading) {
@@ -236,14 +253,33 @@ export default function ServiceDetailPage() {
               </div>
             </div>
 
-            <Button
-              onClick={() => router.push(`/messages?post=${post.id}`)}
-              variant="filled"
-              className="w-full py-4 rounded-xl font-bold text-base shadow-xl shadow-primary-500/20 flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-transform"
-            >
-              <MessageCircle size={18} />
-              <span>تواصل الآن لإنشاء العقد</span>
-            </Button>
+            {!isOwnPost && (
+              <Button
+                onClick={handleContact}
+                disabled={createConversation.isPending}
+                variant="filled"
+                className={`w-full py-4 rounded-xl font-bold text-base shadow-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-transform disabled:opacity-60 ${
+                  hasConversation
+                    ? "!bg-emerald-600 shadow-emerald-500/20 hover:!bg-emerald-700"
+                    : "shadow-primary-500/20"
+                }`}
+              >
+                {createConversation.isPending ? (
+                  <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : hasConversation ? (
+                  <>
+                    <MessageCircle size={18} />
+                    <span>الانتقال إلى المحادثة</span>
+                    <ArrowLeft size={16} />
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle size={18} />
+                    <span>تواصل الآن لإنشاء العقد</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </section>

@@ -4,9 +4,10 @@ import { NotificationIcon } from "./NotificationIcon";
 
 interface NotificationItemProps {
   notification: Notification;
+  onClick?: () => void;
 }
 
-export function NotificationItem({ notification }: NotificationItemProps) {
+export function NotificationItem({ notification, onClick }: NotificationItemProps) {
   const { title, description, time, isRead, iconType } = notification;
 
   return (
@@ -15,6 +16,7 @@ export function NotificationItem({ notification }: NotificationItemProps) {
         !isRead ? "bg-neutral-50/50" : ""
       }`}
       dir="rtl"
+      onClick={onClick}
     >
       {/* Unread dot */}
       <div className="flex-shrink-0 mt-4 w-2">

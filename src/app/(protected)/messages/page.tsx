@@ -1,44 +1,57 @@
 "use client";
 
-import { useState } from "react";
-import type {
-  PersonFolder,
-  ActiveChat,
-  Message,
-} from "@/src/features/messages/chat.types";
-import { MOCK_PERSONS } from "@/src/features/messages/data/chat.data";
+import { useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import type { ActiveChat } from "@/src/features/messages/chat.types";
 import { ConversationsSidebar } from "@/src/features/messages/components/ConversationsSidebar";
 import { ChatHeader } from "@/src/features/messages/components/ChatHeader";
 import { ChatArea } from "@/src/features/messages/components/ChatArea";
 import { ChatInput } from "@/src/features/messages/components/ChatInput";
 import { MessagesEmptyState } from "@/src/features/messages/components/MessagesEmptyState";
-import { ContractModal } from "@/src/features/messages/components/ContractModal"; 
-import { CreateContractForm } from "@/src/features/messages/components/CreateContractForm"; 
-import  type {ContractFormValues}  from "@/src/features/messages/schemas/chat";
+import { ContractModal } from "@/src/features/messages/components/ContractModal";
+import { CreateContractForm } from "@/src/features/messages/components/CreateContractForm";
+import type { ContractFormValues } from "@/src/features/messages/schemas/chat";
 import { motion } from "framer-motion";
+import {
+  useConversations,
+  useMessages,
+  useSendMessage,
+  useChatSocket,
+  generateUUID,
+} from "@/src/features/messages/hooks";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
-type MessagesPageProps = {
-  persons?: PersonFolder[];
-  onBrowseServices?: () => void;
-  onCreateContract?: (personId: string, roomId: string, formData?: ContractFormValues) => void;
-  onSendMessage?: (personId: string, roomId: string, text: string) => void;
-};
+function MessagesPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const conversationIdFromUrl = searchParams.get("conversationId");
 
-export default function MessagesPage({
-  persons = MOCK_PERSONS,
-  onBrowseServices,
-  onCreateContract,
-  onSendMessage,
-}: MessagesPageProps) {
-  const [activeChat, setActiveChat] = useState<ActiveChat | null>(null);
+  const { data: currentUser } = useCurrentUser();
+  const currentUserId = Number(currentUser?.user?.userId);
+
+  const {
+    personFolders,
+    conversations,
+    isLoading: isConversationsLoading,
+  } = useConversations();
+
   const [isContractModalOpen, setIsContractModalOpen] = useState(false);
-  const [localMessages, setLocalMessages] = useState<Record<string, Message[]>>(
-    {},
-  );
 
-  // Derived state for the active person and room
+  // Derived active chat from URL param and person folders
+  const activeChat = (() => {
+    if (!conversationIdFromUrl || !personFolders.length) return null;
+    for (const folder of personFolders) {
+      const room = folder.rooms.find((r) => r.id === conversationIdFromUrl);
+      if (room) {
+        return { personId: folder.personId, roomId: room.id };
+      }
+    }
+    return null;
+  })();
+
+  // Get active person and room from folders
   const activePerson = activeChat
-    ? (persons.find((pf) => pf.personId === activeChat.personId) ?? null)
+    ? (personFolders.find((pf) => pf.personId === activeChat.personId) ?? null)
     : null;
 
   const activeRoom =
@@ -46,38 +59,37 @@ export default function MessagesPage({
       ? (activePerson.rooms.find((r) => r.id === activeChat.roomId) ?? null)
       : null;
 
-  const displayMessages = activeRoom
-    ? [...activeRoom.messages, ...(localMessages[activeRoom.id] ?? [])]
-    : [];
+  // Connect Socket.IO and manage room join/leave
+  useChatSocket(activeChat?.roomId ?? null);
+
+  // Fetch messages for the active conversation
+  const {
+    messages: displayMessages,
+    isLoading: isMessagesLoading,
+  } = useMessages(
+    activeChat?.roomId ?? null,
+    activePerson?.isOnline ?? false
+  );
+
+
+  // Send message mutation
+  const sendMessageMutation = useSendMessage();
 
   const handleSelectRoom = (personId: string, roomId: string) => {
-    setActiveChat({ personId, roomId });
+    router.push(`/messages?conversationId=${roomId}`);
   };
 
-  const handleBack = () => setActiveChat(null);
+  const handleBack = () => router.push("/messages");
 
   const handleSend = (text: string) => {
     if (!activeChat) return;
-
-    const newMsg: Message = {
-      id: `local-${Date.now()}`,
-      sender: "me",
-      text,
-      timestamp: new Intl.DateTimeFormat("ar-SA", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date()),
-      status: "sent",
-    };
-
-    setLocalMessages((prev) => ({
-      ...prev,
-      [activeChat.roomId]: [...(prev[activeChat.roomId] ?? []), newMsg],
-    }));
-
-    onSendMessage?.(activeChat.personId, activeChat.roomId, text);
+    const clientMessageId = generateUUID();
+    sendMessageMutation.mutate({
+      conversationId: activeChat.roomId,
+      body: text,
+      clientMessageId,
+    });
   };
-
 
   const handleCreateContractClick = () => {
     if (activeChat) {
@@ -85,24 +97,48 @@ export default function MessagesPage({
     }
   };
 
-
   const handleContractSubmit = (data: ContractFormValues) => {
-    if (activeChat) {
-      onCreateContract?.(activeChat.personId, activeChat.roomId, data);
-      setIsContractModalOpen(false); 
-    }
+    setIsContractModalOpen(false);
+    // TODO: integrate with exchanges API
   };
 
-  if (persons.length === 0) {
-    return <MessagesEmptyState onBrowseServices={onBrowseServices} />;
+  // Determine if the current user is the provider (initiator, NOT the post owner)
+  const activeConversation = activeChat
+    ? conversations?.find((c) => c.id === activeChat.roomId)
+    : null;
+
+  // The provider is the person who started the conversation (not the post owner).
+  // In the API, participants[0] is typically the initiator. We compare against the post owner.
+  const isProvider = (() => {
+    if (!activeConversation || !currentUserId) return false;
+    // The post owner is the person who created the post
+    // The provider (who contacted) is the OTHER person
+    // Find the post owner from participants — the one whose userId matches a participant
+    // Since we don't have post.userId in the conversation, we check:
+    // If the current user is NOT the post owner, they are the provider (they initiated contact)
+    const postOwnerParticipant = activeConversation.participants.find(
+      (p) => p.userId !== currentUserId
+    );
+    // If there's no other participant, we can't determine
+    if (!postOwnerParticipant) return false;
+    // The current user is the provider if they are NOT the post owner
+    // Since conversations are linked to posts, the person who clicked "تواصل" is the initiator
+    // We'll use a simple heuristic: the first participant who joined is the initiator
+    const sortedParticipants = [...activeConversation.participants].sort(
+      (a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+    );
+    return sortedParticipants[0]?.userId === currentUserId;
+  })();
+
+  if (!isConversationsLoading && personFolders.length === 0) {
+    return <MessagesEmptyState onBrowseServices={() => {}} />;
   }
 
-
   const contractInitialData = {
-    postTitle: activeRoom?.postTitle || "عنوان الخدمة المتفق عليها", 
-    providerName: "Nada (أنت) ",
-    seekerName: activePerson?.personName || "",
-    serviceMode: "online" as "online" | "offline", 
+    postTitle: activeRoom?.postTitle || "عنوان الخدمة المتفق عليها",
+    providerName: activePerson?.personName || "",
+    seekerName: "",
+    serviceMode: "online" as "online" | "offline",
     timeCredits: 2,
   };
 
@@ -121,9 +157,10 @@ export default function MessagesPage({
         }`}
       >
         <ConversationsSidebar
-          persons={persons}
+          persons={personFolders}
           activeChat={activeChat}
           onSelectRoom={handleSelectRoom}
+          isLoading={isConversationsLoading}
         />
       </div>
 
@@ -146,10 +183,16 @@ export default function MessagesPage({
               room={activeRoom}
               onBack={handleBack}
               onCreateContract={handleCreateContractClick}
+              showContractButton={isProvider}
             />
 
             <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-neutral-50/20">
-              <ChatArea messages={displayMessages} dateDivider="اليوم" />
+              <ChatArea
+                messages={displayMessages}
+                conversationId={activeChat?.roomId ?? ""}
+                isLoading={isMessagesLoading}
+                dateDivider="اليوم"
+              />
             </div>
             <ChatInput onSend={handleSend} />
           </motion.div>
@@ -178,7 +221,7 @@ export default function MessagesPage({
         )}
       </div>
 
-  
+   
       <ContractModal
         isOpen={isContractModalOpen}
         onClose={() => setIsContractModalOpen(false)}
@@ -190,5 +233,17 @@ export default function MessagesPage({
         />
       </ContractModal>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center bg-neutral-50/20 h-[calc(100vh-85px)]">
+        <div className="text-neutral-400 text-sm font-medium animate-pulse">جاري تحميل المحادثات...</div>
+      </div>
+    }>
+      <MessagesPageContent />
+    </Suspense>
   );
 }

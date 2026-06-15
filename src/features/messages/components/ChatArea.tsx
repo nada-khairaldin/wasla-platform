@@ -4,12 +4,41 @@ import { MessageBubble } from "./MessageBubble";
 import { Skeleton } from '@/src/components/ui/Skeleton';
 
 type ChatAreaProps = {
- messages: Message[];
+  messages: Message[];
+  conversationId: string;
   isLoading?: boolean;
   dateDivider?: string;
 };
 
-export function ChatArea({ messages, isLoading , dateDivider }: ChatAreaProps) {
+function getDateLabel(dateStr?: string): string {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "";
+
+  const now = new Date();
+
+  // Compare calendar days
+  const dStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const nStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diffDays = Math.round((nStart - dStart) / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) {
+    return "اليوم";
+  }
+  if (diffDays === 1) {
+    return "الأمس";
+  }
+  if (diffDays < 7) {
+    return date.toLocaleDateString("ar-SA", { weekday: "long" });
+  }
+  return date.toLocaleDateString("ar-SA", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export function ChatArea({ messages, conversationId, isLoading , dateDivider }: ChatAreaProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,17 +55,29 @@ export function ChatArea({ messages, isLoading , dateDivider }: ChatAreaProps) {
         </div>
       ) : (
         <>
-          {dateDivider && (
-            <div className="flex items-center justify-center my-2 shrink-0">
-              <span className="text-[10px] md:text-[11px] font-bold text-neutral-400 bg-neutral-100/70 rounded-full px-3 py-1 border border-neutral-200/20">
-                {dateDivider}
-              </span>
-            </div>
-          )}
+          {messages.map((msg, index) => {
+            const dateStr = msg.createdAt || msg.timestamp;
+            const currentDateLabel = getDateLabel(dateStr);
 
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
-          ))}
+            const previousMsg = index > 0 ? messages[index - 1] : null;
+            const previousDateStr = previousMsg ? (previousMsg.createdAt || previousMsg.timestamp) : null;
+            const previousDateLabel = previousDateStr ? getDateLabel(previousDateStr) : null;
+
+            const showSeparator = !previousDateLabel || (currentDateLabel && currentDateLabel !== previousDateLabel);
+
+            return (
+              <div key={msg.id} className="flex flex-col gap-3 w-full shrink-0">
+                {showSeparator && currentDateLabel && (
+                  <div className="flex items-center justify-center my-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <span className="text-[10px] md:text-[11px] font-bold text-neutral-400 bg-neutral-100/70 rounded-full px-3 py-1 border border-neutral-200/20">
+                      {currentDateLabel}
+                    </span>
+                  </div>
+                )}
+                <MessageBubble message={msg} conversationId={conversationId} />
+              </div>
+            );
+          })}
           
           <div ref={bottomRef} className="shrink-0" />
         </>

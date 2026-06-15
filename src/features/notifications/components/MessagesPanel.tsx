@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { MessageSquare, RefreshCw } from "lucide-react";
+import { Inbox, MessageSquare } from "lucide-react";
 import { MOCK_NOTIFICATIONS } from "../data/notifications.data";
 import { NotificationItem } from "./NotificationItem";
+import { useRouter } from "next/navigation";
 
 interface MessagesPanelProps {
   isOpen: boolean;
@@ -17,15 +18,19 @@ export function MessagesPanel({
   anchorRef,
 }: MessagesPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!isOpen) return;
     function handleClick(e: MouseEvent) {
+      // Skip if this panel instance is not actually visible
+      // (e.g. hidden by a parent with display:none on mobile/desktop)
+      if (!panelRef.current || panelRef.current.offsetWidth === 0) return;
+
       if (
-        panelRef.current &&
         !panelRef.current.contains(e.target as Node) &&
-        anchorRef?.current &&
-        !anchorRef.current.contains(e.target as Node)
+        (!anchorRef?.current ||
+          !anchorRef.current.contains(e.target as Node))
       ) {
         onClose();
       }
@@ -33,6 +38,11 @@ export function MessagesPanel({
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen, onClose, anchorRef]);
+
+  const handleNavigate = () => {
+    onClose();
+    router.push("/messages");
+  };
 
   const messages = MOCK_NOTIFICATIONS.filter((n) => n.category === "messages");
   const unreadCount = messages.filter((n) => !n.isRead).length;
@@ -82,18 +92,27 @@ export function MessagesPanel({
           </div>
         ) : (
           messages.map((msg) => (
-            <NotificationItem key={msg.id} notification={msg} />
+            <NotificationItem
+              key={msg.id}
+              notification={msg}
+              onClick={handleNavigate}
+            />
           ))
         )}
       </div>
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-neutral-50">
-        <button className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-neutral-200/60 text-xs font-medium text-neutral-500 hover:bg-neutral-50/60 transition-colors">
-          <RefreshCw size={13} strokeWidth={2} />
-          تحميل الاشعارات السابقة
+        <button
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-neutral-200/60 text-xs font-medium text-neutral-500 hover:bg-neutral-50/60 transition-colors cursor-pointer"
+          onClick={handleNavigate}
+        >
+          <Inbox size={13} strokeWidth={2} />
+          الانتقال إلى صندوق الوارد
         </button>
       </div>
     </div>
   );
 }
+
+

@@ -9,11 +9,14 @@ import {
   Tag,
   Edit3,
   Trash2,
+  MessageSquare,
+  ArrowLeft,
 } from "lucide-react";
 import { getInitials } from "../../../utils";
 import { useSaveToggle, useSavedPosts } from "../hooks";
 import { Post } from "../type";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useCreateConversation, useConversationForPost } from "../../messages/hooks";
 
 
 const Badge = ({
@@ -59,9 +62,21 @@ export const PostCard = ({
     router.push(`/profile/${post.userId}`);
   };
 
-  const goToChat = (e: React.MouseEvent) => {
+  const { hasConversation, conversationId } = useConversationForPost(post.id);
+  const createConversation = useCreateConversation();
+
+  const goToChat = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/messages?post=${post.id}`);
+    if (hasConversation && conversationId) {
+      router.push(`/messages?conversationId=${conversationId}`);
+    } else {
+      try {
+        const conversation = await createConversation.mutateAsync(post.id);
+        router.push(`/messages?conversationId=${conversation.id}`);
+      } catch {
+        // Silently handle — the mutation error state can be used for UI feedback
+      }
+    }
   };
 
   const isRequest = post.category === "REQUEST";
@@ -183,19 +198,34 @@ export const PostCard = ({
         </div>
       </div>
 
-      <div className="mt-5 md:mt-6 flex w-full md:w-auto md:justify-end z-20">
-        <button
-          onClick={goToChat}
-          className={`w-full md:w-auto px-8 py-3.5 md:py-3 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm text-center
-            ${
-              isRecommended
-                ? "bg-primary-600 text-white hover:bg-primary-700 shadow-primary-200"
-                : "bg-white text-primary-600 border border-primary-200 hover:bg-primary-50"
-            }`}
-        >
-          {isRequest ? "التواصل لتقديم عرضك" : "التواصل بخصوص العرض"}
-        </button>
-      </div>
+      {!isOwnPost && (
+        <div className="mt-5 md:mt-6 flex w-full md:w-auto md:justify-end z-20">
+          <button
+            onClick={goToChat}
+            disabled={createConversation.isPending}
+            className={`w-full md:w-auto px-8 py-3.5 md:py-3 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm text-center flex items-center justify-center gap-2 disabled:opacity-60
+              ${
+                hasConversation
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                  : isRecommended
+                    ? "bg-primary-600 text-white hover:bg-primary-700 shadow-primary-200"
+                    : "bg-white text-primary-600 border border-primary-200 hover:bg-primary-50"
+              }`}
+          >
+            {createConversation.isPending ? (
+              <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : hasConversation ? (
+              <>
+                <MessageSquare size={15} />
+                <span>الانتقال إلى المحادثة</span>
+                <ArrowLeft size={14} />
+              </>
+            ) : (
+              <>{isRequest ? "التواصل لتقديم عرضك" : "التواصل بخصوص العرض"}</>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -24,11 +24,13 @@ export function NotificationsPanel({
   useEffect(() => {
     if (!isOpen) return;
     function handleClick(e: MouseEvent) {
+      // Skip if this panel instance is not actually visible
+      if (!panelRef.current || panelRef.current.offsetWidth === 0) return;
+
       if (
-        panelRef.current &&
         !panelRef.current.contains(e.target as Node) &&
-        anchorRef?.current &&
-        !anchorRef.current.contains(e.target as Node)
+        (!anchorRef?.current ||
+          !anchorRef.current.contains(e.target as Node))
       ) {
         onClose();
       }
