@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import * as z from "zod";
 
 import Logo from "../../../components/ui/Logo";
-import InputField from "../../../features/auth/components/InputField";
+import InputField from "../../../components/ui/InputField";
 import Button from "../../../components/ui/Button";
 import { authServices } from "../../../features/auth/services/authService";
 import {

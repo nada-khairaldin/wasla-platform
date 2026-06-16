@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, PenLine, AlignRight } from "lucide-react";
 import Toggle from "./Toggle";
-import InputField from "../../auth/components/InputField";
+import InputField from "../../../components/ui/InputField";
 import { HourRangeSlider } from "../../home/components/HourRangeSlider";
 import CategoryDropdown from "./CategoryDropdown";
 import {

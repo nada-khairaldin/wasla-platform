@@ -7,7 +7,7 @@ import { Mail, ArrowRight, RotateCcw, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Logo from "../../../components/ui/Logo";
-import InputField from "../../../features/auth/components/InputField";
+import InputField from "../../../components/ui/InputField";
 import Button from "../../../components/ui/Button";
 import {
   ForgotPasswordFormData,

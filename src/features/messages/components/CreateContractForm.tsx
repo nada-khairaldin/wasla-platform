@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContractFormValues, contractSchema } from "../schemas/chat";
-import InputField from "../../auth/components/InputField";
+import InputField from "../../../components/ui/InputField";
 import { Briefcase, FileText, Hash } from "lucide-react";
 
 interface CreateContractFormProps {

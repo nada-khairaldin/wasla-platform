@@ -2,9 +2,13 @@ import { apiRequest } from "@/src/services/api";
 import {
   SignupFormData,
   LoginFormData,
-  ForgotPasswordFormData,
 } from "../schemas/authSchema";
 import { AuthResponse } from "../types";
+
+export interface ChangePasswordPayload {
+  oldPassword?: string;
+  newPassword?: string;
+}
 
 export const authServices = {
   signup: (userData: SignupFormData) => {
@@ -37,6 +41,21 @@ export const authServices = {
     return apiRequest({
       method: "GET",
       url: "/me",
+    });
+  },
+
+  changePassword: (passwordData: ChangePasswordPayload) => {
+    return apiRequest<void, ChangePasswordPayload>({
+      method: "POST",
+      url: "/auth/change-password",
+      payload: passwordData,
+    });
+  },
+
+  logout: () => {
+    return apiRequest<void, void>({
+      method: "POST",
+      url: "/auth/logout",
     });
   },
 };

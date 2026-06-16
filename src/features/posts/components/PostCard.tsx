@@ -96,7 +96,7 @@ export const PostCard = ({
       ${
         isRecommended
           ? "bg-white border-2 border-secondary-400 shadow-[0_10px_35px_rgb(239,207,133,0.15)] hover:shadow-secondary-300/40"
-          : "bg-neutral-50 shadow-sm hover:shadow-lg hover:border-primary-300"
+          : "bg-white border border-neutral-200/80 shadow-sm hover:shadow-lg hover:border-primary-300"
       }`}
     >
       <div className="absolute top-0 left-4 md:left-6">

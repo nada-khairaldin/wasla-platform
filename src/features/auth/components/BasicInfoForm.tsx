@@ -7,7 +7,7 @@ import {
   User,
   UserRound,
 } from "lucide-react";
-import InputField from "./InputField";
+import InputField from "../../../components/ui/InputField";
 import Button from "../../../components/ui/Button";
 import { useState } from "react";
 import { useSignupActions, useSignupStore } from "../store/useSignupStore";

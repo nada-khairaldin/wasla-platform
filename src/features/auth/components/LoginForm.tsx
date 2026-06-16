@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Button from "../../../components/ui/Button";
-import InputField from "./InputField";
+import InputField from "../../../components/ui/InputField";
 import { authServices } from "../services/authService";
 import { useState } from "react";
 import {

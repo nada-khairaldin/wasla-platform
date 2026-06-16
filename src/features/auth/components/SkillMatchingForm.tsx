@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { X, Plus, Check } from "lucide-react";
-import InputField from "./InputField";
+import InputField from "../../../components/ui/InputField";
 
 const INITIAL_SUGGESTIONS = [
   "تطوير مواقع الويب",

@@ -1,0 +1,343 @@
+// components/profile/ProfilePage.tsx
+"use client";
+
+import  { useState } from "react";
+import ProfileHeader from "./ProfileHeader";
+import TimeBalanceCard from "./TimeBalanceCard";
+import StatsSection from "./StatsSection";
+import SavedServicesSection from "./SavedServicesSection";
+import ReviewsSection from "./ReviewsSection";
+import RecentContracts from "./RecentContracts";
+import WalletHistory from "./WalletHistory";
+
+import Link from "next/link";
+import { ProfileData, ProfilePageProps } from "../types";
+import { Skeleton } from "@/src/components/ui/Skeleton";
+import { AlertOctagon } from "lucide-react";
+
+function EmptyActivitySection() {
+  return (
+    <div
+      className="rounded-2xl bg-neutral-50 border border-neutral-100 p-8 sm:p-10 flex flex-col items-center justify-center gap-3 text-center"
+    >
+      <div className="w-14 h-14 rounded-full bg-neutral-200 flex items-center justify-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-7 h-7 text-neutral-300"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" />
+        </svg>
+      </div>
+      <p className="text-neutral-800 font-bold">سجلك فارغ تماماً</p>
+      <p className="text-neutral-400 text-sm">
+        تبادل المهارات مع الآخرين في مجتمعنا. قدم خدمة أو اطلب واحدة لتبدأ في تسجيل نشاطاتك هنا.
+      </p>
+      <Link href="/home" className="mt-2 px-5 py-2.5 bg-primary-500 text-white rounded-full text-sm hover:bg-primary-600 transition-colors">
+        تصفح الخدمات
+      </Link>
+    </div>
+  );
+}
+
+export default function ProfilePage(props: ProfilePageProps) {
+  const {
+    profile,
+    isLoading,
+    onEditProfile,
+    onDeleteAccount,
+    onChangePassword,
+    onLogout,
+    onViewWalletDetails,
+    onViewAllContracts,
+    onViewAllSaved,
+    onViewAllTransactions,
+    onViewAllReviews,
+    onUnsaveService,
+    onContractClick,
+  } = props;
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const isEmpty = !profile;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-50">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
+          {/* Row 1: Profile Header + Time Balance Card Skeletons */}
+          <div className="flex flex-col min-[815px]:flex-row gap-4 items-stretch">
+            <div className="flex-1 min-w-0">
+              <div className="rounded-2xl bg-white border border-neutral-100 p-4 sm:p-6 h-full flex items-start gap-4">
+                <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-full shrink-0" />
+                <div className="flex-1 flex flex-col gap-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 flex flex-col gap-2">
+                      <Skeleton className="h-6 w-1/3 rounded" />
+                      <Skeleton className="h-4 w-1/2 rounded" />
+                    </div>
+                    <Skeleton className="h-8 w-24 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-5/6 rounded mt-1" />
+                  <div className="flex gap-2 mt-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="min-[815px]:w-52 min-[815px]:flex-shrink-0">
+              <div className="rounded-2xl bg-white border border-neutral-100 p-4 sm:p-6 flex flex-col gap-4 h-full">
+                <Skeleton className="h-4 w-2/3 rounded" />
+                <Skeleton className="h-10 w-16 rounded mt-2 animate-pulse" />
+                <Skeleton className="h-9 w-full rounded-full mt-auto" />
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Stats Section Skeleton */}
+          <div className="rounded-2xl bg-white border border-neutral-100 p-4 sm:p-6 flex flex-col gap-4">
+            <Skeleton className="h-5 w-36 rounded" />
+            <div className="flex gap-3">
+              <div className="flex-1 p-5 border border-neutral-50 rounded-2xl flex flex-col items-center gap-2">
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <Skeleton className="h-3.5 w-16 rounded" />
+                <Skeleton className="h-6 w-10 rounded" />
+              </div>
+              <div className="flex-1 p-5 border border-neutral-50 rounded-2xl flex flex-col items-center gap-2">
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <Skeleton className="h-3.5 w-16 rounded" />
+                <Skeleton className="h-6 w-10 rounded" />
+              </div>
+              <div className="flex-1 p-5 border border-neutral-50 rounded-2xl flex flex-col items-center gap-2">
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <Skeleton className="h-3.5 w-16 rounded" />
+                <Skeleton className="h-6 w-10 rounded" />
+              </div>
+            </div>
+          </div>
+
+          {/* Row 3: Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white border border-neutral-100 rounded-2xl p-4 sm:p-6 flex flex-col gap-4">
+              <Skeleton className="h-5 w-32 rounded" />
+              <div className="flex flex-col gap-3 mt-2">
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+            </div>
+            <div className="bg-white border border-neutral-100 rounded-2xl p-4 sm:p-6 flex flex-col gap-4">
+              <Skeleton className="h-5 w-32 rounded" />
+              <div className="flex flex-col gap-3 mt-2">
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-neutral-50">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
+        <div className="flex flex-col min-[815px]:flex-row gap-4 items-stretch">
+          <div className="flex-1 min-w-0">
+            <ProfileHeader
+              name={isEmpty ? "" : profile.name}
+              title={isEmpty ? "" : profile.title}
+              bio={isEmpty ? "" : profile.bio}
+              tags={isEmpty ? [] : profile.tags}
+              avatarUrl={isEmpty ? undefined : profile.avatarUrl}
+              onEditClick={onEditProfile}
+              isEmpty={isEmpty}
+            />
+          </div>
+          <div className="min-[815px]:w-52 min-[815px]:flex-shrink-0">
+            <TimeBalanceCard
+              hours={isEmpty ? 5 : profile.timeBalanceHours}
+              onViewDetails={onViewWalletDetails}
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Stats */}
+        <StatsSection
+          rating={isEmpty ? 0 : profile.stats.rating}
+          servicesReceived={isEmpty ? 0 : profile.stats.servicesReceived}
+          servicesProvided={isEmpty ? 0 : profile.stats.servicesProvided}
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {!isEmpty && profile.reviews.length > 0 ? (
+            <ReviewsSection reviews={profile.reviews} onViewAll={onViewAllReviews} />
+          ) : (
+            <div
+              className="rounded-2xl bg-neutral-50 border border-neutral-100 p-6 flex flex-col items-center justify-center gap-2 text-center min-h-[120px]"
+              dir="rtl"
+            >
+              <p className="text-neutral-300 text-sm">لا توجد تقييمات بعد</p>
+            </div>
+          )}
+          <SavedServicesSection
+            services={isEmpty ? [] : profile.savedServices}
+            onUnsave={onUnsaveService}
+            onViewAll={onViewAllSaved}
+          />
+        </div>
+
+        {/* Row 4: Recent Contracts */}
+        {isEmpty || profile.recentContracts.length === 0 ? (
+          <div dir="rtl">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-primary-500">نشاطات التبادل الأخيرة</h2>
+            </div>
+            <EmptyActivitySection />
+          </div>
+        ) : (
+          <RecentContracts
+            contracts={profile.recentContracts}
+            onViewAll={onViewAllContracts}
+            onContractClick={onContractClick}
+          />
+        )}
+
+        {/* Row 5: Wallet History */}
+        {!isEmpty && profile.walletTransactions.length > 0 && (
+          <WalletHistory
+            transactions={profile.walletTransactions}
+            onViewAll={onViewAllTransactions}
+          />
+        )}
+
+        {/* Account Settings / Options */}
+        {!isEmpty && (
+          <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden" dir="rtl">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-neutral-100">
+              <h2 className="text-sm sm:text-base font-bold text-neutral-800">إعدادات الحساب</h2>
+            </div>
+            <div className="divide-y divide-neutral-100">
+              {/* Edit Profile Option */}
+              <button
+                onClick={onEditProfile}
+                className="w-full px-4 sm:px-6 py-3.5 flex items-center justify-between text-right hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold text-neutral-700">تعديل الملف الشخصي</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+
+              {/* Change Password Option */}
+              <button
+                onClick={onChangePassword}
+                className="w-full px-4 sm:px-6 py-3.5 flex items-center justify-between text-right hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-warning-50 flex items-center justify-center text-warning-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold text-neutral-700">تغيير كلمة المرور</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+
+              {/* Logout Option */}
+              <button
+                onClick={onLogout}
+                className="w-full px-4 sm:px-6 py-3.5 flex items-center justify-between text-right hover:bg-neutral-50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold text-neutral-700">تسجيل الخروج</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+
+              {/* Delete Account Option */}
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full px-4 sm:px-6 py-3.5 flex items-center justify-between text-right hover:bg-red-50/50 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold text-red-600">حذف الحساب نهائياً</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Custom Delete Account Warning Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-all duration-300">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-[340px] w-full flex flex-col items-center text-center shadow-2xl animate-in fade-in zoom-in-95 duration-250">
+            {/* Warning Icon inside red background */}
+            <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-500 mb-5">
+              <AlertOctagon size={28} />
+            </div>
+
+            {/* Title */}
+            <h3 className="text-xl font-bold text-neutral-900 mb-2 font-cairo">حذف الحساب؟</h3>
+
+            {/* Description */}
+            <p className="text-sm text-neutral-500 leading-relaxed mb-6 font-cairo">
+              هل أنت متأكد من رغبتك في حذف حسابك نهائياً؟ لا يمكن التراجع عن هذا الإجراء وستفقد جميع بياناتك ونشاطاتك.
+            </p>
+
+            {/* Buttons stacked vertically */}
+            <div className="flex flex-col gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  onDeleteAccount?.();
+                }}
+                className="w-full py-3.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold font-cairo transition-all active:scale-98 cursor-pointer text-center text-sm"
+              >
+                حذف الحساب
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="w-full py-3.5 rounded-xl bg-neutral-100 hover:bg-neutral-200/80 text-neutral-700 font-bold font-cairo transition-all active:scale-98 cursor-pointer text-center text-sm"
+              >
+                تراجع
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
