@@ -10,7 +10,7 @@ import { Skeleton } from "../ui/Skeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { MessagesPanel } from "../../features/notifications/components/MessagesPanel";
 import { NotificationsPanel } from "../../features/notifications/components/NotificationsPanel";
-import { MOCK_NOTIFICATIONS } from "../../features/notifications/data/notifications.data";
+import { useNotifications } from "../../features/notifications/hooks/useNotifications";
 import { useUserProfile } from "../../features/profile/hooks/useUserProfile";
 
 const NAV_LINKS = [
@@ -34,13 +34,16 @@ export default function ProtectedAppNavbar() {
   const bellRef = useRef<HTMLButtonElement>(null);
   const msgRef = useRef<HTMLButtonElement>(null);
 
-  const unreadNotifCount = MOCK_NOTIFICATIONS.filter(
+  const { notifications } = useNotifications();
+
+  const unreadNotifCount = notifications.filter(
     (n) => !n.isRead && n.category !== "messages",
   ).length;
 
-  const unreadMsgCount = MOCK_NOTIFICATIONS.filter(
+  const unreadMsgCount = notifications.filter(
     (n) => !n.isRead && n.category === "messages",
   ).length;
+
 
   function toggleNotif() {
     setNotifOpen((prev) => !prev);

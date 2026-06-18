@@ -2,9 +2,9 @@
 
 import { useRef, useEffect } from "react";
 import { Inbox, MessageSquare } from "lucide-react";
-import { MOCK_NOTIFICATIONS } from "../data/notifications.data";
 import { NotificationItem } from "./NotificationItem";
 import { useRouter } from "next/navigation";
+import { useNotifications } from "../hooks/useNotifications";
 
 interface MessagesPanelProps {
   isOpen: boolean;
@@ -20,11 +20,11 @@ export function MessagesPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  const { notifications, markAllAsRead } = useNotifications();
+
   useEffect(() => {
     if (!isOpen) return;
     function handleClick(e: MouseEvent) {
-      // Skip if this panel instance is not actually visible
-      // (e.g. hidden by a parent with display:none on mobile/desktop)
       if (!panelRef.current || panelRef.current.offsetWidth === 0) return;
 
       if (
@@ -44,7 +44,7 @@ export function MessagesPanel({
     router.push("/messages");
   };
 
-  const messages = MOCK_NOTIFICATIONS.filter((n) => n.category === "messages");
+  const messages = notifications.filter((n) => n.category === "messages");
   const unreadCount = messages.filter((n) => !n.isRead).length;
 
   if (!isOpen) return null;
@@ -63,24 +63,36 @@ export function MessagesPanel({
     >
       {/* Header */}
 
-      <div className="flex items-center gap-2  px-4 pt-4 pb-2">
-        <MessageSquare
-          size={18}
-          className="text-primary-500"
-          strokeWidth={1.8}
-        />
-        <span className="text-sm font-bold text-primary-700">الرسائل</span>
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <div className="flex items-center gap-2">
+          <MessageSquare
+            size={18}
+            className="text-primary-500"
+            strokeWidth={1.8}
+          />
+          <span className="text-sm font-bold text-primary-700">الرسائل</span>
+          {unreadCount > 0 && (
+            <span className="text-[10px] font-semibold bg-primary-700 text-white rounded-full w-4 h-4 leading-none flex justify-center items-center">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+        
         {unreadCount > 0 && (
-          <span className="text-[10px] font-semibold bg-primary-700 text-white rounded-full w-4 h-4leading-none">
-            {unreadCount}
-          </span>
+          <button 
+            onClick={() => markAllAsRead.mutate()}
+            disabled={markAllAsRead.isPending}
+            className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-700 font-medium transition-colors disabled:opacity-50"
+          >
+            تحديد الكل كمقروء
+          </button>
         )}
       </div>
 
       <div className="h-px bg-[#edeeef] mx-4" />
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[#edeeef]">
+      <div className="flex-1 overflow-y-auto divide-y divide-[#edeeef] custom-scrollbar">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-neutral-200">
             <MessageSquare
@@ -95,7 +107,7 @@ export function MessagesPanel({
             <NotificationItem
               key={msg.id}
               notification={msg}
-              onClick={handleNavigate}
+              onNavigate={onClose}
             />
           ))
         )}

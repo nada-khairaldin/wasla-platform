@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { getSocket, disconnectSocket } from "../services/socketService";
+import { useConversations } from "./useConversations";
 import type {
   ApiMessage,
   ApiConversation,
@@ -13,18 +14,6 @@ import type {
 } from "../chat.types";
 import type { Socket } from "socket.io-client";
 
-/**
- * App-level hook: connects Socket.IO when the user is authenticated.
- * This makes the user appear "online" across the entire site — not just the chat page.
- *
- * Responsibilities:
- * - Connect/disconnect socket based on auth
- * - Listen for presence events (online/offline) and update conversations cache
- * - Listen for new messages and emit `chat:messages:delivered` (user is online)
- * - Listen for status updates and sync React Query cache
- *
- * Mount this in the protected layout so it runs on every authenticated page.
- */
 export function useGlobalSocket() {
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
@@ -32,7 +21,9 @@ export function useGlobalSocket() {
   const socketRef = useRef<Socket | null>(null);
   const joinedConversationsRef = useRef<Set<string>>(new Set());
 
-  // ── Helper: emit delivered ack for messages from others ──
+  // Fetch conversations to ensure we have the list to join
+  const { conversations } = useConversations();
+
   const emitDelivered = useCallback(
     (conversationId: string, messageIds: string[]) => {
       if (socketRef.current?.connected && messageIds.length > 0) {
@@ -44,6 +35,18 @@ export function useGlobalSocket() {
     },
     []
   );
+
+  // Dynamic room joining effect
+  useEffect(() => {
+    if (conversations && socketRef.current?.connected) {
+      conversations.forEach((conv) => {
+        if (!joinedConversationsRef.current.has(conv.id)) {
+          socketRef.current?.emit("chat:join", { conversationId: conv.id });
+          joinedConversationsRef.current.add(conv.id);
+        }
+      });
+    }
+  }, [conversations]);
 
   useEffect(() => {
     if (!currentUserId) return;
@@ -57,12 +60,11 @@ export function useGlobalSocket() {
 
     socketRef.current = socket;
 
-    // ─── chat:message:new — new message from another user ───
     const onNewMessage = (msg: ChatMessageNewEvent) => {
       const queryKey = ["messages", msg.conversationId];
 
       queryClient.setQueryData<ApiMessage[]>(queryKey, (old) => {
-        if (!old) return undefined; // Don't create cache for unopened conversations
+        if (!old) return undefined; 
         const exists = old.some(
           (m) =>
             m.id === msg.id ||
@@ -72,16 +74,13 @@ export function useGlobalSocket() {
         return [...old, msg];
       });
 
-      // User is online → acknowledge delivery immediately
       if (msg.senderId !== currentUserId) {
         emitDelivered(msg.conversationId, [msg.id]);
       }
 
-      // Refresh conversations sidebar (lastMessage, unreadCount)
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     };
 
-    // ─── chat:message:sent — server confirms our optimistic message ───
     const onMessageSent = (msg: ChatMessageNewEvent) => {
       const queryKey = ["messages", msg.conversationId];
 
@@ -106,7 +105,6 @@ export function useGlobalSocket() {
       });
     };
 
-    // ─── chat:messages:status — batch status updates (DELIVERED/READ) ───
     const onMessagesStatus = (event: ChatMessagesStatusEvent) => {
       const queryKey = ["messages", event.conversationId];
 
@@ -125,7 +123,6 @@ export function useGlobalSocket() {
       });
     };
 
-    // ─── chat:presence:online ───
     const onPresenceOnline = (event: ChatPresenceOnlineEvent) => {
       queryClient.setQueryData<ApiConversation[]>(
         ["conversations"],
@@ -143,7 +140,6 @@ export function useGlobalSocket() {
       );
     };
 
-    // ─── chat:presence:offline ───
     const onPresenceOffline = (event: ChatPresenceOfflineEvent) => {
       queryClient.setQueryData<ApiConversation[]>(
         ["conversations"],
@@ -168,7 +164,6 @@ export function useGlobalSocket() {
       );
     };
 
-    // ─── chat:message:deleted ───
     const onMessageDeleted = (event: ChatMessageDeletedEvent) => {
       const queryKey = ["messages", event.conversationId];
       queryClient.setQueryData<ApiMessage[]>(queryKey, (old) => {
@@ -179,7 +174,6 @@ export function useGlobalSocket() {
       });
     };
 
-    // ─── chat:message:edited ───
     const onMessageEdited = (msg: ApiMessage) => {
       const queryKey = ["messages", msg.conversationId];
       queryClient.setQueryData<ApiMessage[]>(queryKey, (old) => {
@@ -188,11 +182,15 @@ export function useGlobalSocket() {
       });
     };
 
-    // ─── Helper: join all conversation rooms ───
-    const joinAllConversations = () => {
-      const conversations = queryClient.getQueryData<ApiConversation[]>(["conversations"]);
-      if (conversations && socket.connected) {
-        conversations.forEach((conv) => {
+    const onConnect = () => {
+      joinedConversationsRef.current.clear();
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      
+      // If we already have conversations in cache, join them immediately.
+      // Otherwise, the separate useEffect will catch them when they load.
+      const cached = queryClient.getQueryData<ApiConversation[]>(["conversations"]);
+      if (cached && socket.connected) {
+        cached.forEach((conv) => {
           if (!joinedConversationsRef.current.has(conv.id)) {
             socket.emit("chat:join", { conversationId: conv.id });
             joinedConversationsRef.current.add(conv.id);
@@ -201,17 +199,6 @@ export function useGlobalSocket() {
       }
     };
 
-    // ─── On connect/reconnect, join all rooms and refresh data ───
-    const onConnect = () => {
-      // Reset joined rooms tracking (server forgot them after disconnect)
-      joinedConversationsRef.current.clear();
-      // Refresh conversations first, then join rooms
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      // Join rooms with current cache data (will be updated after invalidation)
-      joinAllConversations();
-    };
-
-    // ─── Register all listeners ───
     socket.on("chat:message:new", onNewMessage);
     socket.on("chat:message:sent", onMessageSent);
     socket.on("chat:messages:status", onMessagesStatus);

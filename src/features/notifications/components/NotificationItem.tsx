@@ -1,14 +1,50 @@
 import { ChevronLeft } from "lucide-react";
 import { Notification } from "../notificationTypes ";
 import { NotificationIcon } from "./NotificationIcon";
+import { useNotifications } from "../hooks/useNotifications";
+import { useRouter } from "next/navigation";
 
 interface NotificationItemProps {
   notification: Notification;
+  onNavigate?: () => void;
   onClick?: () => void;
 }
 
-export function NotificationItem({ notification, onClick }: NotificationItemProps) {
-  const { title, description, time, isRead, iconType } = notification;
+export function NotificationItem({ notification, onNavigate, onClick }: NotificationItemProps) {
+  const { id, title, description, time, isRead, iconType, category, data } = notification;
+  const { markAsRead } = useNotifications();
+  const router = useRouter();
+
+  const handleClick = () => {
+    if (!isRead) {
+      markAsRead.mutate(id);
+    }
+    
+    if (onClick) {
+      onClick();
+    }
+
+    if (category === "messages" || notification.type === "NEW_MESSAGE") {
+      if (onNavigate) onNavigate();
+      
+      let parsedData = data;
+      if (typeof data === "string") {
+        try {
+          parsedData = JSON.parse(data);
+        } catch (e) {
+          console.error("Failed to parse notification data", e);
+        }
+      }
+
+      const chatData = parsedData as Record<string, unknown> | undefined;
+      const chatId = chatData?.conversationId || chatData?.chatId;
+      if (chatId) {
+        router.push(`/messages?conversationId=${chatId}`);
+      } else {
+        router.push(`/messages`);
+      }
+    }
+  };
 
   return (
     <div
@@ -16,7 +52,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
         !isRead ? "bg-neutral-50/50" : ""
       }`}
       dir="rtl"
-      onClick={onClick}
+      onClick={handleClick}
     >
       {/* Unread dot */}
       <div className="flex-shrink-0 mt-4 w-2">

@@ -8,19 +8,13 @@ let socket: Socket | null = null;
  * Connects with JWT from the `token` cookie.
  */
 export function getSocket(): Socket {
-  if (socket?.connected) return socket;
+  if (socket) return socket;
 
   const token = Cookies.get("token");
   if (!token) {
     throw new Error("No auth token available for Socket.IO connection");
   }
 
-  // If a disconnected instance exists, clean it up first
-  if (socket) {
-    socket.removeAllListeners();
-    socket.disconnect();
-    socket = null;
-  }
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
   // Strip any trailing path like /api/v1 — Socket.IO connects to the root

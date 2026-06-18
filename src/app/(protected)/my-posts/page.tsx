@@ -106,7 +106,7 @@ export default function MyPostsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white border border-dashed border-neutral-200 rounded-[24px] max-w-md mx-auto shadow-sm">
+          <div className="text-center py-16 bg-white border border-dashed border-neutral-200 rounded-[24px] mx-auto shadow-sm">
             <ArchiveX className="mx-auto text-neutral-300 mb-4" size={44} />
             <h3 className="text-neutral-700 font-bold text-base mb-1">
               لا توجد منشورات نشطة
