@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { ArrowRight, Star, MessageSquare, ChevronDown, Loader2 } from "lucide-react";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
-import { useUserReviews } from "@/src/hooks/useUserReviews";
+import { useUserReviews } from "@/src/features/profile/hooks/useUserReviews";
 import { getInitials } from "@/src/utils";
 import { Skeleton } from "@/src/components/ui/Skeleton";
 
@@ -19,49 +19,10 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-const MOCK_REVIEWS = [
-  {
-    id: "mr1",
-    rating: 5,
-    comment: "سارة متعاونة جداً، كودها نظيف وقدمت لي ملاحظات قيمة غيرت نظرتي للمشروع تماماً. أنصح بالتعاون معها بشدة!",
-    createdAt: "2026-06-15T18:05:34.173Z",
-    reviewer: {
-      id: 101,
-      username: "sara_ahmed",
-      name: "سارة أحمد",
-      profilePicture: ""
-    }
-  },
-  {
-    id: "mr2",
-    rating: 4,
-    comment: "شرح وافي ومفصل، تمتلك صبراً كبيراً في إيصال المعلومة التقنية لغير المتخصصين.",
-    createdAt: "2026-06-12T10:30:00.000Z",
-    reviewer: {
-      id: 102,
-      username: "m_fahad",
-      name: "محمد فهد",
-      profilePicture: ""
-    }
-  },
-  {
-    id: "mr3",
-    rating: 5,
-    comment: "عمل متميز ودقة في المواعيد. سأتعاون معها بالتأكيد في مشاريع برمجية قادمة.",
-    createdAt: "2026-06-08T14:20:00.000Z",
-    reviewer: {
-      id: 103,
-      username: "khalid_n",
-      name: "خالد النعيمي",
-      profilePicture: ""
-    }
-  }
-];
-
 export default function ReviewsPage() {
   const router = useRouter();
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
-  const userId = currentUser?.user?.userId;
+  const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
 
   const {
     data,
@@ -72,8 +33,7 @@ export default function ReviewsPage() {
     error,
   } = useUserReviews(userId as number);
 
-  const reviews = data?.pages.flatMap((page) => page?.reviews || []) ?? [];
-  const displayReviews = reviews.length > 0 ? reviews : MOCK_REVIEWS;
+  const displayReviews = data?.pages.flatMap((page) => page?.reviews || []) ?? [];
 
   // Calculate average rating and total counts
   const totalReviews = displayReviews.length;
@@ -81,7 +41,7 @@ export default function ReviewsPage() {
     ? (displayReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
     : "0.0";
 
-  const isLoading = (isUserLoading || isReviewsLoading) && reviews.length === 0 && !error;
+  const isLoading = (isUserLoading || isReviewsLoading) && displayReviews.length === 0 && !error;
 
   return (
     <div className="min-h-screen bg-neutral-50 px-4 md:px-8 lg:px-16 py-8" dir="rtl">

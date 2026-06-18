@@ -74,9 +74,20 @@ export default function ProfileHeader(props: ProfileHeaderProps) {
 
           {/* Bio — hidden on very small, visible sm+ */}
           {!isEmpty && (
-            <p className="hidden sm:block text-neutral-650 text-neutral-600 text-sm mt-2 leading-relaxed line-clamp-3">
-              {bio}
-            </p>
+            <div className="hidden sm:block">
+              {bio ? (
+                <p className="text-neutral-600 text-sm mt-2 leading-relaxed line-clamp-3">
+                  {bio}
+                </p>
+              ) : (
+                <p 
+                  className="text-neutral-400 text-sm mt-2 leading-relaxed italic cursor-pointer hover:text-primary-500 transition-colors" 
+                  onClick={onEditClick}
+                >
+                  لا توجد نبذة شخصية حتى الآن. أضف نبذة تعريفية قصيرة لتخبر المجتمع بمهاراتك واهتماماتك وتبدأ في بناء شبكة تبادلاتك! (اضغط هنا للإضافة)
+                </p>
+              )}
+            </div>
           )}
 
           {/* Tags */}
@@ -108,8 +119,19 @@ export default function ProfileHeader(props: ProfileHeaderProps) {
       </div>
 
       {/* Bio on mobile (below avatar row) */}
-      {!isEmpty && bio && (
-        <p className="sm:hidden text-neutral-600 text-sm mt-3 leading-relaxed">{bio}</p>
+      {!isEmpty && (
+        <div className="sm:hidden mt-3">
+          {bio ? (
+            <p className="text-neutral-600 text-sm leading-relaxed">{bio}</p>
+          ) : (
+            <p 
+              className="text-neutral-400 text-xs leading-relaxed italic cursor-pointer hover:text-primary-500 transition-colors" 
+              onClick={onEditClick}
+            >
+              لا توجد نبذة شخصية حتى الآن. اضغط هنا لإضافة نبذة تعريفية قصيرة والتعريف بمهاراتك!
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

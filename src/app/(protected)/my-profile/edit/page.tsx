@@ -1,39 +1,23 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
-import { useUserProfile } from "@/src/hooks/useUserProfile";
-import { userServices } from "@/src/services/userServices";
+import { useUserProfile, useUpdateProfile } from "@/src/features/profile/hooks";
 import EditProfileForm from "@/src/features/profile/components/EditProfileForm";
 import toast from "react-hot-toast";
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   
   // Auth & Profile Query
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
-  const userId = currentUser?.user?.userId;
+  const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile(userId);
 
   // Mutation for saving profile
-  const updateProfileMutation = useMutation({
-    mutationFn: async (payload: {
-      name: string;
-      bio: string;
-      servicesNeeded: string[];
-      servicesOffered: string[];
-    }) => {
-      if (!userId) throw new Error("لم يتم العثور على معرّف المستخدم");
-      const { data, error } = await userServices.updateUserProfile(userId, payload);
-      if (error) throw new Error(error);
-      return data;
-    },
+  const updateProfileMutation = useUpdateProfile(userId, {
     onSuccess: () => {
       toast.success("تم تحديث معلومات ملفك الشخصي بنجاح!");
-      queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       router.push("/my-profile");
     },
     onError: (err: Error) => {
@@ -58,8 +42,8 @@ export default function EditProfilePage() {
         name: userProfile.profile.name || "",
         username: userProfile.profile.username || "",
         bio: userProfile.profile.bio || "",
-        servicesNeeded: ["تطوير ويب", "تصميم جرافيك"], // Fallback suggestions
-        servicesOffered: ["دروس انجليزية", "تصوير فوتوغرافي"], // Fallback suggestions
+        servicesNeeded: userProfile.profile.requiredSkills || [],
+        servicesOffered: userProfile.profile.offeredSkills || [],
       }
     : null;
 

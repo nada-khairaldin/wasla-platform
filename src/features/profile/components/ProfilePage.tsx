@@ -13,35 +13,7 @@ import WalletHistory from "./WalletHistory";
 import Link from "next/link";
 import { ProfileData, ProfilePageProps } from "../types";
 import { Skeleton } from "@/src/components/ui/Skeleton";
-import { AlertOctagon } from "lucide-react";
 
-function EmptyActivitySection() {
-  return (
-    <div
-      className="rounded-2xl bg-neutral-50 border border-neutral-100 p-8 sm:p-10 flex flex-col items-center justify-center gap-3 text-center"
-    >
-      <div className="w-14 h-14 rounded-full bg-neutral-200 flex items-center justify-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-7 h-7 text-neutral-300"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" />
-        </svg>
-      </div>
-      <p className="text-neutral-800 font-bold">سجلك فارغ تماماً</p>
-      <p className="text-neutral-400 text-sm">
-        تبادل المهارات مع الآخرين في مجتمعنا. قدم خدمة أو اطلب واحدة لتبدأ في تسجيل نشاطاتك هنا.
-      </p>
-      <Link href="/home" className="mt-2 px-5 py-2.5 bg-primary-500 text-white rounded-full text-sm hover:bg-primary-600 transition-colors">
-        تصفح الخدمات
-      </Link>
-    </div>
-  );
-}
 
 export default function ProfilePage(props: ProfilePageProps) {
   const {
@@ -60,7 +32,6 @@ export default function ProfilePage(props: ProfilePageProps) {
     onContractClick,
   } = props;
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const isEmpty = !profile;
 
   if (isLoading) {
@@ -173,16 +144,10 @@ export default function ProfilePage(props: ProfilePageProps) {
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {!isEmpty && profile.reviews.length > 0 ? (
-            <ReviewsSection reviews={profile.reviews} onViewAll={onViewAllReviews} />
-          ) : (
-            <div
-              className="rounded-2xl bg-neutral-50 border border-neutral-100 p-6 flex flex-col items-center justify-center gap-2 text-center min-h-[120px]"
-              dir="rtl"
-            >
-              <p className="text-neutral-300 text-sm">لا توجد تقييمات بعد</p>
-            </div>
-          )}
+          <ReviewsSection 
+            reviews={isEmpty ? [] : profile.reviews} 
+            onViewAll={onViewAllReviews} 
+          />
           <SavedServicesSection
             services={isEmpty ? [] : profile.savedServices}
             onUnsave={onUnsaveService}
@@ -191,20 +156,11 @@ export default function ProfilePage(props: ProfilePageProps) {
         </div>
 
         {/* Row 4: Recent Contracts */}
-        {isEmpty || profile.recentContracts.length === 0 ? (
-          <div dir="rtl">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-primary-500">نشاطات التبادل الأخيرة</h2>
-            </div>
-            <EmptyActivitySection />
-          </div>
-        ) : (
-          <RecentContracts
-            contracts={profile.recentContracts}
-            onViewAll={onViewAllContracts}
-            onContractClick={onContractClick}
-          />
-        )}
+        <RecentContracts
+          contracts={isEmpty ? [] : profile.recentContracts}
+          onViewAll={onViewAllContracts}
+          onContractClick={onContractClick}
+        />
 
         {/* Row 5: Wallet History */}
         {!isEmpty && profile.walletTransactions.length > 0 && (
@@ -278,7 +234,7 @@ export default function ProfilePage(props: ProfilePageProps) {
 
               {/* Delete Account Option */}
               <button
-                onClick={() => setShowDeleteModal(true)}
+                onClick={onDeleteAccount}
                 className="w-full px-4 sm:px-6 py-3.5 flex items-center justify-between text-right hover:bg-red-50/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -297,47 +253,6 @@ export default function ProfilePage(props: ProfilePageProps) {
           </div>
         )}
       </div>
-
-      {/* Custom Delete Account Warning Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-all duration-300">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-[340px] w-full flex flex-col items-center text-center shadow-2xl animate-in fade-in zoom-in-95 duration-250">
-            {/* Warning Icon inside red background */}
-            <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-500 mb-5">
-              <AlertOctagon size={28} />
-            </div>
-
-            {/* Title */}
-            <h3 className="text-xl font-bold text-neutral-900 mb-2 font-cairo">حذف الحساب؟</h3>
-
-            {/* Description */}
-            <p className="text-sm text-neutral-500 leading-relaxed mb-6 font-cairo">
-              هل أنت متأكد من رغبتك في حذف حسابك نهائياً؟ لا يمكن التراجع عن هذا الإجراء وستفقد جميع بياناتك ونشاطاتك.
-            </p>
-
-            {/* Buttons stacked vertically */}
-            <div className="flex flex-col gap-3 w-full">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  onDeleteAccount?.();
-                }}
-                className="w-full py-3.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold font-cairo transition-all active:scale-98 cursor-pointer text-center text-sm"
-              >
-                حذف الحساب
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(false)}
-                className="w-full py-3.5 rounded-xl bg-neutral-100 hover:bg-neutral-200/80 text-neutral-700 font-bold font-cairo transition-all active:scale-98 cursor-pointer text-center text-sm"
-              >
-                تراجع
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -34,7 +34,7 @@ export default function ChangePasswordForm(props: ChangePasswordFormProps) {
 
   return (
     <div className="min-h-screen bg-neutral-50 px-4 md:px-8 lg:px-16 py-8" dir="rtl">
-      <div className="max-w-xl mx-auto flex flex-col gap-6">
+      <div className="max-w-[600px] mx-auto flex flex-col gap-6">
         
         {/* Header Block */}
         <div className="flex items-center gap-3">

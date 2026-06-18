@@ -11,7 +11,7 @@ import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { MessagesPanel } from "../../features/notifications/components/MessagesPanel";
 import { NotificationsPanel } from "../../features/notifications/components/NotificationsPanel";
 import { MOCK_NOTIFICATIONS } from "../../features/notifications/data/notifications.data";
-import { useUserProfile } from "../../hooks/useUserProfile";
+import { useUserProfile } from "../../features/profile/hooks/useUserProfile";
 
 const NAV_LINKS = [
   { label: "الرئيسية", href: "/home" },
@@ -25,7 +25,7 @@ export default function ProtectedAppNavbar() {
   const [msgOpen, setMsgOpen] = useState(false);
 
   const { data: currentUser, isLoading } = useCurrentUser();
-  const userId = currentUser?.user?.userId;
+  const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
   const { data: profileData, isLoading: isProfileLoading } =
     useUserProfile(userId);
   const username = profileData?.profile?.username ?? "User";

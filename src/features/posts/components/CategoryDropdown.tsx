@@ -1,20 +1,7 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, LayoutGrid, Plus } from "lucide-react";
-
-const mockCategories = [
-  "البرمجة",
-  "التصميم",
-  "التسويق",
-  "إدارة الأعمال",
-  "كتابة المحتوى",
-  "المحاسبة",
-  "اللغات",
-  "الاستشارات",
-  "الهندسة",
-  "الطبخ",
-  "الرياضة",
-];
+import { useSkills } from "@/src/features/skills";
 
 interface CategoryDropdownProps {
   value: string;
@@ -32,6 +19,11 @@ export default function CategoryDropdown({
   const [customInput, setCustomInput] = useState("");
   const catRef = useRef<HTMLDivElement>(null);
 
+  const { data: dbSkills = [] } = useSkills();
+  const categoriesList = useMemo(() => {
+    return dbSkills.map((s) => s.name);
+  }, [dbSkills]);
+
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (catRef.current && !catRef.current.contains(e.target as Node)) {
@@ -48,7 +40,7 @@ export default function CategoryDropdown({
     const nextOpenState = !catOpen;
     setCatOpen(nextOpenState);
 
-    if (nextOpenState && value && !mockCategories.includes(value)) {
+    if (nextOpenState && value && !categoriesList.includes(value)) {
       setIsCustomMode(true);
       setCustomInput(value);
     } else if (!nextOpenState) {
@@ -80,7 +72,7 @@ export default function CategoryDropdown({
           {!isCustomMode ? (
             <>
               <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
-                {mockCategories.map((cat, index) => (
+                {categoriesList.map((cat, index) => (
                   <div
                     key={index}
                     className={`py-3 px-6 text-sm font-cairo cursor-pointer transition-colors rounded-lg hover:bg-primary-50 ${value === cat ? "bg-primary-50 text-primary-600 font-bold" : "text-neutral-700"}`}

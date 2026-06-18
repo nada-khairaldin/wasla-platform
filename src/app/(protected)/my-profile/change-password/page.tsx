@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import { authServices } from "@/src/features/auth/services/authService";
+import { useChangePassword } from "@/src/features/profile/hooks";
 import { ChangePasswordFormData } from "@/src/features/auth/schemas/authSchema";
 import ChangePasswordForm from "@/src/features/profile/components/ChangePasswordForm";
 import toast from "react-hot-toast";
@@ -10,15 +9,7 @@ import toast from "react-hot-toast";
 export default function ChangePasswordPage() {
   const router = useRouter();
 
-  const changePasswordMutation = useMutation({
-    mutationFn: async (data: ChangePasswordFormData) => {
-      const { error, data: resData } = await authServices.changePassword({
-        oldPassword: data.oldPassword,
-        newPassword: data.password,
-      });
-      if (error) throw new Error(error);
-      return resData;
-    },
+  const changePasswordMutation = useChangePassword({
     onSuccess: () => {
       toast.success("تم تغيير كلمة المرور بنجاح!");
       router.push("/my-profile");

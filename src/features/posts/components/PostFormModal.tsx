@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { useCreatePost } from "../hooks/useCreatePost";
 import { useUpdatePost } from "../hooks/useUpdatePost";
 import { CreatePostRequest, Post } from "../type";
+import { skillsService } from "@/src/features/skills/services/skillsService";
 
 interface PostFormModalProps {
   isOpen: boolean;
@@ -88,11 +89,28 @@ export function PostFormModal({
       status: "PUBLISHED",
     };
 
+    const registerCustomCategory = async (cat: string) => {
+      if (!cat) return;
+      try {
+        const { data: skillsData } = await skillsService.getSkills();
+        const existingSkills = skillsData?.skills || [];
+        const exists = existingSkills.some(
+          (s) => s.name.toLowerCase() === cat.toLowerCase()
+        );
+        if (!exists) {
+          await skillsService.createSkill({ name: cat, category: "GENERAL" });
+        }
+      } catch (err) {
+        console.error("Failed to register custom post category:", err);
+      }
+    };
+
     if (isEditMode && postToEdit) {
       updatePost(
         { postId: postToEdit.id, postData: payload },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
+            await registerCustomCategory(data.category);
             toast.success("تم تحديث الخدمة بنجاح!");
             onClose();
           },
@@ -103,7 +121,8 @@ export function PostFormModal({
       );
     } else {
       createPost(payload, {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await registerCustomCategory(data.category);
           toast.success("تم نشر الخدمة بنجاح!");
           reset();
           onClose();

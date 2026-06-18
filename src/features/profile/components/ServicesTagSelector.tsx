@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { X, Plus, Search } from "lucide-react";
 import { getSkillIcon } from "@/src/utils/skillIcons";
+import { useSkills } from "@/src/features/skills";
 
 interface ServicesTagSelectorProps {
   label: string;
@@ -10,39 +11,25 @@ interface ServicesTagSelectorProps {
   onChange: (tags: string[]) => void;
   addButtonLabel: string;
   placeholder?: string;
+  category: "TECHNICAL" | "GENERAL";
 }
 
-// Popular services list that matches standard platform services and mock categories
-const POPULAR_SERVICES = [
-  "تطوير ويب",
-  "تصميم جرافيك",
-  "دروس انجليزية",
-  "تصوير فوتوغرافي",
-  "ترجمة مقالات",
-  "كتابة محتوى",
-  "إدارة مشاريع",
-  "تصميم واجهات (UX/UI)",
-  "تسويق إلكتروني",
-  "مونتاج فيديو",
-  "كتابة أكاديمية",
-  "الاستشارات القانونية",
-];
-
 export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
-  const { label, icon, selectedTags, onChange, addButtonLabel, placeholder = "البحث في الخدمات..." } = props;
+  const { label, icon, selectedTags, onChange, addButtonLabel, placeholder = "البحث في الخدمات...", category } = props;
   
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Local state for the services suggestions list, initialized with POPULAR_SERVICES
-  const [localServices, setLocalServices] = useState<string[]>(POPULAR_SERVICES);
+  // Load approved skills from backend
+  const { data: dbSkills = [] } = useSkills();
 
-  // Sync selectedTags with local services suggestions synchronously during render to avoid cascading renders
-  const missingTags = selectedTags.filter((tag) => !localServices.includes(tag));
-  if (missingTags.length > 0) {
-    setLocalServices((prev) => [...prev, ...missingTags]);
-  }
+  // Merge database skills with selected tags dynamically
+  const localServices = useMemo(() => {
+    const dbSkillNames = dbSkills.map((s) => s.name);
+    const names = new Set([...dbSkillNames, ...selectedTags]);
+    return Array.from(names);
+  }, [dbSkills, selectedTags]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -65,12 +52,25 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
       if (!selectedTags.includes(trimmed)) {
         onChange([...selectedTags, trimmed]);
       }
-      if (!localServices.includes(trimmed)) {
-        setLocalServices((prev) => [...prev, trimmed]);
-      }
     }
     setSearch("");
     setIsOpen(false);
+  };
+
+  const handleCreateNewSkill = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    // Check if it already exists case-insensitively in dbSkills
+    const existing = dbSkills.find(
+      (s) => s.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) {
+      handleAdd(existing.name);
+      return;
+    }
+
+    handleAdd(trimmed);
   };
 
   // Filter suggestions from localServices list
@@ -140,7 +140,11 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     if (search.trim()) {
-                      handleAdd(search.trim());
+                      if (showCustomOption) {
+                        handleCreateNewSkill(search);
+                      } else {
+                        handleAdd(search.trim());
+                      }
                     }
                   }
                 }}
@@ -164,7 +168,7 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
               {showCustomOption && (
                 <button
                   type="button"
-                  onClick={() => handleAdd(search)}
+                  onClick={() => handleCreateNewSkill(search)}
                   className="w-full py-2.5 px-3 text-right text-xs font-bold text-success-600 hover:bg-success-50 rounded-lg transition-colors flex items-center gap-1.5 border-t border-neutral-50 mt-1"
                 >
                   <Plus size={14} />

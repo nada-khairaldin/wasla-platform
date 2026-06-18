@@ -41,27 +41,41 @@ export default function ReviewsSection(props: ReviewsSectionProps) {
       </div>
 
       <div className="flex flex-col">
-        {reviews.map((review, index) => (
-          <div
-            key={review.id}
-            className={`flex flex-col pb-5 last:pb-0 ${index > 0 ? "pt-5 border-t border-neutral-100/60" : ""}`}
-          >
-            {/* Header info: Name/Avatar on the right, Stars on the left */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0">
-                  {review.reviewerInitial}
+        {reviews.length > 0 ? (
+          reviews.map((review, index) => (
+            <div
+              key={review.id}
+              className={`flex flex-col pb-5 last:pb-0 ${index > 0 ? "pt-5 border-t border-neutral-100/60" : ""}`}
+            >
+              {/* Header info: Name/Avatar on the right, Stars on the left */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0">
+                    {review.reviewerInitial}
+                  </div>
+                  <p className="text-xs sm:text-sm font-semibold text-neutral-800">{review.reviewerName}</p>
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-neutral-800">{review.reviewerName}</p>
+                <StarRating rating={review.rating} />
               </div>
-              <StarRating rating={review.rating} />
+              {/* Comment text — padding on the right to align with text under avatar */}
+              <p className="text-xs sm:text-sm text-neutral-600 font-medium italic leading-relaxed pr-9 sm:pr-10 text-right mt-3">
+                &quot;{review.comment}&quot;
+              </p>
             </div>
-            {/* Comment text — padding on the right to align with text under avatar */}
-            <p className="text-xs sm:text-sm text-neutral-600 font-medium italic leading-relaxed pr-9 sm:pr-10 text-right mt-3">
-              &quot;{review.comment}&quot;
-            </p>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-6 text-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-400">
+              <Star className="w-6 h-6 stroke-[1.5] text-neutral-300" />
+            </div>
+            <div>
+              <p className="text-neutral-500 text-sm font-semibold">لا توجد تقييمات بعد</p>
+              <p className="text-neutral-400 text-xs mt-1 max-w-[280px] leading-relaxed">
+                لم يكتب أحد رأياً في صفحتك بعد. شارك مهاراتك مع الآخرين وقدّم خدمات مميزة لتشجيعهم على تقييمك!
+              </p>
+            </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

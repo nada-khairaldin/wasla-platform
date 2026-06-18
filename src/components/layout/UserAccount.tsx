@@ -66,7 +66,7 @@ export const UserAccount = ({
           >
             <div className="flex flex-col gap-1">
               <AppNavLink
-                href="/profile"
+                href="/my-profile"
                 icon={<User size={18} />}
                 label="عرض الملف الشخصي"
                 variant="dropdown"

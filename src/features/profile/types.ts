@@ -15,7 +15,6 @@ export interface Contract {
   date: string;
   durationHours: number;
   iconBg: string;
-  iconEmoji: string;
 }
 
 export interface Review {

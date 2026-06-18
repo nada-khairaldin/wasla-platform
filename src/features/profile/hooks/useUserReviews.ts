@@ -1,11 +1,11 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { userServices } from "../services/userServices";
+import { profileServices } from "../services/profileServices";
 
 export const useUserReviews = (userId: number, limit = 10) => {
   return useInfiniteQuery({
     queryKey: ["userReviews", userId, limit],
     queryFn: async ({ pageParam }) => {
-      const { data, error } = await userServices.getUserReviews(userId, pageParam as number, limit);
+      const { data, error } = await profileServices.getUserReviews(userId, pageParam as number, limit);
       if (error) {
         throw new Error(error);
       }

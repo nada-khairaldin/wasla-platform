@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight, Sparkles, Funnel } from "lucide-react";
 import { PostCard } from "../../../features/posts/components/PostCard";
 import { usePosts } from "../../../features/posts/hooks";
 import { Skeleton } from "../../../components/ui/Skeleton";
-import { useUserProfile } from "../../../hooks/useUserProfile";
+import { useUserProfile } from "../../../features/profile/hooks/useUserProfile";
 
 interface FilterCriteria {
   type: string;
@@ -20,7 +20,7 @@ interface FilterCriteria {
 
 export default function HomePage() {
   const { data: currentUser, isLoading } = useCurrentUser();
-  const userId = currentUser?.user?.userId;
+  const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
   const { data: profileData, isLoading: isProfileLoading } = useUserProfile(userId);
 
   const points = profileData?.profile?.stats?.availableTimeCredits ?? 0;

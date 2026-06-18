@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Bookmark,
   Clock,
@@ -46,11 +46,14 @@ export const PostCard = ({
   onDelete?: (postId: number) => void;
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: savedPosts } = useSavedPosts();
   const { mutate: toggleSave } = useSaveToggle();
   const { data: currentUser } = useCurrentUser();
   const isOwnPost = post.userId === Number(currentUser?.user?.userId);
   const isSaved = savedPosts?.some((sp) => sp.postId === post.id) ?? false;
+  const isMyPostsView = pathname === "/my-posts" || pathname?.startsWith("/my-posts/");
+  const isHomeView = pathname === "/home" || pathname?.startsWith("/home");
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -59,7 +62,11 @@ export const PostCard = ({
 
   const goToProfile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/profile/${post.userId}`);
+    if (isOwnPost) {
+      router.push("/my-profile");
+    } else {
+      router.push(`/profile/${post.userId}`);
+    }
   };
 
   const { hasConversation, conversationId } = useConversationForPost(post.id);
@@ -93,10 +100,12 @@ export const PostCard = ({
       onClick={() => router.push(`/home/${post.id}`)}
       className={`relative flex flex-col p-5 md:p-6 rounded-xl transition-all duration-500 cursor-pointer overflow-hidden
       hover:[&_.identification-arrow]:-translate-x-1.25 hover:[&_.card-title]:text-primary-700
-      ${
+      ${(isSaved || isRecommended || isMyPostsView) ? "bg-white" : "bg-neutral-50"} ${
         isRecommended
-          ? "bg-white border-2 border-secondary-400 shadow-[0_10px_35px_rgb(239,207,133,0.15)] hover:shadow-secondary-300/40"
-          : "bg-white border border-neutral-200/80 shadow-sm hover:shadow-lg hover:border-primary-300"
+          ? "border-2 border-secondary-400 shadow-[0_10px_35px_rgb(239,207,133,0.15)] hover:shadow-secondary-300/40"
+          : isHomeView
+          ? "border border-transparent shadow-sm hover:shadow-lg hover:border-primary-300"
+          : "border border-neutral-200/80 shadow-sm hover:shadow-lg hover:border-primary-300"
       }`}
     >
       <div className="absolute top-0 left-4 md:left-6">

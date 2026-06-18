@@ -28,6 +28,7 @@ import { authServices } from "../../../../../features/auth/services/authService"
 import { SignupFormData } from "../../../../../features/auth/schemas/authSchema";
 import { useAuthActions } from "../../../../../features/auth/store/useAuthStore";
 import { useQueryClient } from "@tanstack/react-query";
+import { skillsService } from "@/src/features/skills/services/skillsService";
 
 function ConfirmationPage() {
   const { formData } = useSignupStore();
@@ -64,6 +65,25 @@ function ConfirmationPage() {
         return;
       }
       if (resData) {
+        // Register custom signup skills sequentially in the database catalog
+        try {
+          const { data: skillsData } = await skillsService.getSkills();
+          const existingSkills = skillsData?.skills || [];
+          const existingNamesLower = existingSkills.map((s) => s.name.toLowerCase());
+
+          const offered = data.offeredSkills || [];
+          const required = data.requiredSkills || [];
+          const uniqueNewSkills = Array.from(new Set([...offered, ...required]));
+
+          for (const skillName of uniqueNewSkills) {
+            if (!existingNamesLower.includes(skillName.toLowerCase())) {
+              await skillsService.createSkill({ name: skillName, category: "GENERAL" });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to register signup skills in catalog:", err);
+        }
+
         const { accessToken } = resData;
         setAuth(accessToken);
         await queryClient.invalidateQueries({

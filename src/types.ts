@@ -44,6 +44,8 @@ export interface UserProfile {
     username: string;
     bio: string;
     profilePicture: string;
+    offeredSkills: string[];
+    requiredSkills: string[];
     stats: {
       availableTimeCredits: number;
       servicesProvided: number;

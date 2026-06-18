@@ -54,15 +54,17 @@ function MobilePublicSidebar({
         </button>
 
         <div className="flex items-center gap-3 mb-8 pb-6 border-b border-neutral-100">
-          <div className="w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold font-cairo text-sm border-2 border-white shadow-sm">
-            {getInitials(username)}
-          </div>
+          <Link href="/my-profile" onClick={onClose} className="shrink-0 cursor-pointer transition-transform active:scale-95">
+            <div className="w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center text-white font-bold font-cairo text-sm border-2 border-white shadow-sm">
+              {getInitials(username)}
+            </div>
+          </Link>
           <div>
             <h4 className="font-bold font-cairo text-neutral-900 leading-tight">
               {username}
             </h4>
             <Link
-              href="/profile"
+              href="/my-profile"
               onClick={onClose}
               className="text-xs text-primary-600 font-bold hover:underline transition-all"
             >

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -12,6 +12,10 @@ import {
   ArrowDownLeft,
   Wallet,
 } from "lucide-react";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { useUserProfile, useWalletHistory } from "@/src/features/profile/hooks";
+import { Skeleton } from "@/src/components/ui/Skeleton";
+import { mapWalletTransactionToTransaction } from "@/src/features/profile/utils/profileMappers";
 
 interface Transaction {
   id: string;
@@ -21,66 +25,40 @@ interface Transaction {
   date: string;
 }
 
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: "t1",
-    type: "deposit",
-    description: "تقديم خدمة تطوير صفحة هبوط تفاعلية",
-    hours: 4.0,
-    date: "2026/06/10",
-  },
-  {
-    id: "t2",
-    type: "withdrawal",
-    description: "استلام خدمة تصميم شعار وهوية بصرية",
-    hours: 3.0,
-    date: "2026/06/05",
-  },
-  {
-    id: "t3",
-    type: "gift",
-    description: "هدية ترحيبية من منصة وصلة",
-    hours: 5.0,
-    date: "2026/05/15",
-  },
-  {
-    id: "t4",
-    type: "deposit",
-    description: "جلسة إرشادية في ريادة الأعمال للمشاريع الناشئة",
-    hours: 2.5,
-    date: "2026/05/10",
-  },
-  {
-    id: "t5",
-    type: "withdrawal",
-    description: "استلام خدمة كتابة محتوى تسويقي لشبكات التواصل الاجتماعي",
-    hours: 2.0,
-    date: "2026/05/01",
-  },
-  {
-    id: "t6",
-    type: "deposit",
-    description: "ترجمة مقالات تقنية من الإنجليزية للعربية",
-    hours: 6.0,
-    date: "2026/04/28",
-  },
-];
-
 type FilterType = "all" | "deposit" | "withdrawal" | "gift";
 
 export default function WalletPage() {
   const router = useRouter();
-  const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
+
+  // API Queries
+  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
+  // Safe number coercion for userId to protect against string IDs in tokens
+  const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
+
+  const { data: userProfile, isLoading: isProfileLoading } = useUserProfile(userId);
+  const { data: walletHistory = [], isLoading: isHistoryLoading } = useWalletHistory();
+
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
 
-  // Calculate statistics
-  const currentBalance = useMemo(() => {
-    return transactions.reduce((acc, t) => {
-      if (t.type === "deposit" || t.type === "gift") return acc + t.hours;
-      return acc - t.hours;
-    }, 0);
-  }, [transactions]);
+  // Map real Wallet Transactions list
+  const transactions: Transaction[] = useMemo(() => {
+    const list = walletHistory.map(mapWalletTransactionToTransaction);
+    const hasGift = list.some((t) => t.type === "gift" || t.id === "welcome-gift");
+    if (!hasGift) {
+      list.push({
+        id: "welcome-gift",
+        type: "gift",
+        description: "هدية ترحيبية: تفعيل الحساب في المنصة",
+        hours: 5.0,
+        date: "عند التسجيل",
+      });
+    }
+    return list;
+  }, [walletHistory]);
+
+  // Balance and dynamic statistics computation
+  const currentBalance = userProfile?.profile?.stats?.availableTimeCredits ?? 0;
 
   const totalEarned = useMemo(() => {
     return transactions
@@ -94,6 +72,7 @@ export default function WalletPage() {
       .reduce((acc, t) => acc + t.hours, 0);
   }, [transactions]);
 
+  // Gift sum: sum the hours of all gift transactions
   const totalGifts = useMemo(() => {
     return transactions
       .filter((t) => t.type === "gift")
@@ -111,7 +90,6 @@ export default function WalletPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 4;
 
-  // Reset page to 1 synchronously on filter or search change to avoid cascading renders
   const [prevFilter, setPrevFilter] = useState(filter);
   const [prevSearch, setPrevSearch] = useState(search);
 
@@ -128,7 +106,50 @@ export default function WalletPage() {
     return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredTransactions, currentPage]);
 
+  const isLoading = isUserLoading || isProfileLoading || isHistoryLoading;
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 px-4 md:px-8 lg:px-16 py-8" dir="rtl">
+        <div className="max-w-4xl mx-auto flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-full" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-7 w-48 rounded" />
+              <Skeleton className="h-4 w-72 rounded" />
+            </div>
+          </div>
+          {/* Hero Balance Skeleton */}
+          <div className="bg-white rounded-3xl border border-neutral-100 p-6 sm:p-8 flex justify-between items-center gap-6 shadow-sm">
+            <div className="flex flex-col gap-2 flex-1">
+              <Skeleton className="h-4 w-28 rounded" />
+              <Skeleton className="h-14 w-40 rounded" />
+              <Skeleton className="h-3 w-56 rounded mt-2" />
+            </div>
+            <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl shrink-0" />
+          </div>
+          {/* Stats Skeletons */}
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="bg-white rounded-2xl border border-neutral-100 p-4 flex flex-col items-center gap-2 shadow-sm">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <Skeleton className="h-3 w-16 rounded" />
+              <Skeleton className="h-5 w-12 rounded" />
+            </div>
+            <div className="bg-white rounded-2xl border border-neutral-100 p-4 flex flex-col items-center gap-2 shadow-sm">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <Skeleton className="h-3 w-16 rounded" />
+              <Skeleton className="h-5 w-12 rounded" />
+            </div>
+            <div className="bg-white rounded-2xl border border-neutral-100 p-4 flex flex-col items-center gap-2 shadow-sm">
+              <Skeleton className="w-10 h-10 rounded-full" />
+              <Skeleton className="h-3 w-16 rounded" />
+              <Skeleton className="h-5 w-12 rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 px-4 md:px-8 lg:px-16 py-8" dir="rtl">
@@ -238,7 +259,7 @@ export default function WalletPage() {
             </button>
             <button
               onClick={() => setFilter("gift")}
-              className={`py-1.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${filter === "gift" ? "bg-warning-650 bg-amber-500 text-white shadow-sm" : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100"}`}
+              className={`py-1.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${filter === "gift" ? "bg-amber-500 text-white shadow-sm" : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100"}`}
             >
               <Gift size={13} />
               <span>الهدايا</span>
@@ -248,10 +269,10 @@ export default function WalletPage() {
           {/* Table / List */}
           {filteredTransactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-              <div className="p-3 bg-neutral-50 rounded-full text-neutral-305 text-neutral-400">
+              <div className="p-3 bg-neutral-50 rounded-full text-neutral-400">
                 <Clock size={32} />
               </div>
-              <p className="text-neutral-400 text-sm">لا توجد عمليات تطابق البحث   </p>
+              <p className="text-neutral-400 text-sm">لا توجد عمليات تطابق البحث</p>
             </div>
           ) : (
             <>
@@ -276,7 +297,7 @@ export default function WalletPage() {
 
                   return (
                     <div key={tx.id} className="py-4 flex items-center justify-between gap-4">
-                      {/* Hours column (rightmost when mirrored) */}
+                      {/* Hours column */}
                       <div className="text-right flex flex-col items-start gap-0.5">
                         <span className={`text-base font-bold ${isWithdrawal ? "text-error-600" : isDeposit ? "text-success-600" : "text-amber-500"}`}>
                           {arrowSign}
@@ -285,12 +306,12 @@ export default function WalletPage() {
                         <span className="text-[10px] text-neutral-400">{tx.date}</span>
                       </div>
 
-                      {/* Description column (middle) */}
+                      {/* Description column */}
                       <p className="flex-1 text-xs sm:text-sm text-neutral-700 font-medium text-right pr-4 pl-2">
                         {tx.description}
                       </p>
 
-                      {/* Badge column (leftmost when mirrored) */}
+                      {/* Badge column */}
                       <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${badgeClass}`}>
                         {typeText}
                       </span>

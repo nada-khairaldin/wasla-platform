@@ -246,6 +246,7 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                   selectedTags={servicesOffered}
                   onChange={handleServicesOfferedChange}
                   icon={<HandHeart className="w-5 h-5 shrink-0" />}
+                  category="TECHNICAL"
                 />
                 {errors.servicesOffered && (
                   <p className="text-error-500 text-xs text-right mt-1">{errors.servicesOffered.message}</p>
@@ -261,6 +262,7 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                   selectedTags={servicesNeeded}
                   onChange={handleServicesNeededChange}
                   icon={<ShoppingBasket className="w-5 h-5 shrink-0" />}
+                  category="GENERAL"
                 />
                 {errors.servicesNeeded && (
                   <p className="text-error-500 text-xs text-right mt-1">{errors.servicesNeeded.message}</p>
