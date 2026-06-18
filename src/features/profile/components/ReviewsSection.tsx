@@ -31,7 +31,7 @@ export default function ReviewsSection(props: ReviewsSectionProps) {
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h2 className="text-sm sm:text-base font-bold text-primary-500 flex items-center gap-2">
           <MessageSquare className="w-4 h-4 text-primary-500" />
-          <span>آراء المستفيدين</span>
+          <span>التقييمات</span>
         </h2>
         {reviews.length > 0 && (
           <Link href="/my-profile/reviews" className="text-xs sm:text-sm text-primary-500 hover:underline">
@@ -49,7 +49,14 @@ export default function ReviewsSection(props: ReviewsSectionProps) {
             >
               {/* Header info: Name/Avatar on the right, Stars on the left */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
+                <div 
+                  className={`flex items-center gap-2.5 ${review.reviewerId ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                  onClick={() => {
+                    if (review.reviewerId) {
+                      window.location.href = `/users/${review.reviewerId}`;
+                    }
+                  }}
+                >
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0">
                     {review.reviewerInitial}
                   </div>

@@ -52,6 +52,7 @@ export const mapSavedPostToSavedService = (saved: SavedPost): SavedService => {
 export const mapApiReviewToReview = (rev: ApiReview): Review => {
   return {
     id: rev.id.toString(),
+    reviewerId: rev.reviewer?.id,
     reviewerName: rev.reviewer?.name || rev.reviewer?.username || "عضو وصلة",
     reviewerInitial: (
       rev.reviewer?.name ||

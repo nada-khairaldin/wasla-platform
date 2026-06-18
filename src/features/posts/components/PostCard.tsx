@@ -65,7 +65,7 @@ export const PostCard = ({
     if (isOwnPost) {
       router.push("/my-profile");
     } else {
-      router.push(`/profile/${post.userId}`);
+      router.push(`/users/${post.userId}`);
     }
   };
 

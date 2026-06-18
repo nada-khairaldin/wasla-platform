@@ -19,6 +19,7 @@ export interface Contract {
 
 export interface Review {
   id: string;
+  reviewerId?: number;
   reviewerName: string;
   reviewerInitial: string;
   rating: number;

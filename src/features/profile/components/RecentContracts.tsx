@@ -7,10 +7,11 @@ interface RecentContractsProps {
   contracts: Contract[];
   onViewAll?: () => void;
   onContractClick?: (id: string) => void;
+  isPublicView?: boolean;
 }
 
 export default function RecentContracts(props: RecentContractsProps) {
-  const { contracts, onViewAll, onContractClick } = props;
+  const { contracts, onViewAll, onContractClick, isPublicView } = props;
 
   return (
     <div className="rounded-2xl overflow-hidden shadow-sm">
@@ -19,22 +20,28 @@ export default function RecentContracts(props: RecentContractsProps) {
         <h2 className="text-white font-bold text-sm sm:text-base">
           آخر 3 عقود مكتملة
         </h2>
-        <button
-          onClick={onViewAll}
-          className="text-white/70 text-xs sm:text-sm hover:text-white hover:underline transition-all"
-        >
-          عرض الكل
-        </button>
+        {!isPublicView && (
+          <button
+            onClick={onViewAll}
+            className="text-white/70 text-xs sm:text-sm hover:text-white hover:underline transition-all"
+          >
+            عرض الكل
+          </button>
+        )}
       </div>
 
       {/* Contract rows — RTL structure */}
       <div className="bg-white divide-y divide-neutral-100">
         {contracts.length > 0 ? (
-          contracts.map((contract) => (
-            <button
+          contracts.map((contract) => {
+            const Wrapper = isPublicView ? "div" : "button";
+            return (
+            <Wrapper
               key={contract.id}
-              onClick={() => onContractClick?.(contract.id)}
-              className="w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 hover:bg-neutral-50 transition-colors text-right"
+              onClick={!isPublicView ? () => onContractClick?.(contract.id) : undefined}
+              className={`w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 text-right ${
+                !isPublicView ? "hover:bg-neutral-50 transition-colors cursor-pointer" : ""
+              }`}
             >
               {/* Icon — right side */}
               <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${contract.iconBg}`}>
@@ -71,9 +78,11 @@ export default function RecentContracts(props: RecentContractsProps) {
               </div>
 
               {/* ChevronLeft — left side */}
-              <ChevronLeft className="w-4 h-4 text-neutral-300 flex-shrink-0" />
-            </button>
-          ))
+              {!isPublicView && (
+                <ChevronLeft className="w-4 h-4 text-neutral-300 flex-shrink-0" />
+              )}
+            </Wrapper>
+          )})
         ) : (
           <div className="flex flex-col items-center justify-center py-8 px-4 text-center gap-3">
             <div className="w-12 h-12 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-400">

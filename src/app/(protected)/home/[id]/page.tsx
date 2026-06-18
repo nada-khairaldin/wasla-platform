@@ -232,7 +232,7 @@ export default function ServiceDetailPage() {
               </h3>
 
               <div
-                onClick={() => router.push(`/profile/${post.userId}`)}
+                onClick={() => router.push(`/users/${post.userId}`)}
                 className="flex items-center justify-between bg-neutral-50/60 p-3.5 rounded-2xl cursor-pointer hover:bg-neutral-50 transition-colors group"
               >
                 <div className="flex items-center gap-3">
