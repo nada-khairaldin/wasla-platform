@@ -26,9 +26,9 @@ export default function ProtectedAppNavbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
 
-  const { data: currentUser, isLoading } = useCurrentUser();
+  const { data: currentUser, isLoading, isError: isUserError } = useCurrentUser();
   const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
-  const { data: profileData, isLoading: isProfileLoading } =
+  const { data: profileData, isLoading: isProfileLoading, isError: isProfileError } =
     useUserProfile(userId);
   const username = profileData?.profile?.username ?? "User";
   const points = profileData?.profile?.stats?.availableTimeCredits ?? 0;
@@ -199,16 +199,24 @@ export default function ProtectedAppNavbar() {
             </div>
 
             <div className="hidden md:block">
-              {isLoading ? (
-                <Skeleton />
-              ) : (
-                profileData && (
-                  <UserAccount
-                    username={username}
-                    points={`رصيدك ${points} ساعة`}
-                  />
-                )
-              )}
+              {isLoading || isProfileLoading ? (
+                 <div className="flex items-center gap-2 border border-neutral-100 rounded-full py-2 pr-1.5 pl-3 w-40">
+                   <Skeleton className="w-9 h-9 rounded-full shrink-0" />
+                   <div className="flex flex-col gap-1.5 w-full">
+                     <Skeleton className="h-3 w-20" />
+                     <Skeleton className="h-2 w-12" />
+                   </div>
+                 </div>
+              ) : isUserError || isProfileError ? (
+                <div className="text-xs text-red-500 font-bold border border-red-100 bg-red-50 px-3 py-2 rounded-full">
+                  تعذر تحميل بيانات المستخدم
+                </div>
+              ) : profileData ? (
+                <UserAccount
+                  username={username}
+                  points={`رصيدك ${points} ساعة`}
+                />
+              ) : null}
             </div>
           </div>
 

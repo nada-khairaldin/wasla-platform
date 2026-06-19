@@ -1,9 +1,19 @@
 "use client";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { scrollToSection } from "@/src/utils";
 import Logo from "../ui/Logo";
+import { useAuthStore } from "../../features/auth/store/useAuthStore";
 
 const Footer = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
   const platformLinks = [
     { name: "كيف تعمل", href: "how-it-works" },
     { name: "مميزات المنصة", href: "features" },
@@ -52,19 +62,55 @@ const Footer = () => {
         </div>
 
         <div className="md:col-span-1 pt-4">
-          <h3 className="text-xl  font-bold mb-6">الرئيسية</h3>
-          <ul className="flex flex-col gap-4">
-            {authLinks.map((link, index) => (
-              <li key={index}>
+          {mounted && isAuthenticated ? (
+            <ul className="flex flex-col gap-4">
+              <li>
                 <Link
-                  href={link.href}
+                  href="/home"
                   className="inline-block hover:text-primary-hover hover:-translate-x-1.5 transition-all duration-300"
                 >
-                  {link.name}
+                  الرئيسية
                 </Link>
               </li>
-            ))}
-          </ul>
+              <li>
+                <Link
+                  href="/my-posts"
+                  className="inline-block hover:text-primary-hover hover:-translate-x-1.5 transition-all duration-300"
+                >
+                  منشوراتي
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/my-contracts"
+                  className="inline-block hover:text-primary-hover hover:-translate-x-1.5 transition-all duration-300"
+                >
+                  عقودي
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/messages"
+                  className="inline-block hover:text-primary-hover hover:-translate-x-1.5 transition-all duration-300"
+                >
+                  رسائلي
+                </Link>
+              </li>
+            </ul>
+          ) : (
+            <ul className="flex flex-col gap-4">
+              {authLinks.map((link, index) => (
+                <li key={index}>
+                  <Link
+                    href={link.href}
+                    className="inline-block hover:text-primary-hover hover:-translate-x-1.5 transition-all duration-300"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 

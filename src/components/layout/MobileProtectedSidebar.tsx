@@ -12,7 +12,6 @@ const SIDEBAR_LINKS = [
   { id: 1, label: "الرئيسية", href: "/home", icon: Home },
   { id: 2, label: "عقودي", href: "/contracts", icon: FileText },
   { id: 3, label: "منشوراتي", href: "/my-posts", icon: LayoutGrid },
-  { id: 4, label: "الإعدادات", href: "/settings", icon: Settings },
 ];
 
 function MobilePublicSidebar({

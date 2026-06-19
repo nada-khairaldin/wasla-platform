@@ -1,9 +1,20 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useAuthStore } from "../../features/auth/store/useAuthStore";
 
 function Logo({ isFooter = false , className = "" }: { isFooter?: boolean; className?: string }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <Link href="/">
+    <Link href={mounted && isAuthenticated ? "/home" : "/"}>
       <div
         className={
           isFooter

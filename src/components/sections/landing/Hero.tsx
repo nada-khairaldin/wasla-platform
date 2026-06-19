@@ -70,7 +70,21 @@ function Hero() {
           variants={itemVariants}
           className="flex flex-col items-center justify-center sm:flex-row gap-sm sm:gap-xl2 w-full"
         >
-          <Link href="/signup">
+          {/* Mobile Only CTAs */}
+          <Link href="/login" className="w-full sm:hidden">
+            <Button size="lg" variant="filled" className="w-full">
+              سجل الدخول
+            </Button>
+          </Link>
+
+          <Link href="/signup" className="w-full sm:hidden">
+            <Button size="lg" variant="outline" className="w-full bg-white">
+              ابدأ مجانًا
+            </Button>
+          </Link>
+
+          {/* Desktop Only CTAs */}
+          <Link href="/signup" className="hidden sm:block">
             <Button
               size="lg"
               variant="filled"
@@ -83,7 +97,7 @@ function Hero() {
           <Button
             size="lg"
             variant="outline"
-            className="group flex items-center gap-sm justify-center"
+            className="group hidden sm:flex items-center gap-sm justify-center"
             onClick={(e) => scrollToSection(e, "how-it-works")}
             aria-label="تعرف على كيفية البدء"
           >

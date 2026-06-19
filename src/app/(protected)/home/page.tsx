@@ -29,10 +29,10 @@ export default function HomePage() {
     return undefined;
   };
   const userId = extractUserId(currentUser);
-  const { data: profileData, isLoading: isProfileLoading } = useUserProfile(userId);
+  const { data: profileData, isLoading: isProfileLoading, isError: isProfileError } = useUserProfile(userId);
 
   const points = profileData?.profile?.stats?.availableTimeCredits ?? 0;
-  const username = profileData?.profile?.username ?? "User";
+  const username = profileData?.profile?.username;
 
   const { data: feedData, isLoading: isPostsLoading } = usePosts(userId);
   const allPosts = useMemo(() => feedData?.posts ?? [], [feedData?.posts]);
@@ -92,11 +92,11 @@ export default function HomePage() {
       <div className="max-w-[1400px] mx-auto px-4 md:px-10 pt-8">
         <div className="grid grid-cols-12 gap-6 items-stretch mb-8">
           <aside className="col-span-12 md:col-span-4 lg:col-span-3">
-            <BalanceCard points={points} isLoading={isProfileLoading} />
+            <BalanceCard points={points} isLoading={isLoading || isProfileLoading} />
           </aside>
 
           <div className="col-span-12 md:col-span-8 lg:col-span-9">
-            <HeroSection user={username} isLoading={isLoading} />
+            <HeroSection user={username} isLoading={isLoading || isProfileLoading} />
           </div>
         </div>
 

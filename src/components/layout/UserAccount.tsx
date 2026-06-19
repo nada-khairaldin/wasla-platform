@@ -70,12 +70,14 @@ export const UserAccount = ({
                 icon={<User size={18} />}
                 label="عرض الملف الشخصي"
                 variant="dropdown"
+                onClick={() => setIsOpen(false)}
               />
               <AppNavLink
                 href="/wallet"
                 icon={<Wallet size={18} />}
                 label="تفاصيل المحفظة"
                 variant="dropdown"
+                onClick={() => setIsOpen(false)}
               />
 
               <div className="h-px bg-neutral-50 my-1 mx-2" />
