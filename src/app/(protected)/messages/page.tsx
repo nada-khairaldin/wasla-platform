@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useSyncExternalStore } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import type { ActiveChat } from "@/src/features/messages/chat.types";
 import { ConversationsSidebar } from "@/src/features/messages/components/ConversationsSidebar";
@@ -22,6 +22,11 @@ import {
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
 function MessagesPageContent() {
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const searchParams = useSearchParams();
   const router = useRouter();
   const conversationIdFromUrl = searchParams.get("conversationId");
@@ -129,6 +134,10 @@ function MessagesPageContent() {
     );
     return sortedParticipants[0]?.userId === currentUserId;
   })();
+
+  if (!isMounted) {
+    return null; // The Suspense fallback will effectively be what the user sees, but returning null or skeleton ensures no mismatch
+  }
 
   if (!isConversationsLoading && personFolders.length === 0) {
     return <MessagesEmptyState onBrowseServices={() => {}} />;

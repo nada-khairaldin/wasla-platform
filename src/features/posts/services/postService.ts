@@ -5,6 +5,7 @@ import {
   SavedPost,
   CreatePostRequest,
   UpdatePostRequest,
+  FeedResponse,
 } from "../type";
 
 export const postServices = {
@@ -12,6 +13,13 @@ export const postServices = {
     return apiRequest<PostsResponse>({
       method: "GET",
       url: "/posts",
+    });
+  },
+
+  getFeed: (userId?: number) => {
+    return apiRequest<FeedResponse>({
+      method: "GET",
+      url: userId ? `/feed/${userId}` : "/posts",
     });
   },
 

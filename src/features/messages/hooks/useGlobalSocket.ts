@@ -24,6 +24,10 @@ export function useGlobalSocket() {
   // Fetch conversations to ensure we have the list to join
   const { conversations } = useConversations();
 
+  // Global debounce and dedupe state for notifications
+  const lastSoundPlayedAtRef = useRef<number>(0);
+  const playedNotificationIdsRef = useRef<Set<string>>(new Set());
+
   const emitDelivered = useCallback(
     (conversationId: string, messageIds: string[]) => {
       if (socketRef.current?.connected && messageIds.length > 0) {
@@ -79,6 +83,63 @@ export function useGlobalSocket() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    };
+
+    const playNotificationSound = () => {
+      const now = Date.now();
+      if (now - lastSoundPlayedAtRef.current < 1000) return; // Debounce 1 second
+      lastSoundPlayedAtRef.current = now;
+
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch((err) => console.log('Audio autoplay prevented by browser:', err));
+      } catch (e) {
+        // ignore error
+      }
+    };
+
+    const handleNewNotification = (payload: Record<string, unknown> | null) => {
+      if (!payload) return;
+
+      let dedupeKey = String(payload.id);
+
+      // 1. Is this a raw message event (chat:message:new)?
+      if (payload.conversationId && payload.senderId) {
+        dedupeKey = String(payload.id);
+        if (Number(payload.senderId) === currentUserId) {
+          playedNotificationIdsRef.current.add(dedupeKey);
+          return;
+        }
+      } 
+      // 2. Is this a notification event (chat:notification:new)?
+      else if (payload.type === "NEW_MESSAGE" && payload.data && typeof payload.data === "object") {
+        const data = payload.data as Record<string, unknown>;
+        if (data.messageId) {
+          dedupeKey = String(data.messageId);
+        }
+      }
+
+      if (!dedupeKey || dedupeKey === "undefined" || dedupeKey === "null") {
+        try {
+          dedupeKey = `hash-${JSON.stringify(payload)}`;
+        } catch (e) {
+          dedupeKey = `unknown-${Date.now()}`;
+        }
+      }
+
+      // 3. Prevent duplicate sounds for the same message/notification
+      if (playedNotificationIdsRef.current.has(dedupeKey)) return;
+      
+      playedNotificationIdsRef.current.add(dedupeKey);
+      
+      // Clear set entirely if it gets too large, but to avoid the "Mark All as Read" blast bug,
+      // we only delete the oldest half. For simplicity, just reset safely.
+      if (playedNotificationIdsRef.current.size > 500) {
+        playedNotificationIdsRef.current.clear();
+      }
+
+      playNotificationSound();
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     };
 
     const onMessageSent = (msg: ChatMessageNewEvent) => {
@@ -208,6 +269,11 @@ export function useGlobalSocket() {
     socket.on("chat:message:edited", onMessageEdited);
     socket.on("connect", onConnect);
 
+    // Notifications
+    socket.on("notification:new", handleNewNotification); 
+    socket.on("chat:notification:new", handleNewNotification); 
+    socket.on("chat:message:new", handleNewNotification);
+
     return () => {
       socket.off("chat:message:new", onNewMessage);
       socket.off("chat:message:sent", onMessageSent);
@@ -217,6 +283,11 @@ export function useGlobalSocket() {
       socket.off("chat:message:deleted", onMessageDeleted);
       socket.off("chat:message:edited", onMessageEdited);
       socket.off("connect", onConnect);
+
+      socket.off("notification:new", handleNewNotification);
+      socket.off("chat:notification:new", handleNewNotification);
+      socket.off("chat:message:new", handleNewNotification);
+
       disconnectSocket();
       socketRef.current = null;
     };

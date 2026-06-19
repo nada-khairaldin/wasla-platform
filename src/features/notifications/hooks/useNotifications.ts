@@ -5,22 +5,16 @@ import {
 } from "@tanstack/react-query";
 import { notificationService, GetNotificationsResponse, NotificationPayload, mapNotificationPayloadToUI } from "../services/notificationService";
 import { Notification } from "../notificationTypes ";
-import { useEffect } from "react";
-import { getSocket } from "../../messages/services/socketService";
-import Cookies from "js-cookie";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
-// Global debounce to prevent duplicate sounds and fetches
-let lastSoundPlayedAt = 0;
-// Global set to prevent playing the sound for the same notification multiple times if backend loops
-const playedNotificationIds = new Set<string>();
+
 
 export const useNotifications = () => {
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
   const currentUserId = Number(currentUser?.user?.userId);
 
-  const query = useInfiniteQuery<{ notifications: Notification[]; nextCursor?: string | null }, Error>({
+  const query = useInfiniteQuery<{ notifications: Notification[]; nextCursor?: string | null; unreadCount?: number; unreadMsgCount?: number }, Error>({
     queryKey: ["notifications"],
     queryFn: async ({ pageParam = undefined }) => {
       const { data, error } = await notificationService.getNotifications(
@@ -38,86 +32,16 @@ export const useNotifications = () => {
       }
       return {
         notifications: (backendData.notifications || []).map(mapNotificationPayloadToUI),
-        nextCursor: backendData.nextCursor
+        nextCursor: backendData.nextCursor,
+        unreadCount: backendData.unreadCount,
+        unreadMsgCount: backendData.unreadMsgCount,
       };
     },
     getNextPageParam: (lastPage) => lastPage?.nextCursor || undefined,
     initialPageParam: undefined,
   });
 
-  useEffect(() => {
-    try {
-      const token = Cookies.get("token");
-      if (!token) return;
 
-      const socket = getSocket();
-      if (!socket) return;
-
-      const playNotificationSound = () => {
-        const now = Date.now();
-        if (now - lastSoundPlayedAt < 1000) return; // Debounce 1 second
-        lastSoundPlayedAt = now;
-
-        try {
-          const audio = new Audio('/notification.mp3');
-          audio.play().catch((err) => console.log('Audio autoplay prevented by browser:', err));
-        } catch (e) {
-          // ignore error
-        }
-      };
-
-      const handleNewNotification = (payload: Record<string, unknown> | null) => {
-        if (!payload) return;
-
-        let dedupeKey = String(payload.id);
-
-        // 1. Is this a raw message event (chat:message:new)?
-        if (payload.conversationId && payload.senderId) {
-          dedupeKey = String(payload.id);
-          // Block sound if WE sent this message!
-          if (Number(payload.senderId) === currentUserId) {
-            playedNotificationIds.add(dedupeKey); // Add to Set so the matching notification is also blocked!
-            return;
-          }
-        } 
-        // 2. Is this a notification event (chat:notification:new)?
-        else if (payload.type === "NEW_MESSAGE" && payload.data && typeof payload.data === "object") {
-          const data = payload.data as Record<string, unknown>;
-          if (data.messageId) {
-            // Deduplicate based on the original message ID, NOT the notification ID!
-            // This prevents backend loops from playing sound if they create new notification rows.
-            dedupeKey = String(data.messageId);
-          }
-        }
-
-        if (!dedupeKey || dedupeKey === "undefined" || dedupeKey === "null") {
-          dedupeKey = `unknown-${Date.now()}-${Math.random()}`;
-        }
-
-        // 3. Prevent duplicate sounds for the same message/notification
-        if (playedNotificationIds.has(dedupeKey)) return;
-        
-        playedNotificationIds.add(dedupeKey);
-        // Keep set small to avoid memory leaks
-        if (playedNotificationIds.size > 200) playedNotificationIds.clear();
-
-        playNotificationSound();
-        queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      };
-
-      socket.on("notification:new", handleNewNotification); 
-      socket.on("chat:notification:new", handleNewNotification); 
-      socket.on("chat:message:new", handleNewNotification); // This is what actually works currently!
-
-      return () => {
-        socket.off("notification:new", handleNewNotification);
-        socket.off("chat:notification:new", handleNewNotification);
-        socket.off("chat:message:new", handleNewNotification);
-      };
-    } catch (e) {
-      console.error("Socket error in useNotifications:", e);
-    }
-  }, [queryClient, currentUserId]);
 
   const markAsRead = useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),
@@ -173,21 +97,38 @@ export const useNotifications = () => {
         }
       );
 
-      return { previousData };
+      // Also optimistically clear unreadCount for conversations since the message counter now depends on it
+      await queryClient.cancelQueries({ queryKey: ["conversations"] });
+      const previousConversations = queryClient.getQueryData(["conversations"]);
+      queryClient.setQueryData(["conversations"], (old: unknown) => {
+        if (!old || !Array.isArray(old)) return old;
+        return old.map((conv) => ({ ...(conv as Record<string, unknown>), unreadCount: 0 }));
+      });
+
+      return { previousData, previousConversations };
     },
     onError: (err, newTodo, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(["notifications"], context.previousData);
       }
+      if (context?.previousConversations) {
+        queryClient.setQueryData(["conversations"], context.previousConversations);
+      }
     },
     onSettled: () => {
       // Optional: queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      // We do NOT invalidate "conversations" here because the backend /notifications/read-all
+      // endpoint does NOT mark chat messages as read in the DB. Invalidating it would cause
+      // the counter to instantly revert to the unread count from the DB.
+      // queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 
   return {
     ...query,
     notifications: query.data?.pages.flatMap((p) => p.notifications || []) || [],
+    unreadCount: query.data?.pages[0]?.unreadCount,
+    unreadMsgCount: query.data?.pages[0]?.unreadMsgCount,
     markAsRead,
     markAllAsRead,
   };

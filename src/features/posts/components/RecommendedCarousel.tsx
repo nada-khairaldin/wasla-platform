@@ -10,33 +10,13 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-const MOCK_RECOMMENDED: Post[] = Array(10)
-  .fill(null)
-  .map((_, i) => ({
-    id: i,
-    title:
-      i % 2 === 0
-        ? "تصميم هوية بصرية لمتجر إلكتروني"
-        : "مطلوب كاتب محتوى لمقالات تقنية",
-    description:
-      "نبحث عن محترف متخصص في بناء الهوية البصرية وشعارات المتاجر، يشمل ذلك اختيار الألوان والخطوط ودليل الاستخدام.",
-    category: i % 2 === 0 ? "OFFER" : "REQUEST",
-    assignedTimeCredits: i % 2 === 0 ? 5 : 12,
-    serviceMode: i % 2 === 0 ? "ONLINE" : "OFFLINE",
-    status: "PUBLISHED",
-    userId: i + 100,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * (i + 1)).toISOString(),
-    updatedAt: new Date().toISOString(),
-    user: {
-      id: i + 100,
-      username: i % 2 === 0 ? "أحمد السعيد" : "سارة علي",
-      email: `user${i}@example.com`,
-      full_name: i % 2 === 0 ? "أحمد السعيد" : "سارة علي",
-      profile_image: "https://i.pravatar.cc/150?img=" + i,
-    },
-  }));
+interface RecommendedCarouselProps {
+  posts: Post[];
+}
 
-export const RecommendedCarousel = () => {
+export const RecommendedCarousel = ({ posts }: RecommendedCarouselProps) => {
+  if (!posts || posts.length === 0) return null;
+
   return (
     <div className="relative recommended-swiper-container group px-2 md:px-4">
       <button className="swiper-prev-btn absolute -right-2 md:-right-5 top-1/2 -translate-y-1/2 z-30 w-11 h-11 bg-white shadow-xl rounded-full flex items-center justify-center text-neutral-400 hover:text-secondary-500 transition-all border border-neutral-50 cursor-pointer active:scale-90">
@@ -67,7 +47,7 @@ export const RecommendedCarousel = () => {
         }}
         className="pb-14 pt-4"
       >
-        {MOCK_RECOMMENDED.map((post) => (
+        {posts.map((post) => (
           <SwiperSlide key={post.id} className="h-full py-2">
             <div className="custom-post-wrapper text-neutral-900">
               <PostCard post={post} isRecommended={true} />

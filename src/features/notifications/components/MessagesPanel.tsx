@@ -5,6 +5,7 @@ import { Inbox, MessageSquare } from "lucide-react";
 import { NotificationItem } from "./NotificationItem";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "../hooks/useNotifications";
+import { useConversations } from "../../messages/hooks/useConversations";
 
 interface MessagesPanelProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function MessagesPanel({
   const router = useRouter();
 
   const { notifications, markAllAsRead } = useNotifications();
+  const { conversations } = useConversations();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -42,7 +44,10 @@ export function MessagesPanel({
   };
 
   const messages = notifications.filter((n) => n.category === "messages");
-  const unreadCount = messages.filter((n) => !n.isRead).length;
+  
+  const displayUnreadCount = conversations 
+    ? conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0)
+    : messages.filter((n) => !n.isRead).length;
 
   if (!isOpen) return null;
 
@@ -68,14 +73,14 @@ export function MessagesPanel({
             strokeWidth={1.8}
           />
           <span className="text-sm font-bold text-primary-700">الرسائل</span>
-          {unreadCount > 0 && (
+          {displayUnreadCount > 0 && (
             <span className="text-[10px] font-semibold bg-primary-700 text-white rounded-full w-4 h-4 leading-none flex justify-center items-center">
-              {unreadCount}
+              {displayUnreadCount > 99 ? '99+' : displayUnreadCount}
             </span>
           )}
         </div>
         
-        {unreadCount > 0 && (
+        {displayUnreadCount > 0 && (
           <button 
             onClick={() => markAllAsRead.mutate()}
             disabled={markAllAsRead.isPending}

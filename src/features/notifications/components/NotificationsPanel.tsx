@@ -19,7 +19,7 @@ export function NotificationsPanel({
   const [activeTab, setActiveTab] = useState<NotificationCategory>("all");
   const panelRef = useRef<HTMLDivElement>(null);
   
-  const { notifications, fetchNextPage, hasNextPage, isFetchingNextPage, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, fetchNextPage, hasNextPage, isFetchingNextPage, markAllAsRead } = useNotifications();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -44,7 +44,7 @@ export function NotificationsPanel({
       ? nonMessageNotifications
       : nonMessageNotifications.filter((n) => n.category === activeTab);
 
-  const unreadCount = nonMessageNotifications.filter((n) => !n.isRead).length;
+  const displayUnreadCount = unreadCount ?? nonMessageNotifications.filter((n) => !n.isRead).length;
 
   const handleMarkAllAsRead = () => {
     markAllAsRead.mutate();
@@ -68,14 +68,14 @@ export function NotificationsPanel({
         <div className="flex items-center gap-2">
           <Bell size={18} className="text-primary-500" strokeWidth={2} />
           <span className="text-sm font-bold text-primary-700">الإشعارات</span>
-          {unreadCount > 0 && (
+          {displayUnreadCount > 0 && (
             <span className="text-[10px] font-semibold bg-primary-700 text-white rounded-full w-4 h-4 leading-none flex justify-center items-center">
-              {unreadCount}
+              {displayUnreadCount > 99 ? '99+' : displayUnreadCount}
             </span>
           )}
         </div>
         
-        {unreadCount > 0 && (
+        {displayUnreadCount > 0 && (
           <button 
             onClick={handleMarkAllAsRead}
             disabled={markAllAsRead.isPending}

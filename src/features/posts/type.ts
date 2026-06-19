@@ -51,3 +51,8 @@ export interface PostsResponse {
 export interface PostResponse {
   post: Post;
 }
+
+export interface FeedResponse {
+  posts: Post[];
+  source?: "recommender" | "fallback" | string;
+}

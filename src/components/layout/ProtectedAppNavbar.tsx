@@ -8,9 +8,11 @@ import SearchBar from "../../features/search/components/SearchBar";
 import MobilePublicSidebar from "./MobileProtectedSidebar";
 import { Skeleton } from "../ui/Skeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
-import { MessagesPanel } from "../../features/notifications/components/MessagesPanel";
+import { MessagesPanel } from "@/src/features/notifications/components/MessagesPanel";
 import { NotificationsPanel } from "../../features/notifications/components/NotificationsPanel";
-import { useNotifications } from "../../features/notifications/hooks/useNotifications";
+import { useNotifications } from "@/src/features/notifications/hooks/useNotifications";
+import { useConversations } from "@/src/features/messages/hooks/useConversations";
+import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useUserProfile } from "../../features/profile/hooks/useUserProfile";
 
 const NAV_LINKS = [
@@ -34,15 +36,16 @@ export default function ProtectedAppNavbar() {
   const bellRef = useRef<HTMLButtonElement>(null);
   const msgRef = useRef<HTMLButtonElement>(null);
 
-  const { notifications } = useNotifications();
+  const { notifications, unreadCount } = useNotifications();
+  const { conversations } = useConversations();
 
-  const unreadNotifCount = notifications.filter(
+  const displayUnreadNotifCount = unreadCount ?? notifications.filter(
     (n) => !n.isRead && n.category !== "messages",
   ).length;
 
-  const unreadMsgCount = notifications.filter(
-    (n) => !n.isRead && n.category === "messages",
-  ).length;
+  const displayUnreadMsgCount = conversations 
+    ? conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0)
+    : notifications.filter((n) => !n.isRead && n.category === "messages").length;
 
 
   function toggleNotif(e: React.MouseEvent) {
@@ -96,9 +99,9 @@ export default function ProtectedAppNavbar() {
                   }`}
                 >
                   <MessageSquare size={22} strokeWidth={1.8} />
-                  {unreadMsgCount > 0 && (
+                  {displayUnreadMsgCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
-                      {unreadMsgCount}
+                      {displayUnreadMsgCount > 99 ? '99+' : displayUnreadMsgCount}
                     </span>
                   )}
                 </button>
@@ -120,9 +123,9 @@ export default function ProtectedAppNavbar() {
                   }`}
                 >
                   <Bell size={22} strokeWidth={1.8} />
-                  {unreadNotifCount > 0 && (
+                  {displayUnreadNotifCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
-                      {unreadNotifCount}
+                      {displayUnreadNotifCount > 99 ? '99+' : displayUnreadNotifCount}
                     </span>
                   )}
                 </button>
@@ -158,9 +161,9 @@ export default function ProtectedAppNavbar() {
                   }`}
                 >
                   <MessageSquare size={22} strokeWidth={1.8} />
-                  {unreadMsgCount > 0 && (
+                  {displayUnreadMsgCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
-                      {unreadMsgCount}
+                      {displayUnreadMsgCount > 99 ? '99+' : displayUnreadMsgCount}
                     </span>
                   )}
                 </button>
@@ -182,9 +185,9 @@ export default function ProtectedAppNavbar() {
                   }`}
                 >
                   <Bell size={22} strokeWidth={1.8} />
-                  {unreadNotifCount > 0 && (
+                  {displayUnreadNotifCount > 0 && (
                     <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center border-2 border-white">
-                      {unreadNotifCount}
+                      {displayUnreadNotifCount > 99 ? '99+' : displayUnreadNotifCount}
                     </span>
                   )}
                 </button>

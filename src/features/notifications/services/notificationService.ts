@@ -15,6 +15,8 @@ export interface NotificationPayload {
 export interface GetNotificationsResponse {
   notifications: NotificationPayload[];
   nextCursor?: string | null;
+  unreadCount?: number;
+  unreadMsgCount?: number;
 }
 
 export const mapNotificationPayloadToUI = (payload: NotificationPayload): Notification => {

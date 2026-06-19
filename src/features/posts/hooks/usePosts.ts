@@ -2,15 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { postServices } from "../services/postService";
 
 
-export const usePosts = () => {
+export const usePosts = (userId?: number) => {
   return useQuery({
-    queryKey: ["posts"],
+    queryKey: ["posts", "feed", userId],
     queryFn: async () => {
-      const { data, error } = await postServices.getPosts();
+      const { data, error } = await postServices.getFeed(userId);
       if (error) {
         throw new Error(error);
       }
-      return data?.posts ?? [];
+      return {
+        posts: data?.posts ?? [],
+        source: data?.source ?? "fallback",
+      };
     },
   });
 };

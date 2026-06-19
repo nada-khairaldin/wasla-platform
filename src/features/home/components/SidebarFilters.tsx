@@ -17,13 +17,7 @@ interface FilterState {
   hours: number;
 }
 
-const mockCategories = [
-  "البرمجة",
-  "التصميم",
-  "التسويق",
-  "إدارة الأعمال",
-  "كتابة المحتوى",
-];
+import { useSkills } from "@/src/features/skills";
 
 const TYPE_OPTIONS = [
   { label: "الكل", value: "الكل" },
@@ -53,6 +47,9 @@ export const SidebarFilters = ({
   const [selectedType, setSelectedType] = useState("الكل");
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [hours, setHours] = useState(initialHours);
+
+  const { data: dbSkills = [], isLoading: isSkillsLoading } = useSkills();
+  const isActuallyLoading = isLoading || isSkillsLoading;
 
   useEffect(() => {
     if (isMobileDrawer && isOpen) {
@@ -126,7 +123,7 @@ export const SidebarFilters = ({
       <div className="space-y-4">
         <p className="text-sm font-bold text-neutral-600">التخصصات</p>
         <div className="flex flex-col gap-3 max-h-[240px] overflow-y-auto pl-2 custom-scrollbar">
-          {isLoading
+          {isActuallyLoading
             ? Array(5)
                 .fill(0)
                 .map((_, i) => (
@@ -134,7 +131,7 @@ export const SidebarFilters = ({
                 ))
             : (categories.length > 0
                 ? categories.map((c) => c.name)
-                : mockCategories
+                : dbSkills.map((s) => s.name)
               ).map((cat, index) => (
                 <label
                   key={index}

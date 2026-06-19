@@ -20,14 +20,31 @@ interface FilterCriteria {
 
 export default function HomePage() {
   const { data: currentUser, isLoading } = useCurrentUser();
-  const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
+  const extractUserId = (userObj: unknown) => {
+    const obj = userObj as { id?: string | number; user?: { id?: string | number; userId?: string | number } } | null | undefined;
+    if (!obj) return undefined;
+    if (obj.user?.userId) return Number(obj.user.userId);
+    if (obj.user?.id) return Number(obj.user.id);
+    if (obj.id) return Number(obj.id);
+    return undefined;
+  };
+  const userId = extractUserId(currentUser);
   const { data: profileData, isLoading: isProfileLoading } = useUserProfile(userId);
 
   const points = profileData?.profile?.stats?.availableTimeCredits ?? 0;
   const username = profileData?.profile?.username ?? "User";
 
-  const { data: postsData, isLoading: isPostsLoading } = usePosts();
-  const posts = postsData ?? [];
+  const { data: feedData, isLoading: isPostsLoading } = usePosts(userId);
+  const allPosts = useMemo(() => feedData?.posts ?? [], [feedData?.posts]);
+  const feedSource = feedData?.source ?? "fallback";
+
+  const recommendedPosts = useMemo(() => {
+    return feedSource.toLowerCase() === "recommender" ? allPosts.slice(0, 6) : [];
+  }, [allPosts, feedSource]);
+
+  const regularPosts = useMemo(() => {
+    return feedSource.toLowerCase() === "recommender" ? allPosts.slice(6) : allPosts;
+  }, [allPosts, feedSource]);
 
   const [activeFilters, setActiveFilters] = useState<FilterCriteria>({
     type: "الكل",
@@ -45,7 +62,7 @@ export default function HomePage() {
   };
 
   const filteredPosts = useMemo(() => {
-    return posts.filter((post) => {
+    return regularPosts.filter((post) => {
       const postType = post.category === "REQUEST" ? "طلب" : "عرض";
       const matchesType =
         activeFilters.type === "الكل" || postType === activeFilters.type;
@@ -61,7 +78,7 @@ export default function HomePage() {
 
       return matchesType && matchesCategory && matchesHours;
     });
-  }, [posts, activeFilters]);
+  }, [regularPosts, activeFilters]);
 
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
@@ -83,24 +100,26 @@ export default function HomePage() {
           </div>
         </div>
 
-        <section className="my-16">
-          <div className="flex flex-col gap-2 mb-8 px-2 text-right">
-            <div className="flex items-center gap-2">
-              <Sparkles size={28} className="text-secondary-500" />
-              <h3 className="font-black text-primary-900 text-3xl">
-                منشورات موصى بها
-              </h3>
+        {feedSource.toLowerCase() === "recommender" && recommendedPosts.length > 0 && (
+          <section className="my-16">
+            <div className="flex flex-col gap-2 mb-8 px-2 text-right">
+              <div className="flex items-center gap-2">
+                <Sparkles size={28} className="text-secondary-500" />
+                <h3 className="font-black text-primary-900 text-3xl">
+                  منشورات موصى بها
+                </h3>
+              </div>
+              <p className="text-primary-400 text-base font-medium">
+                قائمة منتقاة بعناية من خلال الذكاء الاصطناعي بناءً على اهتماماتك
+              </p>
             </div>
-            <p className="text-primary-400 text-base font-medium">
-              قائمة منتقاة بعناية من خلال الذكاء الاصطناعي بناءً على اهتماماتك
-            </p>
-          </div>
 
-          <div className="relative">
-            <div className="absolute inset-y-0 -inset-x-4 bg-secondary-50/30 rounded-[50px] -z-10 blur-3xl" />
-            <RecommendedCarousel />
-          </div>
-        </section>
+            <div className="relative">
+              <div className="absolute inset-y-0 -inset-x-4 bg-secondary-50/30 rounded-[50px] -z-10 blur-3xl" />
+              <RecommendedCarousel posts={recommendedPosts} />
+            </div>
+          </section>
+        )}
 
         <div className="grid grid-cols-12 gap-8 items-start">
           <aside className="col-span-12 lg:col-span-3 sticky top-21 hidden lg:block">
@@ -195,10 +214,9 @@ export default function HomePage() {
                     window.scrollTo({ top: 800, behavior: "smooth" });
                   }}
                   className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all shadow-sm
-                    ${
-                      currentPage === 1
-                        ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
-                        : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
+                    ${currentPage === 1
+                      ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
+                      : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
                     }`}
                 >
                   <ChevronRight size={22} />
@@ -214,11 +232,10 @@ export default function HomePage() {
                           window.scrollTo({ top: 800, behavior: "smooth" });
                         }}
                         className={`w-11 h-11 rounded-xl font-black text-sm transition-all duration-300
-                        ${
-                          currentPage === page
+                        ${currentPage === page
                             ? "bg-primary-600 text-white shadow-lg shadow-primary-200 scale-105"
                             : "bg-white text-primary-400 border border-primary-50 hover:text-primary-600"
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
@@ -233,10 +250,9 @@ export default function HomePage() {
                     window.scrollTo({ top: 800, behavior: "smooth" });
                   }}
                   className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all shadow-sm
-                    ${
-                      currentPage === totalPages
-                        ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
-                        : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
+                    ${currentPage === totalPages
+                      ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
+                      : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
                     }`}
                 >
                   <ChevronLeft size={22} />
