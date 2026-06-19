@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { Message } from "../chat.types";
 import { Check, CheckCheck, AlertCircle, Pencil, Trash2 } from "lucide-react";
 import { useEditMessage, useDeleteMessage } from "../hooks";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { useConversations } from "../hooks/useConversations";
 
 type MessageBubbleProps = {
   message: Message;
@@ -18,6 +20,18 @@ export function MessageBubble({ message, conversationId }: MessageBubbleProps) {
 
   const editMutation = useEditMessage();
   const deleteMutation = useDeleteMessage();
+
+  const { data: currentUser } = useCurrentUser();
+  const currentUserId = Number(currentUser?.user?.userId);
+  const { conversations } = useConversations();
+  const conversation = conversations?.find((c) => c.id === conversationId);
+  const isRecipientOnline = conversation?.participants?.some(
+    (p) => p.user.id !== currentUserId && p.user.is_online
+  );
+
+  const isRead = message.status === "read";
+  const isDelivered = message.status === "delivered" || (message.status === "sent" && isRecipientOnline);
+  const isSent = message.status === "sent" && !isDelivered;
 
   const handleSaveEdit = () => {
     if (!editText.trim() || editText === message.text) {
@@ -190,11 +204,11 @@ export function MessageBubble({ message, conversationId }: MessageBubbleProps) {
 
               {isMe && (
                 <span className="shrink-0 mr-0.5">
-                  {message.status === "sent" && (
+                  {isSent && (
                     <Check size={13} className="text-white/50" strokeWidth={2.5} />
                   )}
 
-                  {message.status === "delivered" && (
+                  {isDelivered && !isRead && (
                     <CheckCheck
                       size={13}
                       className="text-white/50"
@@ -202,7 +216,7 @@ export function MessageBubble({ message, conversationId }: MessageBubbleProps) {
                     />
                   )}
 
-                  {message.status === "read" && (
+                  {isRead && (
                     <CheckCheck
                       size={13}
                       className="text-green-300"

@@ -75,7 +75,7 @@ export const useNotifications = () => {
         if (payload.conversationId && payload.senderId) {
           dedupeKey = String(payload.id);
           // Block sound if WE sent this message!
-          if (payload.senderId === currentUserId) {
+          if (Number(payload.senderId) === currentUserId) {
             playedNotificationIds.add(dedupeKey); // Add to Set so the matching notification is also blocked!
             return;
           }
@@ -88,6 +88,10 @@ export const useNotifications = () => {
             // This prevents backend loops from playing sound if they create new notification rows.
             dedupeKey = String(data.messageId);
           }
+        }
+
+        if (!dedupeKey || dedupeKey === "undefined" || dedupeKey === "null") {
+          dedupeKey = `unknown-${Date.now()}-${Math.random()}`;
         }
 
         // 3. Prevent duplicate sounds for the same message/notification
@@ -113,7 +117,7 @@ export const useNotifications = () => {
     } catch (e) {
       console.error("Socket error in useNotifications:", e);
     }
-  }, [queryClient]);
+  }, [queryClient, currentUserId]);
 
   const markAsRead = useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),

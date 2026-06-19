@@ -9,13 +9,11 @@ import { useNotifications } from "../hooks/useNotifications";
 interface MessagesPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  anchorRef?: React.RefObject<HTMLElement>;
 }
 
 export function MessagesPanel({
   isOpen,
   onClose,
-  anchorRef,
 }: MessagesPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -29,15 +27,14 @@ export function MessagesPanel({
 
       if (
         !panelRef.current.contains(e.target as Node) &&
-        (!anchorRef?.current ||
-          !anchorRef.current.contains(e.target as Node))
+        !(e.target as Element).closest('[data-msg-trigger]')
       ) {
         onClose();
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [isOpen, onClose, anchorRef]);
+  }, [isOpen, onClose]);
 
   const handleNavigate = () => {
     onClose();

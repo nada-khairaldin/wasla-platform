@@ -23,16 +23,6 @@ export function useChatSocket(activeConversationId: string | null) {
 
   useEffect(() => {
     if (!currentUserId || !activeConversationId) {
-      // If no active conversation, leave any previously joined room
-      if (joinedRoomRef.current) {
-        try {
-          const socket = getSocket();
-          socket.emit("chat:leave", { conversationId: joinedRoomRef.current });
-        } catch {
-          // Socket not available
-        }
-        joinedRoomRef.current = null;
-      }
       return;
     }
 
@@ -46,11 +36,6 @@ export function useChatSocket(activeConversationId: string | null) {
     if (!socket.connected) return;
 
     const previousRoom = joinedRoomRef.current;
-
-    // Leave previous room if different
-    if (previousRoom && previousRoom !== activeConversationId) {
-      socket.emit("chat:leave", { conversationId: previousRoom });
-    }
 
     // Join new room
     if (activeConversationId !== previousRoom) {
@@ -82,17 +67,6 @@ export function useChatSocket(activeConversationId: string | null) {
       }
     }
 
-    // Cleanup: leave room on unmount
-    return () => {
-      if (joinedRoomRef.current) {
-        try {
-          const s = getSocket();
-          s.emit("chat:leave", { conversationId: joinedRoomRef.current });
-        } catch {
-          // Socket may be gone
-        }
-        joinedRoomRef.current = null;
-      }
-    };
+    // No cleanup needed: we want to stay in the room to receive future notifications and delivery receipts.
   }, [activeConversationId, currentUserId, queryClient]);
 }

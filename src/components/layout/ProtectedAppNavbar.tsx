@@ -45,12 +45,16 @@ export default function ProtectedAppNavbar() {
   ).length;
 
 
-  function toggleNotif() {
+  function toggleNotif(e: React.MouseEvent) {
+    e.stopPropagation();
     setNotifOpen((prev) => !prev);
+    setMsgOpen(false);
   }
 
-  function toggleMsg() {
+  function toggleMsg(e: React.MouseEvent) {
+    e.stopPropagation();
     setMsgOpen((prev) => !prev);
+    setNotifOpen(false);
   }
 
   return (
@@ -83,7 +87,7 @@ export default function ProtectedAppNavbar() {
             <div className="flex items-center gap-3 md:hidden">
               <div className="relative">
                 <button
-                  ref={msgRef}
+                  data-msg-trigger="true"
                   onClick={toggleMsg}
                   className={`relative p-2 rounded-xl transition-all ${
                     msgOpen
@@ -101,14 +105,13 @@ export default function ProtectedAppNavbar() {
                 <MessagesPanel
                   isOpen={msgOpen}
                   onClose={() => setMsgOpen(false)}
-                  anchorRef={msgRef as React.RefObject<HTMLElement>}
                 />
               </div>
 
               {/* Bell button + panel */}
               <div className="relative">
                 <button
-                  ref={bellRef}
+                  data-notif-trigger="true"
                   onClick={toggleNotif}
                   className={`relative p-2 rounded-xl transition-all ${
                     notifOpen
@@ -126,7 +129,6 @@ export default function ProtectedAppNavbar() {
                 <NotificationsPanel
                   isOpen={notifOpen}
                   onClose={() => setNotifOpen(false)}
-                  anchorRef={bellRef as React.RefObject<HTMLElement>}
                 />
               </div>
             </div>
@@ -147,7 +149,7 @@ export default function ProtectedAppNavbar() {
             <div className="hidden md:flex items-center gap-1 border-l border-neutral-100 pl-2">
               <div className="relative">
                 <button
-                  ref={msgRef}
+                  data-msg-trigger="true"
                   onClick={toggleMsg}
                   className={`relative p-2 rounded-xl transition-all ${
                     msgOpen
@@ -165,14 +167,13 @@ export default function ProtectedAppNavbar() {
                 <MessagesPanel
                   isOpen={msgOpen}
                   onClose={() => setMsgOpen(false)}
-                  anchorRef={msgRef as React.RefObject<HTMLElement>}
                 />
               </div>
 
               {/* Bell button + panel */}
               <div className="relative">
                 <button
-                  ref={bellRef}
+                  data-notif-trigger="true"
                   onClick={toggleNotif}
                   className={`relative p-2 rounded-xl transition-all ${
                     notifOpen
@@ -190,7 +191,6 @@ export default function ProtectedAppNavbar() {
                 <NotificationsPanel
                   isOpen={notifOpen}
                   onClose={() => setNotifOpen(false)}
-                  anchorRef={bellRef as React.RefObject<HTMLElement>}
                 />
               </div>
             </div>

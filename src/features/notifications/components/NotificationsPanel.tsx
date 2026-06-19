@@ -10,13 +10,11 @@ import { useNotifications } from "../hooks/useNotifications";
 interface NotificationsPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  anchorRef?: React.RefObject<HTMLElement>;
 }
 
 export function NotificationsPanel({
   isOpen,
   onClose,
-  anchorRef,
 }: NotificationsPanelProps) {
   const [activeTab, setActiveTab] = useState<NotificationCategory>("all");
   const panelRef = useRef<HTMLDivElement>(null);
@@ -30,15 +28,14 @@ export function NotificationsPanel({
 
       if (
         !panelRef.current.contains(e.target as Node) &&
-        (!anchorRef?.current ||
-          !anchorRef.current.contains(e.target as Node))
+        !(e.target as Element).closest('[data-notif-trigger]')
       ) {
         onClose();
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [isOpen, onClose, anchorRef]);
+  }, [isOpen, onClose]);
 
   // Exclude messages from the main notifications panel if needed, or filter by activeTab
   const nonMessageNotifications = notifications.filter(n => n.category !== "messages");
