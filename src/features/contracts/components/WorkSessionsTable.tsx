@@ -6,9 +6,10 @@ interface WorkSessionsTableProps {
 }
 
 const statusStyles: Record<WorkSessionConfirmation, string> = {
-  مؤكدة:      "text-[#079455]",
-  "غير مؤكدة": "text-[#f79009]",
-  ملغية:      "text-[#d92d20]",
+  مؤكدة:      "text-success-500",
+  "غير مؤكدة": "text-warning-500",
+  ملغية:      "text-error-500",
+  "قيد الانتظار": "text-neutral-500",
 };
 
 const COLS = ["التاريخ", "عدد الساعات", "الملاحظات", "الحالة"] as const;

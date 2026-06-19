@@ -1,0 +1,41 @@
+import { CompletedContract } from "../contract.types";
+
+export const COMPLETED_MOCK_CONTRACTS: CompletedContract[] = [
+  {
+    id: "comp-1",
+    title: "تطوير واجهة تطبيق",
+    serviceDescription: "تطوير احترافي متكامل لتطبيق جوال رياضي",
+    date: "15 يونيو 2025",
+    durationText: "مدة الخدمة: 3 ساعات",
+    otherPartyName: "أحمد خالد",
+    otherPartyInitials: "أ",
+    rating: 4.8,
+    status: "انتهى بنجاح",
+    iconType: "code",
+  },
+  {
+    id: "comp-2",
+    title: "ترجمة مستند قانوني",
+    serviceDescription: "ترجمة احترافية من العربية إلى الإنجليزية",
+    date: "10 يونيو 2025",
+    durationText: "مدة الخدمة: ساعتان",
+    otherPartyName: "محمد علي",
+    otherPartyInitials: "م",
+    rating: 4.2,
+    status: "انتهى بنزاع",
+    disputeResponsible: "المسؤول عن النزاع: المستفيد",
+    iconType: "translate",
+  },
+  {
+    id: "comp-3",
+    title: "كتابة محتوى تسويقي",
+    serviceDescription: "كتابة 5 مقالات تسويقية لمنصة عقارية",
+    date: "8 يونيو 2025",
+    durationText: "مدة الخدمة: 4 ساعات",
+    otherPartyName: "سارة يوسف",
+    otherPartyInitials: "س",
+    rating: 5.0,
+    status: "انتهى بنجاح",
+    iconType: "write",
+  },
+];

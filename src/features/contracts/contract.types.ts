@@ -1,6 +1,6 @@
-export type ContractStatus = "active" | "pending";
+export type ContractStatus = "active" | "pending" | "completed";
 export type UserRole = "provider" | "seeker";
-export type WorkSessionConfirmation = "مؤكدة" | "غير مؤكدة" | "ملغية";
+export type WorkSessionConfirmation = "مؤكدة" | "غير مؤكدة" | "ملغية" | "قيد الانتظار";
 
 export interface WorkSession {
   id: string;
@@ -35,4 +35,20 @@ export interface Contract {
   stats?: ContractStats;
   workSessions?: WorkSession[];
   operationLogs?: OperationLogEntry[];
+}
+
+export type CompletedContractStatus = "انتهى بنجاح" | "انتهى بنزاع";
+
+export interface CompletedContract {
+  id: string;
+  title: string;
+  serviceDescription: string;
+  date: string;
+  durationText: string;
+  otherPartyName: string;
+  otherPartyInitials: string;
+  rating?: number;
+  status: CompletedContractStatus;
+  disputeResponsible?: string; 
+  iconType: "code" | "translate" | "write" | "design" | string;
 }

@@ -11,7 +11,7 @@ interface ContractStatsRowProps {
 
 function StatCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="w-full max-w-[208px] h-[248px] rounded-[24px] bg-primary-500 pt-[32px] pb-[28px] px-[20px] flex flex-col items-center justify-between text-center shadow-sm hover:shadow-md transition-all duration-200 mx-auto">
+    <div className="shrink-0 snap-center w-[208px] h-[248px] rounded-[24px] bg-primary-500 pt-[32px] pb-[28px] px-[20px] flex flex-col items-center justify-between text-center shadow-sm hover:shadow-md transition-all duration-200">
       {children}
     </div>
   );
@@ -38,7 +38,7 @@ export function ContractStatsRow({ stats }: ContractStatsRowProps) {
     totalHours > 0 ? (completedHours / totalHours) * 100 : 0;
 
   return (
-    <div className="w-full flex flex-wrap items-center justify-center md:justify-start gap-6">
+    <div className="w-full flex md:flex-wrap items-center justify-start md:justify-between gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* 1 – Completed Hours (Progress Ring) */}
       <StatCard>
         <div className="flex flex-col items-center gap-2">
