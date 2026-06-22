@@ -1,13 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { profileServices, BasicProfileResponse } from "../services/profileServices";
-import { skillsService } from "@/src/features/skills/services/skillsService";
 import { UserProfile } from "@/src/types";
 
 export interface UpdateProfilePayload {
   name: string;
   bio: string;
-  servicesNeeded: string[];
-  servicesOffered: string[];
+  requiredSkills: string[];
+  offeredSkills: string[];
 }
 
 export interface UseUpdateProfileOptions {
@@ -27,30 +26,11 @@ export const useUpdateProfile = (
       const backendPayload = {
         name: payload.name,
         bio: payload.bio,
-        offeredSkills: payload.servicesOffered,
-        requiredSkills: payload.servicesNeeded,
+        offeredSkills: payload.offeredSkills,
+        requiredSkills: payload.requiredSkills,
       };
       const { data, error } = await profileServices.updateUserProfile(userId, backendPayload);
       if (error) throw new Error(error);
-
-      // Register custom skills sequentially after successful profile update
-      try {
-        const { data: skillsData } = await skillsService.getSkills();
-        const existingSkills = skillsData?.skills || [];
-        const existingNamesLower = existingSkills.map((s) => s.name.toLowerCase());
-
-        const allUniqueSelected = Array.from(
-          new Set([...payload.servicesOffered, ...payload.servicesNeeded])
-        );
-
-        for (const skillName of allUniqueSelected) {
-          if (!existingNamesLower.includes(skillName.toLowerCase())) {
-            await skillsService.createSkill({ name: skillName, category: "GENERAL" });
-          }
-        }
-      } catch (err) {
-        console.error("Failed to register custom skills in catalog:", err);
-      }
 
       return data;
     },
@@ -64,8 +44,8 @@ export const useUpdateProfile = (
               ...oldData.profile,
               name: data?.profile?.name ?? oldData.profile.name,
               bio: data?.profile?.bio ?? oldData.profile.bio,
-              offeredSkills: variables.servicesOffered,
-              requiredSkills: variables.servicesNeeded,
+              offeredSkills: variables.offeredSkills,
+              requiredSkills: variables.requiredSkills,
             },
           };
         });

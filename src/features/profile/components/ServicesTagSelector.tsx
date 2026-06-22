@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { X, Plus, Search } from "lucide-react";
 import { getSkillIcon } from "@/src/utils/skillIcons";
 import { useSkills } from "@/src/features/skills";
+import { useCreateSkill } from "@/src/features/skills/hooks/useCreateSkill";
 
 interface ServicesTagSelectorProps {
   label: string;
@@ -11,15 +12,22 @@ interface ServicesTagSelectorProps {
   onChange: (tags: string[]) => void;
   addButtonLabel: string;
   placeholder?: string;
-  category: "TECHNICAL" | "GENERAL";
 }
 
 export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
-  const { label, icon, selectedTags, onChange, addButtonLabel, placeholder = "البحث في الخدمات...", category } = props;
+  const {
+    label,
+    icon,
+    selectedTags,
+    onChange,
+    addButtonLabel,
+    placeholder = "البحث في الخدمات...",
+  } = props;
   
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { mutate: createSkill } = useCreateSkill();
   
   // Load approved skills from backend
   const { data: dbSkills = [] } = useSkills();
@@ -46,13 +54,25 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
     onChange(selectedTags.filter((tag) => tag !== tagToRemove));
   };
 
+  const selectedTagsLower = useMemo(() => {
+    return new Set(selectedTags.map((tag) => tag.toLowerCase()));
+  }, [selectedTags]);
+
   const handleAdd = (tagToAdd: string) => {
     const trimmed = tagToAdd.trim();
-    if (trimmed) {
-      if (!selectedTags.includes(trimmed)) {
-        onChange([...selectedTags, trimmed]);
-      }
+    if (!trimmed) {
+      setSearch("");
+      setIsOpen(false);
+      return;
     }
+
+    if (selectedTagsLower.has(trimmed.toLowerCase())) {
+      setSearch("");
+      setIsOpen(false);
+      return;
+    }
+
+    onChange([...selectedTags, trimmed]);
     setSearch("");
     setIsOpen(false);
   };
@@ -60,6 +80,12 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
   const handleCreateNewSkill = (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
+
+    if (selectedTagsLower.has(trimmed.toLowerCase())) {
+      setSearch("");
+      setIsOpen(false);
+      return;
+    }
 
     // Check if it already exists case-insensitively in dbSkills
     const existing = dbSkills.find(
@@ -70,20 +96,22 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
       return;
     }
 
+    // Optimistic UX: add immediately and create in catalog in background.
     handleAdd(trimmed);
+    createSkill({ name: trimmed, category: "GENERAL" });
   };
 
   // Filter suggestions from localServices list
   const suggestions = localServices.filter(
     (item) =>
       item.toLowerCase().includes(search.toLowerCase()) &&
-      !selectedTags.includes(item)
+      !selectedTagsLower.has(item.toLowerCase())
   );
 
   const showCustomOption =
     search.trim() !== "" &&
     !localServices.some((item) => item.toLowerCase() === search.trim().toLowerCase()) &&
-    !selectedTags.some((item) => item.toLowerCase() === search.trim().toLowerCase());
+    !selectedTagsLower.has(search.trim().toLowerCase());
 
   return (
     <div className="flex flex-col gap-3 w-full text-right" ref={dropdownRef}>
@@ -98,9 +126,9 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
         {selectedTags.map((tag) => (
           <div
             key={tag}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#eef3f7] text-[#1e4c6e] rounded-full text-xs font-semibold select-none border border-neutral-100/50"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#eef3f7] text-primary-600 rounded-full text-xs font-semibold select-none border border-neutral-100/50"
           >
-            {getSkillIcon(tag, { className: "w-3.5 h-3.5 text-[#1e4c6e] shrink-0" })}
+            {getSkillIcon(tag, { className: "w-3.5 h-3.5 text-primary-600 shrink-0" })}
             <span>{tag}</span>
             <button
               type="button"
@@ -108,7 +136,7 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
               className="p-0.5 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer"
               title="إزالة"
             >
-              <X size={12} className="text-[#8fa8be] hover:text-[#1e4c6e]" />
+              <X size={12} className="text-[#8fa8be] hover:text-primary-600" />
             </button>
           </div>
         ))}
@@ -117,7 +145,7 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-neutral-300 text-neutral-500 hover:text-[#1e4c6e] hover:border-[#1e4c6e] rounded-full text-xs transition-all cursor-pointer bg-white font-medium"
+          className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-neutral-300 text-neutral-500 hover:text-primary-600 hover:border-primary-600 rounded-full text-xs transition-all cursor-pointer bg-white font-medium"
         >
           <Plus size={13} />
           <span>{addButtonLabel}</span>
@@ -125,7 +153,7 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
 
         {/* Search Dropdown */}
         {isOpen && (
-          <div className="absolute top-full right-0 left-0 mt-2 bg-white rounded-xl shadow-2xl border border-primary-50 z-[1000] p-3 animate-in fade-in slide-in-from-top-2 flex flex-col gap-2">
+          <div className="absolute top-full right-0 left-0 mt-2 bg-white rounded-xl shadow-2xl border border-primary-50 z-1000 p-3 animate-in fade-in slide-in-from-top-2 flex flex-col gap-2">
             {/* Search Input */}
             <div className="relative w-full">
               <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />

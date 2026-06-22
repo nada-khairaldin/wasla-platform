@@ -4,18 +4,60 @@ import Button from "../../../../../components/ui/Button";
 import AuthWrapper from "../../../../../features/auth/components/AuthWrapper";
 import SkillMatchingForm from "../../../../../features/auth/components/SkillMatchingForm";
 import Stepper from "../../../../../features/auth/components/Stepper";
-import { useEffect, useState } from "react";
-import { ChevronRight, FileText } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { skillsSchema } from "../../../../../features/auth/schemas/authSchema";
 import {
   useSignupActions,
   useSignupStore,
 } from "../../../../../features/auth/store/useSignupStore";
 import BioInput from "../../../../../features/auth/components/BioInput";
+import { useInfiniteSkills } from "../../../../../features/skills/hooks/useInfiniteSkills";
 
 function Page() {
   const data = useSignupStore((state) => state.formData);
   const router = useRouter();
+
+  const {
+    data: skillsPages,
+    isLoading,
+    isError,
+    isFetchNextPageError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteSkills(10);
+
+  const availableSkills = useMemo(() => {
+    if (!skillsPages?.pages.length) return [];
+
+    const uniqueSkillsMap = new Map<number, { id: number; name: string }>();
+
+    skillsPages.pages.forEach((page) => {
+      page.skills.forEach((skill) => {
+        if (!uniqueSkillsMap.has(skill.id)) {
+          uniqueSkillsMap.set(skill.id, { id: skill.id, name: skill.name });
+        }
+      });
+    });
+
+    return Array.from(uniqueSkillsMap.values());
+  }, [skillsPages]);
+
+  const handleLoadMoreSkills = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const handleRetrySkills = useCallback(() => {
+    if (isError) {
+      refetch();
+      return;
+    }
+
+    fetchNextPage();
+  }, [fetchNextPage, isError, refetch]);
 
   useEffect(() => {
     if (!data.email) {
@@ -99,6 +141,14 @@ function Page() {
               label="المهارات التي أقدمها"
               selectedSkills={offeredSkills}
               onSkillsChange={setOfferedSkills}
+              availableSkills={availableSkills}
+              isLoading={isLoading}
+              hasMoreSkills={Boolean(hasNextPage)}
+              isFetchingMoreSkills={isFetchingNextPage}
+              onLoadMoreSkills={handleLoadMoreSkills}
+              isError={isError}
+              isFetchMoreError={isFetchNextPageError}
+              onRetrySkills={handleRetrySkills}
             />
             {errors.offered && (
               <p className="text-red-500 text-xs mt-2 mr-2">{errors.offered}</p>
@@ -110,6 +160,14 @@ function Page() {
               label="المهارات التي أحتاجها"
               selectedSkills={requiredSkills}
               onSkillsChange={setRequiredSkills}
+              availableSkills={availableSkills}
+              isLoading={isLoading}
+              hasMoreSkills={Boolean(hasNextPage)}
+              isFetchingMoreSkills={isFetchingNextPage}
+              onLoadMoreSkills={handleLoadMoreSkills}
+              isError={isError}
+              isFetchMoreError={isFetchNextPageError}
+              onRetrySkills={handleRetrySkills}
             />
             {errors.required && (
               <p className="text-red-500 text-xs mt-2 mr-2">

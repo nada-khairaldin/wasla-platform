@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { skillsService } from "../services/skillsService";
 
-export const useSkills = (category?: "TECHNICAL" | "GENERAL") => {
+export const useSkills = () => {
   return useQuery({
-    queryKey: ["skills", category],
+    queryKey: ["skills"],
     queryFn: async () => {
-      const { data, error } = await skillsService.getSkills(category);
+      const { data, error } = await skillsService.getSkills();
       if (error) throw new Error(error);
       return data?.skills || [];
     },

@@ -37,7 +37,8 @@ export interface ProfileData {
   name: string;
   title: string;
   bio: string;
-  tags: string[];
+  offeredSkills: string[];
+  requiredSkills: string[];
   avatarUrl?: string;
   timeBalanceHours: number;
   stats: {

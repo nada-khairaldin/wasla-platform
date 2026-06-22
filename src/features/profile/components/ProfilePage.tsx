@@ -60,7 +60,7 @@ export default function ProfilePage(props: ProfilePageProps) {
                 </div>
               </div>
             </div>
-            <div className="min-[815px]:w-52 min-[815px]:flex-shrink-0">
+            <div className="min-[815px]:w-52 min-[815px]:shrink-0">
               <div className="rounded-2xl bg-white border border-neutral-100 p-4 sm:p-6 flex flex-col gap-4 h-full">
                 <Skeleton className="h-4 w-2/3 rounded" />
                 <Skeleton className="h-10 w-16 rounded mt-2 animate-pulse" />
@@ -122,13 +122,14 @@ export default function ProfilePage(props: ProfilePageProps) {
               name={isEmpty ? "" : profile.name}
               title={isEmpty ? "" : profile.title}
               bio={isEmpty ? "" : profile.bio}
-              tags={isEmpty ? [] : profile.tags}
+              offeredSkills={isEmpty ? [] : profile.offeredSkills}
+              requiredSkills={isEmpty ? [] : profile.requiredSkills}
               avatarUrl={isEmpty ? undefined : profile.avatarUrl}
               onEditClick={onEditProfile}
               isEmpty={isEmpty}
             />
           </div>
-          <div className="min-[815px]:w-52 min-[815px]:flex-shrink-0">
+          <div className="min-[815px]:w-52 min-[815px]:shrink-0">
             <TimeBalanceCard
               hours={isEmpty ? 5 : profile.timeBalanceHours}
               onViewDetails={onViewWalletDetails}

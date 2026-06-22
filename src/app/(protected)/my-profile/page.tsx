@@ -92,12 +92,8 @@ export default function ProfileRoute() {
       name: prof.name || "",
       title: prof.username ? `@${prof.username}` : "",
       bio: prof.bio || "",
-      tags: Array.from(
-        new Set([
-          ...(prof.offeredSkills || []),
-          ...(prof.requiredSkills || []),
-        ])
-      ),
+      offeredSkills: prof.offeredSkills || [],
+      requiredSkills: prof.requiredSkills || [],
       avatarUrl: prof.profilePicture || undefined,
       timeBalanceHours: prof.stats?.availableTimeCredits || 0,
       stats,

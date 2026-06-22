@@ -31,8 +31,8 @@ export default function EditProfilePage() {
   const handleSubmit = (data: {
     name: string;
     bio: string;
-    servicesNeeded: string[];
-    servicesOffered: string[];
+    requiredSkills: string[];
+    offeredSkills: string[];
   }) => {
     updateProfileMutation.mutate(data);
   };
@@ -42,8 +42,8 @@ export default function EditProfilePage() {
         name: userProfile.profile.name || "",
         username: userProfile.profile.username || "",
         bio: userProfile.profile.bio || "",
-        servicesNeeded: userProfile.profile.requiredSkills || [],
-        servicesOffered: userProfile.profile.offeredSkills || [],
+        requiredSkills: userProfile.profile.requiredSkills || [],
+        offeredSkills: userProfile.profile.offeredSkills || [],
       }
     : null;
 

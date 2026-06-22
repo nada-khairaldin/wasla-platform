@@ -12,16 +12,16 @@ interface EditProfileFormProps {
     name: string;
     username: string;
     bio: string;
-    servicesNeeded: string[];
-    servicesOffered: string[];
+    requiredSkills: string[];
+    offeredSkills: string[];
   } | null;
   isLoading: boolean;
   isPending: boolean;
   onSubmit: (data: {
     name: string;
     bio: string;
-    servicesNeeded: string[];
-    servicesOffered: string[];
+    requiredSkills: string[];
+    offeredSkills: string[];
   }) => void;
   onCancel: () => void;
 }
@@ -45,14 +45,14 @@ export default function EditProfileForm(props: EditProfileFormProps) {
     defaultValues: {
       name: "",
       bio: "",
-      servicesNeeded: [],
-      servicesOffered: [],
+      requiredSkills: [],
+      offeredSkills: [],
     },
   });
 
 
-  const servicesNeeded = watch("servicesNeeded") || [];
-  const servicesOffered = watch("servicesOffered") || [];
+  const requiredSkills = watch("requiredSkills") || [];
+  const offeredSkills = watch("offeredSkills") || [];
   const bio = watch("bio") || "";
 
 
@@ -61,8 +61,8 @@ export default function EditProfileForm(props: EditProfileFormProps) {
       reset({
         name: initialData.name || "",
         bio: initialData.bio || "",
-        servicesNeeded: initialData.servicesNeeded || [],
-        servicesOffered: initialData.servicesOffered || [],
+        requiredSkills: initialData.requiredSkills || [],
+        offeredSkills: initialData.offeredSkills || [],
       });
       setUsername(initialData.username || "");
     }
@@ -81,20 +81,20 @@ export default function EditProfileForm(props: EditProfileFormProps) {
     onCancel();
   };
 
-  const handleServicesNeededChange = (tags: string[]) => {
-    setValue("servicesNeeded", tags, { shouldDirty: true, shouldValidate: true });
+  const handleRequiredSkillsChange = (tags: string[]) => {
+    setValue("requiredSkills", tags, { shouldDirty: true, shouldValidate: true });
   };
 
-  const handleServicesOfferedChange = (tags: string[]) => {
-    setValue("servicesOffered", tags, { shouldDirty: true, shouldValidate: true });
+  const handleOfferedSkillsChange = (tags: string[]) => {
+    setValue("offeredSkills", tags, { shouldDirty: true, shouldValidate: true });
   };
 
   const onSubmitForm = (data: EditProfileFormData) => {
     onSubmit({
       name: data.name,
       bio: data.bio ?? "",
-      servicesNeeded: data.servicesNeeded,
-      servicesOffered: data.servicesOffered,
+      requiredSkills: data.requiredSkills,
+      offeredSkills: data.offeredSkills,
     });
   };
 
@@ -243,13 +243,12 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                   label="خدمات أقدمها"
                   addButtonLabel="أضف مهارة"
                   placeholder="ابحث عن مهارة لتقديمها..."
-                  selectedTags={servicesOffered}
-                  onChange={handleServicesOfferedChange}
+                  selectedTags={offeredSkills}
+                  onChange={handleOfferedSkillsChange}
                   icon={<HandHeart className="w-5 h-5 shrink-0" />}
-                  category="TECHNICAL"
                 />
-                {errors.servicesOffered && (
-                  <p className="text-error-500 text-xs text-right mt-1">{errors.servicesOffered.message}</p>
+                {errors.offeredSkills && (
+                  <p className="text-error-500 text-xs text-right mt-1">{errors.offeredSkills.message}</p>
                 )}
               </div>
 
@@ -259,13 +258,12 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                   label="خدمات أحتاجها"
                   addButtonLabel="أضف خدمة"
                   placeholder="ابحث عن خدمة تحتاجها..."
-                  selectedTags={servicesNeeded}
-                  onChange={handleServicesNeededChange}
+                  selectedTags={requiredSkills}
+                  onChange={handleRequiredSkillsChange}
                   icon={<ShoppingBasket className="w-5 h-5 shrink-0" />}
-                  category="GENERAL"
                 />
-                {errors.servicesNeeded && (
-                  <p className="text-error-500 text-xs text-right mt-1">{errors.servicesNeeded.message}</p>
+                {errors.requiredSkills && (
+                  <p className="text-error-500 text-xs text-right mt-1">{errors.requiredSkills.message}</p>
                 )}
               </div>
 
@@ -294,7 +292,7 @@ export default function EditProfileForm(props: EditProfileFormProps) {
 
 
       {showDiscardModal && (
-        <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-all duration-300">
+        <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-9999 flex items-center justify-center p-4 transition-all duration-300">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-[340px] w-full flex flex-col items-center text-center shadow-2xl animate-in fade-in zoom-in-95 duration-250">
             <div className="w-14 h-14 rounded-full bg-error-50 flex items-center justify-center text-error-600 mb-5">
               <AlertOctagon size={28} />

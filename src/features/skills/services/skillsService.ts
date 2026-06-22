@@ -1,12 +1,17 @@
 import { apiRequest } from "@/src/services/api";
-import { SkillsResponse, CreateSkillPayload, CreateSkillResponse } from "../types";
+import {
+  SkillsResponse,
+  CreateSkillPayload,
+  CreateSkillResponse,
+  GetSkillsPayload,
+} from "../types";
 
 export const skillsService = {
-  getSkills: (category?: "TECHNICAL" | "GENERAL") => {
+  getSkills: (payload?: GetSkillsPayload) => {
     return apiRequest<SkillsResponse>({
       method: "GET",
       url: "/skills",
-      payload: category ? { category } : undefined,
+      payload,
     });
   },
 

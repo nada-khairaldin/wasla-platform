@@ -130,11 +130,11 @@ export const editProfileSchema = z.object({
     .max(250, "النبذة الشخصية يجب أن لا تتجاوز 250 حرفاً")
     .optional()
     .or(z.literal("")),
-  servicesNeeded: createSkillsArraySchema(
+  requiredSkills: createSkillsArraySchema(
     "يرجى اختيار مهارة واحدة على الأقل تحتاجها",
     "يرجى اختيار خمس مهارات كحد أقصى",
   ),
-  servicesOffered: createSkillsArraySchema(
+  offeredSkills: createSkillsArraySchema(
     "يرجى اختيار مهارة واحدة على الأقل تقدمها",
     "يرجى اختيار خمس مهارات كحد أقصى",
   ),

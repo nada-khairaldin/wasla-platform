@@ -5,14 +5,15 @@ interface ProfileHeaderProps {
   name: string;
   title: string;
   bio: string;
-  tags: string[];
+  offeredSkills: string[];
+  requiredSkills: string[];
   avatarUrl?: string;
   onEditClick?: () => void;
   isEmpty?: boolean;
 }
 
 export default function ProfileHeader(props: ProfileHeaderProps) {
-  const { name, title, bio, tags, avatarUrl, onEditClick, isEmpty } = props;
+  const { name, title, bio, offeredSkills, requiredSkills, avatarUrl, onEditClick, isEmpty } = props;
 
   return (
     <div className="rounded-2xl bg-white shadow-sm border border-neutral-100 p-4 sm:p-6 h-full" dir="rtl">
@@ -20,7 +21,7 @@ export default function ProfileHeader(props: ProfileHeaderProps) {
       <div className="flex items-start gap-3 sm:gap-4">
         
         {/* Avatar (right side) */}
-        <div className="relative flex-shrink-0">
+        <div className="relative shrink-0">
           {isEmpty ? (
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-500 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 sm:w-10 sm:h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -65,7 +66,7 @@ export default function ProfileHeader(props: ProfileHeaderProps) {
             {!isEmpty && (
               <button
                 onClick={onEditClick}
-                className="flex-shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 border border-neutral-200 text-neutral-600 rounded-full text-xs sm:text-sm hover:bg-neutral-50 hover:text-neutral-800 transition-colors whitespace-nowrap"
+                className="shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 border border-neutral-200 text-neutral-600 rounded-full text-xs sm:text-sm hover:bg-neutral-50 hover:text-neutral-800 transition-colors whitespace-nowrap"
               >
                 تعديل الملف
               </button>
@@ -90,14 +91,29 @@ export default function ProfileHeader(props: ProfileHeaderProps) {
             </div>
           )}
 
-          {/* Tags */}
+          {/* Skills chips */}
           {!isEmpty && (
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
-              {tags?.map((tag) => (
-                <span key={tag} className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-neutral-100 text-neutral-600 text-xs">
-                  #{tag}
-                </span>
-              ))}
+            <div className="mt-2 sm:mt-3 flex flex-col gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {offeredSkills?.map((skill) => (
+                  <span
+                    key={`offered-${skill}`}
+                    className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-neutral-100 text-neutral-600 text-xs"
+                  >
+                    #{skill}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {requiredSkills?.map((skill) => (
+                  <span
+                    key={`required-${skill}`}
+                    className="px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-primary-50 text-primary-700 text-xs"
+                  >
+                    #{skill}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
