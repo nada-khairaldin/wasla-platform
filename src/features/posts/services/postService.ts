@@ -16,10 +16,10 @@ export const postServices = {
     });
   },
 
-  getFeed: (userId?: number) => {
+  getFeed: (userId: number) => {
     return apiRequest<FeedResponse>({
       method: "GET",
-      url: userId ? `/feed/${userId}` : "/posts",
+      url: `/feed/${userId}`,
     });
   },
 

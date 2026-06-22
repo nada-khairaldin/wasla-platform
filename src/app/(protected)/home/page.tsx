@@ -6,10 +6,9 @@ import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { BalanceCard } from "../../../features/home/components/BalanceCard";
 import { SidebarFilters } from "../../../features/home/components/SidebarFilters";
 import { RecommendedCarousel } from "../../../features/posts/components/RecommendedCarousel";
-import { ChevronLeft, ChevronRight, Sparkles, Funnel } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Funnel, AlertTriangle, RefreshCw } from "lucide-react";
 import { PostCard } from "../../../features/posts/components/PostCard";
 import { usePosts } from "../../../features/posts/hooks";
-import { Skeleton } from "../../../components/ui/Skeleton";
 import { useUserProfile } from "../../../features/profile/hooks/useUserProfile";
 
 interface FilterCriteria {
@@ -29,22 +28,31 @@ export default function HomePage() {
     return undefined;
   };
   const userId = extractUserId(currentUser);
-  const { data: profileData, isLoading: isProfileLoading, isError: isProfileError } = useUserProfile(userId);
+  const { data: profileData, isLoading: isProfileLoading } = useUserProfile(userId);
 
   const points = profileData?.profile?.stats?.availableTimeCredits ?? 0;
   const username = profileData?.profile?.username;
 
-  const { data: feedData, isLoading: isPostsLoading } = usePosts(userId);
+  const hasUserId = typeof userId === "number" && Number.isFinite(userId);
+  const {
+    data: feedData,
+    isLoading: isPostsLoading,
+    isError: isFeedError,
+    refetch: refetchFeed,
+    isFetching: isRefreshingFeed,
+  } = usePosts(userId);
   const allPosts = useMemo(() => feedData?.posts ?? [], [feedData?.posts]);
   const feedSource = feedData?.source ?? "fallback";
+  const isRecommenderFeed = feedSource.toLowerCase() === "recommender";
+  const showRecommenderFallbackNotice = Boolean(feedData?.recommenderUnavailable);
 
   const recommendedPosts = useMemo(() => {
-    return feedSource.toLowerCase() === "recommender" ? allPosts.slice(0, 6) : [];
-  }, [allPosts, feedSource]);
+    return isRecommenderFeed ? allPosts.slice(0, 6) : [];
+  }, [allPosts, isRecommenderFeed]);
 
   const regularPosts = useMemo(() => {
-    return feedSource.toLowerCase() === "recommender" ? allPosts.slice(6) : allPosts;
-  }, [allPosts, feedSource]);
+    return isRecommenderFeed ? allPosts.slice(6) : allPosts;
+  }, [allPosts, isRecommenderFeed]);
 
   const [activeFilters, setActiveFilters] = useState<FilterCriteria>({
     type: "الكل",
@@ -100,7 +108,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {feedSource.toLowerCase() === "recommender" && recommendedPosts.length > 0 && (
+        {isRecommenderFeed && recommendedPosts.length > 0 && (
           <section className="my-16">
             <div className="flex flex-col gap-2 mb-8 px-2 text-right">
               <div className="flex items-center gap-2">
@@ -139,18 +147,59 @@ export default function HomePage() {
                 <h3 className="font-bold text-primary-900 text-xl tracking-tight">
                   آخر المنشورات
                 </h3>
+                {isRecommenderFeed && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-secondary-100 text-secondary-700 px-3 py-1 text-xs font-bold">
+                    <Sparkles size={12} />
+                    Recommended for you
+                  </span>
+                )}
               </div>
 
-              <button
-                onClick={() => setIsMobileFilterOpen(true)}
-                className="lg:hidden flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border border-neutral-200 w-11 h-11 rounded-xl transition-all shadow-sm active:scale-95"
-              >
-                <Funnel size={20} className="text-primary-600" />
-              </button>
+              <div className="flex items-center gap-2">
+                {hasUserId && (
+                  <button
+                    onClick={() => refetchFeed()}
+                    disabled={isRefreshingFeed}
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-all disabled:opacity-60"
+                  >
+                    <RefreshCw size={15} className={isRefreshingFeed ? "animate-spin" : ""} />
+                    تحديث
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setIsMobileFilterOpen(true)}
+                  className="lg:hidden flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border border-neutral-200 w-11 h-11 rounded-xl transition-all shadow-sm active:scale-95"
+                >
+                  <Funnel size={20} className="text-primary-600" />
+                </button>
+              </div>
             </div>
 
+            {showRecommenderFallbackNotice && (
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <div className="flex items-center gap-2 text-amber-800 text-sm font-bold">
+                  <AlertTriangle size={16} />
+                  <span>تعذر تحميل التوصيات، يتم عرض آخر المنشورات حالياً.</span>
+                </div>
+                <button
+                  onClick={() => refetchFeed()}
+                  disabled={isRefreshingFeed}
+                  className="text-sm text-amber-900 underline font-bold disabled:opacity-60"
+                >
+                  إعادة المحاولة
+                </button>
+              </div>
+            )}
+
             <div className="grid gap-6">
-              {isPostsLoading ? (
+              {!hasUserId ? (
+                <div className="text-center py-24 bg-neutral-50 rounded-4xl border-2 border-dashed border-neutral-200">
+                  <p className="text-neutral-500 font-bold text-lg">
+                    جاري تهيئة بيانات المستخدم...
+                  </p>
+                </div>
+              ) : isPostsLoading ? (
                 Array(3)
                   .fill(0)
                   .map((_, i) => (
@@ -175,12 +224,31 @@ export default function HomePage() {
                       </div>
                     </div>
                   ))
+              ) : isFeedError ? (
+                <div className="text-center py-24 bg-error-50 rounded-4xl border border-error-200 space-y-4">
+                  <p className="text-error-600 font-bold text-lg">
+                    تعذر تحميل التوصيات
+                  </p>
+                  <button
+                    onClick={() => refetchFeed()}
+                    disabled={isRefreshingFeed}
+                    className="text-error-700 font-black underline disabled:opacity-60"
+                  >
+                    إعادة المحاولة
+                  </button>
+                </div>
+              ) : allPosts.length === 0 ? (
+                <div className="text-center py-24 bg-neutral-50 rounded-4xl border-2 border-dashed border-neutral-200">
+                  <p className="text-neutral-500 font-bold text-lg">
+                    No posts available
+                  </p>
+                </div>
               ) : currentPosts.length > 0 ? (
                 currentPosts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))
               ) : (
-                <div className="text-center py-24 bg-neutral-50 rounded-[32px] border-2 border-dashed border-neutral-200">
+                <div className="text-center py-24 bg-neutral-50 rounded-4xl border-2 border-dashed border-neutral-200">
                   <div className="text-4xl mb-4">🔍</div>
                   <p className="text-neutral-500 font-bold text-lg">
                     لا توجد نتائج تطابق خياراتك

@@ -1,5 +1,6 @@
 "use client";
 import { useRouter, usePathname } from "next/navigation";
+import { memo } from "react";
 import {
   Bookmark,
   Clock,
@@ -34,7 +35,7 @@ const Badge = ({
   </div>
 );
 
-export const PostCard = ({
+const PostCardComponent = ({
   post,
   isRecommended = false,
   onEdit,
@@ -238,3 +239,6 @@ export const PostCard = ({
     </div>
   );
 };
+
+export const PostCard = memo(PostCardComponent);
+PostCard.displayName = "PostCard";

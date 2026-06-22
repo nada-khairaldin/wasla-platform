@@ -21,6 +21,7 @@ export const useUpdatePost = () => {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["myPosts"] });
       queryClient.invalidateQueries({ queryKey: ["post", variables.postId] });
     },

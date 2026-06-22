@@ -14,6 +14,7 @@ export const useDeletePost = () => {
     },
     onSuccess: (data, postId) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
       queryClient.invalidateQueries({ queryKey: ["myPosts"] });
       queryClient.removeQueries({ queryKey: ["post", postId] });
     },
