@@ -85,42 +85,29 @@ export const useNotifications = () => {
 
       queryClient.setQueryData(
         ["notifications"],
-        (data: { pages: { notifications: Notification[]; nextCursor?: string | null }[]; pageParams: unknown[] } | undefined) => {
+        (data: { pages: { notifications: Notification[]; nextCursor?: string | null; unreadCount?: number; unreadMsgCount?: number }[]; pageParams: unknown[] } | undefined) => {
           if (!data) return data;
           return {
             ...data,
-            pages: data.pages.map((page) => ({
+            pages: data.pages.map((page, index) => ({
               ...page,
+              unreadCount: index === 0 ? 0 : page.unreadCount,
+              unreadMsgCount: index === 0 ? 0 : page.unreadMsgCount,
               notifications: page.notifications?.map((n) => ({ ...n, isRead: true })),
             })),
           };
         }
       );
 
-      // Also optimistically clear unreadCount for conversations since the message counter now depends on it
-      await queryClient.cancelQueries({ queryKey: ["conversations"] });
-      const previousConversations = queryClient.getQueryData(["conversations"]);
-      queryClient.setQueryData(["conversations"], (old: unknown) => {
-        if (!old || !Array.isArray(old)) return old;
-        return old.map((conv) => ({ ...(conv as Record<string, unknown>), unreadCount: 0 }));
-      });
-
-      return { previousData, previousConversations };
+      return { previousData };
     },
     onError: (err, newTodo, context) => {
       if (context?.previousData) {
         queryClient.setQueryData(["notifications"], context.previousData);
       }
-      if (context?.previousConversations) {
-        queryClient.setQueryData(["conversations"], context.previousConversations);
-      }
     },
     onSettled: () => {
-      // Optional: queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      // We do NOT invalidate "conversations" here because the backend /notifications/read-all
-      // endpoint does NOT mark chat messages as read in the DB. Invalidating it would cause
-      // the counter to instantly revert to the unread count from the DB.
-      // queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 

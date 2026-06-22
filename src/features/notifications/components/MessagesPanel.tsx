@@ -1,17 +1,22 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Inbox, MessageSquare } from "lucide-react";
+import { Inbox, MessageSquare, RefreshCw } from "lucide-react";
 import { NotificationItem } from "./NotificationItem";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "../hooks/useNotifications";
-import { useConversations } from "../../messages/hooks/useConversations";
 
 interface MessagesPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+/**
+ * MessagesPanel — Inbox dropdown for NEW_MESSAGE notifications only.
+ * Source of truth: notifications API filtered by category === "messages".
+ * No coupling with conversations system.
+ * Supports cursor-based pagination with infinite scroll.
+ */
 export function MessagesPanel({
   isOpen,
   onClose,
@@ -19,8 +24,7 @@ export function MessagesPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const { notifications, markAllAsRead } = useNotifications();
-  const { conversations } = useConversations();
+  const { notifications, unreadMsgCount, markAllAsRead, fetchNextPage, hasNextPage, isFetchingNextPage } = useNotifications();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -43,11 +47,21 @@ export function MessagesPanel({
     router.push("/messages");
   };
 
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    }
+  };
+
+  // STRICT: Only show message notifications (type === NEW_MESSAGE)
   const messages = notifications.filter((n) => n.category === "messages");
-  
-  const displayUnreadCount = conversations 
-    ? conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0)
-    : messages.filter((n) => !n.isRead).length;
+
+  // Messages unread count: only MESSAGE notifications
+  const displayUnreadCount = unreadMsgCount
+    ?? messages.filter((n) => !n.isRead).length;
 
   if (!isOpen) return null;
 
@@ -94,7 +108,10 @@ export function MessagesPanel({
       <div className="h-px bg-[#edeeef] mx-4" />
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[#edeeef] custom-scrollbar">
+      <div 
+        className="flex-1 overflow-y-auto divide-y divide-[#edeeef] custom-scrollbar"
+        onScroll={handleScroll}
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-neutral-200">
             <MessageSquare
@@ -113,6 +130,12 @@ export function MessagesPanel({
             />
           ))
         )}
+        
+        {isFetchingNextPage && (
+          <div className="py-4 flex justify-center items-center">
+            <RefreshCw size={16} className="text-neutral-400 animate-spin" />
+          </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -128,5 +151,3 @@ export function MessagesPanel({
     </div>
   );
 }
-
-

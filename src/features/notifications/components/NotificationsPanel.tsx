@@ -37,17 +37,27 @@ export function NotificationsPanel({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen, onClose]);
 
-  // Exclude messages from the main notifications panel if needed, or filter by activeTab
+  // STRICT: Exclude message notifications (type === NEW_MESSAGE) — they belong to MessagesPanel
   const nonMessageNotifications = notifications.filter(n => n.category !== "messages");
   const filtered =
     activeTab === "all"
       ? nonMessageNotifications
       : nonMessageNotifications.filter((n) => n.category === activeTab);
 
+  // Unread count: only NON-message notifications
   const displayUnreadCount = unreadCount ?? nonMessageNotifications.filter((n) => !n.isRead).length;
 
   const handleMarkAllAsRead = () => {
     markAllAsRead.mutate();
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    }
   };
 
   if (!isOpen) return null;
@@ -89,7 +99,10 @@ export function NotificationsPanel({
 
       <NotificationTabs active={activeTab} onChange={setActiveTab} />
 
-      <div className="flex-1 overflow-y-auto divide-y divide-[#edeeef] custom-scrollbar">
+      <div 
+        className="flex-1 overflow-y-auto divide-y divide-[#edeeef] custom-scrollbar"
+        onScroll={handleScroll}
+      >
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-neutral-200">
             <Bell size={32} strokeWidth={1.2} className="mb-2 opacity-50" />
@@ -104,20 +117,13 @@ export function NotificationsPanel({
             />
           ))
         )}
+        
+        {isFetchingNextPage && (
+          <div className="py-4 flex justify-center items-center">
+            <RefreshCw size={16} className="text-neutral-400 animate-spin" />
+          </div>
+        )}
       </div>
-
-      {hasNextPage && (
-        <div className="px-4 py-3 border-t border-neutral-50">
-          <button 
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-neutral-200/60 text-xs font-medium text-neutral-500 hover:bg-neutral-50/60 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={13} strokeWidth={2} className={isFetchingNextPage ? "animate-spin" : ""} />
-            {isFetchingNextPage ? "جاري التحميل..." : "تحميل الاشعارات السابقة"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

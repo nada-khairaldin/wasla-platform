@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatService } from "../services/chatService";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { transformMessages } from "../utils/transformConversations";
-import type { Message } from "../chat.types";
+import type { Message, ApiConversation } from "../chat.types";
 
 /**
  * Fetches messages for a specific conversation and transforms them into UI Message[].
@@ -33,6 +33,17 @@ export function useMessages(
   // Automatically mark unread messages from the other party as read
   useEffect(() => {
     if (!query.data || !userId || !conversationId) return;
+
+    // CRITICAL UX: Immediately reset conversation.unreadCount to 0 (optimistic)
+    // Opening a chat = all messages are considered READ
+    queryClient.setQueryData<ApiConversation[]>(["conversations"], (old) => {
+      if (!old) return old;
+      return old.map((conv) =>
+        conv.id === String(conversationId)
+          ? { ...conv, unreadCount: 0 }
+          : conv
+      );
+    });
 
     // Find messages sent by the other user that the current user hasn't read yet
     const unreadMessages = query.data.filter(

@@ -11,7 +11,6 @@ import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { MessagesPanel } from "@/src/features/notifications/components/MessagesPanel";
 import { NotificationsPanel } from "../../features/notifications/components/NotificationsPanel";
 import { useNotifications } from "@/src/features/notifications/hooks/useNotifications";
-import { useConversations } from "@/src/features/messages/hooks/useConversations";
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useUserProfile } from "../../features/profile/hooks/useUserProfile";
 
@@ -36,16 +35,15 @@ export default function ProtectedAppNavbar() {
   const bellRef = useRef<HTMLButtonElement>(null);
   const msgRef = useRef<HTMLButtonElement>(null);
 
-  const { notifications, unreadCount } = useNotifications();
-  const { conversations } = useConversations();
+  const { notifications, unreadCount, unreadMsgCount } = useNotifications();
 
-  const displayUnreadNotifCount = unreadCount ?? notifications.filter(
-    (n) => !n.isRead && n.category !== "messages",
-  ).length;
+  // Notifications badge: count only NON-message notifications
+  const displayUnreadNotifCount = unreadCount
+    ?? notifications.filter((n) => !n.isRead && n.category !== "messages").length;
 
-  const displayUnreadMsgCount = conversations 
-    ? conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0)
-    : notifications.filter((n) => !n.isRead && n.category === "messages").length;
+  // Messages badge: count only MESSAGE notifications (type === NEW_MESSAGE)
+  const displayUnreadMsgCount = unreadMsgCount
+    ?? notifications.filter((n) => !n.isRead && n.category === "messages").length;
 
 
   function toggleNotif(e: React.MouseEvent) {
@@ -88,6 +86,7 @@ export default function ProtectedAppNavbar() {
             </div>
 
             <div className="flex items-center gap-3 md:hidden">
+              {/* Messages (Inbox) button + panel */}
               <div className="relative">
                 <button
                   data-msg-trigger="true"
@@ -111,7 +110,7 @@ export default function ProtectedAppNavbar() {
                 />
               </div>
 
-              {/* Bell button + panel */}
+              {/* Bell (Notifications) button + panel */}
               <div className="relative">
                 <button
                   data-notif-trigger="true"
@@ -150,6 +149,7 @@ export default function ProtectedAppNavbar() {
             </button>
 
             <div className="hidden md:flex items-center gap-1 border-l border-neutral-100 pl-2">
+              {/* Messages (Inbox) button + panel */}
               <div className="relative">
                 <button
                   data-msg-trigger="true"
@@ -173,7 +173,7 @@ export default function ProtectedAppNavbar() {
                 />
               </div>
 
-              {/* Bell button + panel */}
+              {/* Bell (Notifications) button + panel */}
               <div className="relative">
                 <button
                   data-notif-trigger="true"
