@@ -8,13 +8,22 @@ export function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname === "/login" || pathname.startsWith("/signup");
+  const isAuthPage = 
+    pathname === "/login" || 
+    pathname.startsWith("/signup") || 
+    pathname.startsWith("/forgot-password") || 
+    pathname.startsWith("/reset-password");
+    
   const isPublicPage = pathname === "/";
 
   const hasValidSession = token || refreshToken;
 
   if (hasValidSession && (isAuthPage || isPublicPage)) {
     return NextResponse.redirect(new URL("/home", request.url));
+  }
+
+  if (!hasValidSession && !isAuthPage && !isPublicPage) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
