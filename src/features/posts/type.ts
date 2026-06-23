@@ -46,6 +46,7 @@ export interface SavedPost {
 
 export interface PostsResponse {
   posts: Post[];
+  nextCursor?: number | string | null;
 }
 
 export interface PostResponse {
@@ -55,4 +56,5 @@ export interface PostResponse {
 export interface FeedResponse {
   posts: Post[];
   source?: "recommender" | "fallback" | string;
+  nextCursor?: number | string | null;
 }

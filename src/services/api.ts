@@ -11,6 +11,7 @@ interface ApiRequestProps<P = unknown> {
 interface ApiResponse<T = unknown> {
   data: T | null;
   error: string | null;
+  status?: number;
 }
 
 export const api = axios.create({
@@ -94,11 +95,13 @@ export const apiRequest = async <T = unknown, P = unknown>({
       ...(payload && (isGet ? { params: payload } : { data: payload })),
       ...config,
     });
-    return { data: response.data, error: null };
+    return { data: response.data, error: null, status: response.status };
   } catch (error: unknown) {
     let errorMessage = "حدث خطأ غير متوقع";
+    let status: number | undefined;
 
     if (axios.isAxiosError(error)) {
+      status = error.response?.status;
       const data = error.response?.data;
       errorMessage =
         data?.errors?.[0]?.message ||
@@ -108,6 +111,6 @@ export const apiRequest = async <T = unknown, P = unknown>({
     } else if (error instanceof Error) {
       errorMessage = error.message;
     }
-    return { data: null, error: errorMessage };
+    return { data: null, error: errorMessage, status };
   }
 };

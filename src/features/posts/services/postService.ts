@@ -9,17 +9,17 @@ import {
 } from "../type";
 
 export const postServices = {
-  getPosts: () => {
+  getPosts: (cursor?: number | string) => {
     return apiRequest<PostsResponse>({
       method: "GET",
-      url: "/posts",
+      url: cursor ? `/posts?cursor=${cursor}` : "/posts",
     });
   },
 
-  getFeed: (userId: number) => {
+  getFeed: (userId: number, cursor?: number | string) => {
     return apiRequest<FeedResponse>({
       method: "GET",
-      url: `/feed/${userId}`,
+      url: cursor ? `/feed/${userId}?cursor=${cursor}` : `/feed/${userId}`,
     });
   },
 

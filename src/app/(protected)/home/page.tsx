@@ -17,6 +17,8 @@ interface FilterCriteria {
   hours: number;
 }
 
+import { useEffect } from "react";
+
 type PaginationToken = number | "dots";
 
 function getSmartPaginationTokens(currentPage: number, totalPages: number): PaginationToken[] {
@@ -56,7 +58,6 @@ function getSmartPaginationTokens(currentPage: number, totalPages: number): Pagi
 
   return tokens;
 }
-
 export default function HomePage() {
   const { data: currentUser, isLoading } = useCurrentUser();
   const extractUserId = (userObj: unknown) => {
@@ -80,10 +81,14 @@ export default function HomePage() {
     isError: isFeedError,
     refetch: refetchFeed,
     isFetching: isRefreshingFeed,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = usePosts(userId);
-  const showRecommenderFallbackNotice = Boolean(feedData?.recommenderUnavailable);
-  const recommendedPosts = feedData?.recommendedPosts ?? [];
-  const regularPosts = feedData?.regularPosts ?? [];
+
+  const showRecommenderFallbackNotice = Boolean(feedData?.pages[0]?.recommenderUnavailable);
+  const recommendedPosts = feedData?.pages[0]?.recommendedPosts ?? [];
+  const regularPosts = feedData?.pages.flatMap(p => p.regularPosts) ?? [];
 
   const [activeFilters, setActiveFilters] = useState<FilterCriteria>({
     type: "الكل",
@@ -119,7 +124,7 @@ export default function HomePage() {
     });
   }, [regularPosts, activeFilters]);
 
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / postsPerPage) + (hasNextPage ? 1 : 0));
   const paginationTokens = useMemo(
     () => getSmartPaginationTokens(currentPage, totalPages),
     [currentPage, totalPages],
@@ -129,6 +134,12 @@ export default function HomePage() {
     const start = (currentPage - 1) * postsPerPage;
     return filteredPosts.slice(start, start + postsPerPage);
   }, [filteredPosts, currentPage]);
+
+  useEffect(() => {
+    if ((currentPage - 1) * postsPerPage >= filteredPosts.length && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [currentPage, filteredPosts.length, hasNextPage, isFetchingNextPage, fetchNextPage, postsPerPage]);
 
   return (
     <main className="min-h-screen bg-white pb-20">
@@ -217,7 +228,7 @@ export default function HomePage() {
                     جاري تهيئة بيانات المستخدم...
                   </p>
                 </div>
-              ) : isPostsLoading ? (
+              ) : isPostsLoading || (isFetchingNextPage && currentPosts.length === 0) ? (
                 Array(3)
                   .fill(0)
                   .map((_, i) => (
@@ -320,7 +331,7 @@ export default function HomePage() {
                         <button
                           key={token}
                           onClick={() => {
-                            setCurrentPage(token);
+                            setCurrentPage(token as number);
                             window.scrollTo({ top: 800, behavior: "smooth" });
                           }}
                           aria-current={currentPage === token ? "page" : undefined}
