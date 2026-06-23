@@ -7,7 +7,7 @@ import { changePasswordSchema, ChangePasswordFormData } from "@/src/features/aut
 
 interface ChangePasswordFormProps {
   isPending: boolean;
-  onSubmit: (data: ChangePasswordFormData) => void;
+  onSubmit: (data: ChangePasswordFormData, reset: () => void) => void;
   onCancel: () => void;
 }
 
@@ -22,6 +22,7 @@ export default function ChangePasswordForm(props: ChangePasswordFormProps) {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordSchema),
@@ -29,7 +30,7 @@ export default function ChangePasswordForm(props: ChangePasswordFormProps) {
   });
 
   const handleSubmitForm = (data: ChangePasswordFormData) => {
-    onSubmit(data);
+    onSubmit(data, reset);
   };
 
   return (

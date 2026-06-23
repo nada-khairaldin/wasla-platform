@@ -1,29 +1,30 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useChangePassword } from "@/src/features/profile/hooks";
+import { useChangePassword } from "@/src/features/auth/hooks/useChangePassword";
 import { ChangePasswordFormData } from "@/src/features/auth/schemas/authSchema";
 import ChangePasswordForm from "@/src/features/profile/components/ChangePasswordForm";
-import toast from "react-hot-toast";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
 
   const changePasswordMutation = useChangePassword({
     onSuccess: () => {
-      toast.success("تم تغيير كلمة المرور بنجاح!");
-      router.push("/my-profile");
+      // Logic for toast and logout is handled inside useChangePassword hook
+      // No need to route to /my-profile since we are logging out
     },
     onError: (err: Error) => {
       console.error("Change password error:", err);
-      // Fallback for mock environments: log success and proceed
-      toast.success("تم حفظ كلمة المرور الجديدة بنجاح! (نمط تجريبي)");
-      router.push("/my-profile");
+      // Removed mock fallback to avoid wrong success messages when real API fails
     },
   });
 
-  const onSubmit = (data: ChangePasswordFormData) => {
-    changePasswordMutation.mutate(data);
+  const onSubmit = (data: ChangePasswordFormData, reset: () => void) => {
+    changePasswordMutation.mutate(data, {
+      onSuccess: () => {
+        reset(); // Clear fields upon success
+      }
+    });
   };
 
   return (

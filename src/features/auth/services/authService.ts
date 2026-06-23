@@ -3,12 +3,7 @@ import {
   SignupFormData,
   LoginFormData,
 } from "../schemas/authSchema";
-import { AuthResponse, ResetPasswordPayload } from "../types";
-
-export interface ChangePasswordPayload {
-  oldPassword?: string;
-  newPassword?: string;
-}
+import { AuthResponse, ResetPasswordPayload, ChangePasswordPayload } from "../types";
 
 export const authServices = {
   signup: (userData: SignupFormData) => {
@@ -52,11 +47,11 @@ export const authServices = {
     });
   },
 
-  changePassword: (passwordData: ChangePasswordPayload) => {
+  changePassword: (payload: ChangePasswordPayload) => {
     return apiRequest<void, ChangePasswordPayload>({
       method: "POST",
       url: "/auth/change-password",
-      payload: passwordData,
+      payload,
     });
   },
 
