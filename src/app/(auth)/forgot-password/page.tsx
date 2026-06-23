@@ -13,11 +13,11 @@ import {
   ForgotPasswordFormData,
   forgotPasswordSchema,
 } from "../../../features/auth/schemas/authSchema";
-import { authServices } from "../../../features/auth/services/authService";
+import { useForgotPassword } from "../../../features/auth/hooks/useForgotPassword";
 import Link from "next/link";
 
 function ForgotPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false);
+  const { mutateAsync: requestPasswordReset, isPending: isLoading } = useForgotPassword();
   const [isSuccess, setIsSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState("");
 
@@ -32,9 +32,8 @@ function ForgotPasswordPage() {
   });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setIsLoading(true);
     try {
-      const { error } = await authServices.forgotPassword(data.email);
+      const { error } = await requestPasswordReset(data.email);
       if (error) {
         toast.error(error);
       } else {
@@ -44,8 +43,6 @@ function ForgotPasswordPage() {
       }
     } catch (err) {
       toast.error("حدث خطأ غير متوقع");
-    } finally {
-      setIsLoading(false);
     }
   };
 

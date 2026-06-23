@@ -3,7 +3,7 @@ import {
   SignupFormData,
   LoginFormData,
 } from "../schemas/authSchema";
-import { AuthResponse } from "../types";
+import { AuthResponse, ResetPasswordPayload } from "../types";
 
 export interface ChangePasswordPayload {
   oldPassword?: string;
@@ -29,11 +29,19 @@ export const authServices = {
     });
   },
 
-  forgotPassword: (email: string) => {
+  requestPasswordReset: (email: string) => {
     return apiRequest<void, { email: string }>({
       method: "POST",
       url: "/auth/forget-password",
       payload: { email },
+    });
+  },
+
+  resetPassword: (payload: ResetPasswordPayload) => {
+    return apiRequest<void, ResetPasswordPayload>({
+      method: "POST",
+      url: "/auth/reset-password",
+      payload,
     });
   },
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, ArrowRight, CheckCircle2 } from "lucide-react";
@@ -11,21 +11,21 @@ import * as z from "zod";
 import Logo from "../../../components/ui/Logo";
 import InputField from "../../../components/ui/InputField";
 import Button from "../../../components/ui/Button";
-import { authServices } from "../../../features/auth/services/authService";
+import { useResetPassword } from "../../../features/auth/hooks/useResetPassword";
 import {
   ResetPasswordFormData,
   resetPasswordSchema,
 } from "../../../features/auth/schemas/authSchema";
 import Link from "next/link";
 
-function ResetPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false);
+function ResetPasswordContent() {
+  const { mutateAsync: resetPassword, isPending: isLoading } = useResetPassword();
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  // const token = searchParams.get("token");
+  const token = searchParams.get("token");
 
   const {
     register,
@@ -36,15 +36,14 @@ function ResetPasswordPage() {
     mode: "onBlur",
   });
 
-  /* const onSubmit = async (data: ResetPasswordFormData) => {
+  const onSubmit = async (data: ResetPasswordFormData) => {
     if (!token) {
       toast.error("رابط غير صالح أو منتهي الصلاحية");
       return;
     }
 
-    setIsLoading(true);
     try {
-      const { error } = await authServices.resetPassword(data.password, token);
+      const { error } = await resetPassword({ token, newPassword: data.password });
       
       if (error) {
         toast.error(error);
@@ -54,11 +53,8 @@ function ResetPasswordPage() {
       }
     } catch (err) {
       toast.error("حدث خطأ أثناء الاتصال بالسيرفر");
-    } finally {
-      setIsLoading(false);
     }
   };
-  */
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-xl overflow-hidden font-cairo">
@@ -80,7 +76,7 @@ function ResetPasswordPage() {
               أدخل كلمة المرور الجديدة الخاصة بك لتتمكن من الدخول إلى حسابك
             </p>
 
-            <form className="w-full space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-5">
               <InputField
                 id="password"
                 type="password"
@@ -150,4 +146,10 @@ function ResetPasswordPage() {
   );
 }
 
-export default ResetPasswordPage;
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-cairo text-neutral-600">جاري التحميل...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}

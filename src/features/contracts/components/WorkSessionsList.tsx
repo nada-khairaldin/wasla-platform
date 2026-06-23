@@ -11,6 +11,45 @@ interface WorkSessionsListProps {
 
 const TABS = ["الكل", "المؤكدة", "غير مؤكدة", "قيد الانتظار"];
 const ITEMS_PER_PAGE = 4;
+type PaginationToken = number | "dots";
+
+function getSmartPaginationTokens(currentPage: number, totalPages: number): PaginationToken[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages = new Set<number>([1, totalPages]);
+
+  for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+    if (page > 1 && page < totalPages) {
+      pages.add(page);
+    }
+  }
+
+  if (currentPage <= 3) {
+    for (let page = 2; page <= Math.min(4, totalPages - 1); page += 1) {
+      pages.add(page);
+    }
+  }
+
+  if (currentPage >= totalPages - 2) {
+    for (let page = Math.max(2, totalPages - 3); page <= totalPages - 1; page += 1) {
+      pages.add(page);
+    }
+  }
+
+  const sortedPages = [...pages].sort((a, b) => a - b);
+  const tokens: PaginationToken[] = [];
+
+  sortedPages.forEach((page, index) => {
+    if (index > 0 && page - sortedPages[index - 1] > 1) {
+      tokens.push("dots");
+    }
+    tokens.push(page);
+  });
+
+  return tokens;
+}
 
 export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId }: WorkSessionsListProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +76,7 @@ export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId 
   const totalPages = Math.ceil(sessions.length / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedSessions = sessions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginationTokens = getSmartPaginationTokens(currentPage, totalPages);
 
   const goToNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   const goToPrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -181,43 +221,80 @@ export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId 
 
         {/* Pagination Footer */}
         {sessions.length > 0 && (
-          <div className="flex items-center justify-between border-t border-neutral-100 p-4 bg-neutral-50/50 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <button 
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight size={16} />
-              </button>
-              
-              {Array.from({ length: totalPages }).map((_, idx) => {
-                const page = idx + 1;
-                const isActive = page === currentPage;
-                return (
-                  <button 
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
-                      isActive 
-                        ? "bg-[#215077] text-white shadow-sm" 
-                        : "text-neutral-600 hover:bg-neutral-100"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-
-              <button 
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-t border-neutral-100 p-4 bg-neutral-50/50 shrink-0">
+            <div className="md:hidden flex items-center gap-2">
+              <button
                 onClick={goToPrevPage}
                 disabled={currentPage === 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-9 px-3 rounded-lg border border-neutral-200 bg-white text-neutral-700 text-xs font-bold transition-colors hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronLeft size={16} />
+                السابق
+              </button>
+              <select
+                value={currentPage}
+                onChange={(event) => goToPage(Number(event.target.value))}
+                className="h-9 flex-1 rounded-lg border border-neutral-200 bg-white px-2 text-xs font-bold text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#215077]/20"
+              >
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <option key={page} value={page}>
+                    صفحة {page} من {totalPages}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="h-9 px-3 rounded-lg border border-neutral-200 bg-white text-neutral-700 text-xs font-bold transition-colors hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                التالي
               </button>
             </div>
-            
+
+            <div className="hidden md:block w-full max-w-full overflow-x-auto">
+              <div className="flex items-center gap-1.5 min-w-max">
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
+
+                {paginationTokens.map((token, index) =>
+                  token === "dots" ? (
+                    <span
+                      key={`dots-${index}`}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-200 text-neutral-400 text-sm font-bold select-none"
+                      aria-hidden="true"
+                    >
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={token}
+                      onClick={() => goToPage(token)}
+                      aria-current={token === currentPage ? "page" : undefined}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
+                        token === currentPage
+                          ? "bg-[#215077] text-white shadow-sm"
+                          : "text-neutral-600 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {token}
+                    </button>
+                  ),
+                )}
+
+                <button
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+              </div>
+            </div>
+
             <p className="text-xs font-bold text-neutral-400">
               عرض {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, sessions.length)} من أصل {sessions.length} جلسة
             </p>

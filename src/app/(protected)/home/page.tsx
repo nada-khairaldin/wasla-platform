@@ -17,6 +17,46 @@ interface FilterCriteria {
   hours: number;
 }
 
+type PaginationToken = number | "dots";
+
+function getSmartPaginationTokens(currentPage: number, totalPages: number): PaginationToken[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages = new Set<number>([1, totalPages]);
+
+  for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+    if (page > 1 && page < totalPages) {
+      pages.add(page);
+    }
+  }
+
+  if (currentPage <= 3) {
+    for (let page = 2; page <= Math.min(4, totalPages - 1); page += 1) {
+      pages.add(page);
+    }
+  }
+
+  if (currentPage >= totalPages - 2) {
+    for (let page = Math.max(2, totalPages - 3); page <= totalPages - 1; page += 1) {
+      pages.add(page);
+    }
+  }
+
+  const sortedPages = [...pages].sort((a, b) => a - b);
+  const tokens: PaginationToken[] = [];
+
+  sortedPages.forEach((page, index) => {
+    if (index > 0 && page - sortedPages[index - 1] > 1) {
+      tokens.push("dots");
+    }
+    tokens.push(page);
+  });
+
+  return tokens;
+}
+
 export default function HomePage() {
   const { data: currentUser, isLoading } = useCurrentUser();
   const extractUserId = (userObj: unknown) => {
@@ -41,18 +81,9 @@ export default function HomePage() {
     refetch: refetchFeed,
     isFetching: isRefreshingFeed,
   } = usePosts(userId);
-  const allPosts = useMemo(() => feedData?.posts ?? [], [feedData?.posts]);
-  const feedSource = feedData?.source ?? "fallback";
-  const isRecommenderFeed = feedSource.toLowerCase() === "recommender";
   const showRecommenderFallbackNotice = Boolean(feedData?.recommenderUnavailable);
-
-  const recommendedPosts = useMemo(() => {
-    return isRecommenderFeed ? allPosts.slice(0, 6) : [];
-  }, [allPosts, isRecommenderFeed]);
-
-  const regularPosts = useMemo(() => {
-    return isRecommenderFeed ? allPosts.slice(6) : allPosts;
-  }, [allPosts, isRecommenderFeed]);
+  const recommendedPosts = feedData?.recommendedPosts ?? [];
+  const regularPosts = feedData?.regularPosts ?? [];
 
   const [activeFilters, setActiveFilters] = useState<FilterCriteria>({
     type: "الكل",
@@ -89,6 +120,10 @@ export default function HomePage() {
   }, [regularPosts, activeFilters]);
 
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const paginationTokens = useMemo(
+    () => getSmartPaginationTokens(currentPage, totalPages),
+    [currentPage, totalPages],
+  );
 
   const currentPosts = useMemo(() => {
     const start = (currentPage - 1) * postsPerPage;
@@ -108,7 +143,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {isRecommenderFeed && recommendedPosts.length > 0 && (
+        {recommendedPosts.length > 0 && (
           <section className="my-16">
             <div className="flex flex-col gap-2 mb-8 px-2 text-right">
               <div className="flex items-center gap-2">
@@ -147,26 +182,9 @@ export default function HomePage() {
                 <h3 className="font-bold text-primary-900 text-xl tracking-tight">
                   آخر المنشورات
                 </h3>
-                {isRecommenderFeed && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-secondary-100 text-secondary-700 px-3 py-1 text-xs font-bold">
-                    <Sparkles size={12} />
-                    Recommended for you
-                  </span>
-                )}
               </div>
 
               <div className="flex items-center gap-2">
-                {hasUserId && (
-                  <button
-                    onClick={() => refetchFeed()}
-                    disabled={isRefreshingFeed}
-                    className="inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-all disabled:opacity-60"
-                  >
-                    <RefreshCw size={15} className={isRefreshingFeed ? "animate-spin" : ""} />
-                    تحديث
-                  </button>
-                )}
-
                 <button
                   onClick={() => setIsMobileFilterOpen(true)}
                   className="lg:hidden flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 text-neutral-600 border border-neutral-200 w-11 h-11 rounded-xl transition-all shadow-sm active:scale-95"
@@ -227,7 +245,7 @@ export default function HomePage() {
               ) : isFeedError ? (
                 <div className="text-center py-24 bg-error-50 rounded-4xl border border-error-200 space-y-4">
                   <p className="text-error-600 font-bold text-lg">
-                    تعذر تحميل التوصيات
+                    حدث خطأ أثناء تحميل المنشورات
                   </p>
                   <button
                     onClick={() => refetchFeed()}
@@ -237,10 +255,10 @@ export default function HomePage() {
                     إعادة المحاولة
                   </button>
                 </div>
-              ) : allPosts.length === 0 ? (
+              ) : regularPosts.length === 0 ? (
                 <div className="text-center py-24 bg-neutral-50 rounded-4xl border-2 border-dashed border-neutral-200">
                   <p className="text-neutral-500 font-bold text-lg">
-                    No posts available
+                    لا توجد منشورات متاحة حالياً
                   </p>
                 </div>
               ) : currentPosts.length > 0 ? (
@@ -271,60 +289,68 @@ export default function HomePage() {
 
             {/*pagination controls*/}
             {totalPages > 1 && (
-              <div
-                className="flex justify-center items-center gap-3 pt-12 pb-10"
-                dir="rtl"
-              >
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => {
-                    setCurrentPage((prev) => prev - 1);
-                    window.scrollTo({ top: 800, behavior: "smooth" });
-                  }}
-                  className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all shadow-sm
-                    ${currentPage === 1
-                      ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
-                      : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
-                    }`}
-                >
-                  <ChevronRight size={22} />
-                </button>
+              <div className="w-full max-w-full overflow-hidden pt-12 pb-10" dir="rtl">
+                <div className="w-full max-w-full overflow-x-auto scrollbar-none">
+                  <div className="mx-auto flex min-w-max items-center justify-center gap-2 px-1 py-1">
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => {
+                        setCurrentPage((prev) => Math.max(prev - 1, 1));
+                        window.scrollTo({ top: 800, behavior: "smooth" });
+                      }}
+                      className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl border flex items-center justify-center transition-all duration-200 shadow-sm
+                        ${currentPage === 1
+                          ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
+                          : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
+                        }`}
+                    >
+                      <ChevronRight size={18} className="sm:w-[22px] sm:h-[22px]" />
+                    </button>
 
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        onClick={() => {
-                          setCurrentPage(page);
-                          window.scrollTo({ top: 800, behavior: "smooth" });
-                        }}
-                        className={`w-11 h-11 rounded-xl font-black text-sm transition-all duration-300
-                        ${currentPage === page
-                            ? "bg-primary-600 text-white shadow-lg shadow-primary-200 scale-105"
-                            : "bg-white text-primary-400 border border-primary-50 hover:text-primary-600"
-                          }`}
-                      >
-                        {page}
-                      </button>
-                    ),
-                  )}
+                    {paginationTokens.map((token, index) =>
+                      token === "dots" ? (
+                        <span
+                          key={`dots-${index}`}
+                          className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl border border-primary-50 bg-white text-primary-300 flex items-center justify-center font-black text-xs sm:text-sm select-none"
+                          aria-hidden="true"
+                        >
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={token}
+                          onClick={() => {
+                            setCurrentPage(token);
+                            window.scrollTo({ top: 800, behavior: "smooth" });
+                          }}
+                          aria-current={currentPage === token ? "page" : undefined}
+                          className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl font-black text-xs sm:text-sm transition-all duration-200
+                          ${currentPage === token
+                              ? "bg-primary-600 text-white shadow-lg shadow-primary-200 scale-105"
+                              : "bg-white text-primary-400 border border-primary-50 hover:text-primary-600"
+                            }`}
+                        >
+                          {token}
+                        </button>
+                      ),
+                    )}
+
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => {
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                        window.scrollTo({ top: 800, behavior: "smooth" });
+                      }}
+                      className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl border flex items-center justify-center transition-all duration-200 shadow-sm
+                        ${currentPage === totalPages
+                          ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
+                          : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
+                        }`}
+                    >
+                      <ChevronLeft size={18} className="sm:w-[22px] sm:h-[22px]" />
+                    </button>
+                  </div>
                 </div>
-
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => {
-                    setCurrentPage((prev) => prev + 1);
-                    window.scrollTo({ top: 800, behavior: "smooth" });
-                  }}
-                  className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all shadow-sm
-                    ${currentPage === totalPages
-                      ? "opacity-30 cursor-not-allowed border-neutral-100 text-neutral-300"
-                      : "border-primary-100 text-primary-600 hover:bg-primary-600 hover:text-white"
-                    }`}
-                >
-                  <ChevronLeft size={22} />
-                </button>
               </div>
             )}
           </div>
