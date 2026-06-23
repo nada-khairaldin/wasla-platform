@@ -143,7 +143,7 @@ export const profileServices = {
   getWalletHistory: (params?: { page?: number; limit?: number; type?: string; status?: string }) => {
     return apiRequest<WalletHistoryResponse>({
       method: "GET",
-      url: "/wallet/history",
+      url: "/api/v1/wallet/history",
       payload: params,
     });
   },

@@ -21,6 +21,15 @@ export const chatService = {
     });
   },
 
+  /** Create a new direct conversation or reuse an existing one for a user */
+  createDirectConversation: (recipientId: number) => {
+    return apiRequest<ConversationResponse, { recipientId: number }>({
+      method: "POST",
+      url: "/conversations/direct",
+      payload: { recipientId },
+    });
+  },
+
   /** List all conversations for the current user */
   getConversations: (cursor?: string, limit: number = 20) => {
     const params: Record<string, string | number> = { limit };

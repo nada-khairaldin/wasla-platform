@@ -76,7 +76,7 @@ export default function UserProfilePage({ userId }: UserProfilePageProps) {
                 </div>
               </div>
             ) : (
-              profile && <UserProfileHeader profile={profile} />
+              profile && <UserProfileHeader profile={profile} userId={userId} />
             )}
           </div>
 

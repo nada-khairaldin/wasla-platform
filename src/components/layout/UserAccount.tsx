@@ -73,7 +73,7 @@ export const UserAccount = ({
                 onClick={() => setIsOpen(false)}
               />
               <AppNavLink
-                href="/wallet"
+                href="/my-profile/wallet"
                 icon={<Wallet size={18} />}
                 label="تفاصيل المحفظة"
                 variant="dropdown"

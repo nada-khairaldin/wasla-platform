@@ -75,17 +75,7 @@ export default function ProfileRoute() {
     const savedServices = savedPosts.map(mapSavedPostToSavedService);
     const recentContracts = (prof.recentExchanges || []).map(mapProfileRecentExchangeToContract);
     const mappedTransactions = walletHistory.map(mapWalletTransactionToTransaction);
-    const hasGift = mappedTransactions.some(t => t.type === "gift" || t.id === "welcome-gift");
     const walletTransactions = [...mappedTransactions];
-    if (!hasGift) {
-      walletTransactions.push({
-        id: "welcome-gift",
-        type: "gift" as const,
-        description: "هدية ترحيبية: تفعيل الحساب في المنصة",
-        hours: 5.0,
-        date: "عند التسجيل",
-      });
-    }
     const mappedReviews = reviews.map(mapApiReviewToReview);
 
     return {

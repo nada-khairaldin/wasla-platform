@@ -81,11 +81,13 @@ export const mapWalletTransactionToTransaction = (tx: WalletTransaction): Transa
     if (
       lowerDesc.includes("welcome") ||
       lowerDesc.includes("gift") ||
+      lowerDesc.includes("wasla") ||
       description.includes("هدية") ||
       description.includes("ترحيب")
     ) {
       type = "gift";
-      description = "هدية ترحيبية: تفعيل الحساب في المنصة";
+      // Keep the original description if it was provided by the API
+      description = tx.relatedServiceOrRequest?.title || "هدية من المنصة";
     }
   }
 

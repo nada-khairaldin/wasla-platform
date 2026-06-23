@@ -43,18 +43,7 @@ export default function WalletPage() {
 
   // Map real Wallet Transactions list
   const transactions: Transaction[] = useMemo(() => {
-    const list = walletHistory.map(mapWalletTransactionToTransaction);
-    const hasGift = list.some((t) => t.type === "gift" || t.id === "welcome-gift");
-    if (!hasGift) {
-      list.push({
-        id: "welcome-gift",
-        type: "gift",
-        description: "هدية ترحيبية: تفعيل الحساب في المنصة",
-        hours: 5.0,
-        date: "عند التسجيل",
-      });
-    }
-    return list;
+    return walletHistory.map(mapWalletTransactionToTransaction);
   }, [walletHistory]);
 
   // Balance and dynamic statistics computation
