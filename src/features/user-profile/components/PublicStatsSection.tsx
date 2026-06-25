@@ -1,5 +1,5 @@
 import React from "react";
-import { Star, CheckCircle, FileUp, Clock, BarChart2 } from "lucide-react";
+import { Star, CheckCircle, FileUp, BarChart2 } from "lucide-react";
 
 interface PublicStatsSectionProps {
   timeCredits: number;
@@ -31,7 +31,7 @@ function StatCard(props: StatCardProps) {
 }
 
 export default function PublicStatsSection(props: PublicStatsSectionProps) {
-  const { timeCredits, servicesProvided, servicesReceived, rating, ratingCount } = props;
+  const { servicesProvided, servicesReceived, rating } = props;
 
   return (
     <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 sm:p-6" dir="rtl">

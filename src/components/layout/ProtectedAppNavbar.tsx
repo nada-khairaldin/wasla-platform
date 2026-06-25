@@ -5,6 +5,7 @@ import Logo from "../ui/Logo";
 import { UserAccount } from "./UserAccount";
 import DesktopPublicNavLinks from "./DesktopProtectedNavLinks";
 import SearchBar from "../../features/search/components/SearchBar";
+import { SearchModal } from "../../features/search/components/SearchModal";
 import MobilePublicSidebar from "./MobileProtectedSidebar";
 import { Skeleton } from "../ui/Skeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
@@ -13,6 +14,7 @@ import { NotificationsPanel } from "../../features/notifications/components/Noti
 import { useNotifications } from "@/src/features/notifications/hooks/useNotifications";
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
 import { useUserProfile } from "../../features/profile/hooks/useUserProfile";
+import { useSearchModal } from "../../features/search/hooks/useSearchModal";
 
 const NAV_LINKS = [
   { label: "الرئيسية", href: "/home" },
@@ -24,6 +26,7 @@ export default function ProtectedAppNavbar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
+  const { openModal } = useSearchModal();
 
   const { data: currentUser, isLoading, isError: isUserError } = useCurrentUser();
   const userId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
@@ -144,7 +147,10 @@ export default function ProtectedAppNavbar() {
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4 shrink-0">
-            <button className="hidden md:flex lg:hidden p-2 text-neutral-500 hover:bg-neutral-50 rounded-xl transition-all">
+            <button 
+              onClick={openModal}
+              className="hidden md:flex lg:hidden p-2 text-neutral-500 hover:bg-neutral-50 rounded-xl transition-all"
+            >
               <Search size={22} />
             </button>
 
@@ -232,6 +238,7 @@ export default function ProtectedAppNavbar() {
         points={`رصيدك ${points} ساعة`}
         onClose={() => setSidebarOpen(false)}
       />
+      <SearchModal />
     </>
   );
 }

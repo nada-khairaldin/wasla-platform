@@ -11,7 +11,6 @@ import { useUserProfile } from "@/src/features/profile/hooks/useUserProfile";
 import { useUserReviews } from "@/src/features/profile/hooks/useUserReviews";
 import { mapProfileRecentExchangeToContract, mapApiReviewToReview } from "@/src/features/profile/utils/profileMappers";
 import { useRouter } from "next/navigation";
-import { Review, Contract } from "@/src/features/profile/types";
 
 interface UserProfilePageProps {
   userId: number;

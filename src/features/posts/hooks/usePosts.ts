@@ -65,7 +65,15 @@ export const usePosts = (userId?: number) => {
               nextCursor = data.nextCursor;
             }
           } else if (data?.source === "fallback") {
+            // Recommender unavailable — merge fallback posts into regular posts
             recommenderUnavailable = true;
+            const fallbackPosts = data.posts ?? [];
+            const existingIds = new Set(regularPosts.map(p => p.id));
+            const newPosts = fallbackPosts.filter((p: Post) => !existingIds.has(p.id));
+            regularPosts.push(...newPosts);
+            if (data.nextCursor) {
+              nextCursor = data.nextCursor;
+            }
           }
         }
       }

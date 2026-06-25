@@ -41,7 +41,7 @@ function ForgotPasswordPage() {
         setIsSuccess(true);
         toast.success("تم إرسال الرابط بنجاح");
       }
-    } catch (err) {
+    } catch {
       toast.error("حدث خطأ غير متوقع");
     }
   };

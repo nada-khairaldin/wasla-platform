@@ -1,18 +1,21 @@
+"use client";
 import { Search } from "lucide-react";
+import { useSearchModal } from "../hooks/useSearchModal";
 
 function SearchBar() {
+  const { openModal } = useSearchModal();
+
   return (
-    <div className="relative group w-full">
-      <input
-        type="text"
-        placeholder="ابحث عن..."
-        className="w-full bg-[#f1f3f5] border-none rounded-xl py-2 pr-10 pl-4 text-sm font-cairo outline-none focus:bg-[#e9ecef] focus:ring-2 focus:ring-primary-500 transition-all h-[40px] "
-      />
+    <button
+      onClick={openModal}
+      className="relative group w-full flex items-center bg-[#f1f3f5] rounded-xl py-2 pr-4 pl-10 h-[40px] hover:bg-[#e9ecef] transition-all text-neutral-400 text-sm font-cairo cursor-pointer"
+    >
+      <span className="opacity-80">ابحث عن...</span>
       <Search
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-primary-500"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 group-hover:text-primary-500 transition-colors"
         size={18}
       />
-    </div>
+    </button>
   );
 }
 

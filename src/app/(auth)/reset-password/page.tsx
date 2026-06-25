@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import * as z from "zod";
 
 import Logo from "../../../components/ui/Logo";
 import InputField from "../../../components/ui/InputField";
@@ -21,7 +20,6 @@ import Link from "next/link";
 function ResetPasswordContent() {
   const { mutateAsync: resetPassword, isPending: isLoading } = useResetPassword();
   const [isSuccess, setIsSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -51,7 +49,7 @@ function ResetPasswordContent() {
         setIsSuccess(true);
         toast.success("تم تغيير كلمة المرور بنجاح");
       }
-    } catch (err) {
+    } catch {
       toast.error("حدث خطأ أثناء الاتصال بالسيرفر");
     }
   };

@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { UserProfile } from "@/src/types";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { useCreateConversation } from "@/src/features/messages/hooks/useCreateConversation";
@@ -33,7 +34,7 @@ export default function UserProfileHeader({ profile, userId }: UserProfileHeader
         {/* Avatar (right side) */}
         <div className="relative flex-shrink-0">
           {profilePicture ? (
-            <img src={profilePicture} alt={name} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" />
+            <Image src={profilePicture} alt={name || ""} width={80} height={80} unoptimized className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" />
           ) : (
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-500 flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
               {name?.charAt(0) || "م"}
