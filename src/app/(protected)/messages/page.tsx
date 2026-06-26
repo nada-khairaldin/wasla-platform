@@ -124,12 +124,13 @@ function MessagesPageContent() {
       });
       toast.success("تم انشاء العقد بنجاح");
       setIsContractModalOpen(false);
-    } catch (error: any) {
-      if (error?.message?.includes("already exists") || error?.message?.includes("active")) {
+    } catch (error: unknown) {
+      const err = error as Error;
+      if (err?.message?.includes("already exists") || err?.message?.includes("active")) {
          toast.error("يوجد عقد نشط أو معلق مسبقاً لهذه الخدمة");
          setIsContractModalOpen(false);
       } else {
-         toast.error(error?.message || "حدث خطأ غير متوقع");
+         toast.error(err?.message || "حدث خطأ غير متوقع");
       }
     }
   };
@@ -137,7 +138,7 @@ function MessagesPageContent() {
   const isProvider = currentUserId === postData?.userId;
   
   // A contract exists if there is an exchange attached to the conversation or post
-  const hasActiveContract = !!(activeConversation as any)?.exchange || !!(postData as any)?.exchange;
+  const hasActiveContract = !!(activeConversation as { exchange?: unknown })?.exchange || !!(postData as { exchange?: unknown })?.exchange;
   
   const showContractButton = Boolean(
     isProvider && 
@@ -156,7 +157,7 @@ function MessagesPageContent() {
   const seekerName = (() => {
     if (!activeConversation) return "";
     const seekerParticipant = activeConversation.participants.find(p => p.userId !== postData?.userId);
-    return seekerParticipant?.username || "";
+    return seekerParticipant?.user?.username || "";
   })();
 
   const contractInitialData = {

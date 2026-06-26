@@ -21,7 +21,7 @@ export const RecommendedCarousel = ({ posts }: RecommendedCarouselProps) => {
     <div className="relative recommended-swiper-container group px-2 md:px-4">
       {/* Mobile Native Scroll Snap (Visible only on mobile) */}
       <div 
-        className="flex md:hidden overflow-x-auto snap-x snap-mandatory gap-4 pb-6 pt-2 hide-scrollbar" 
+        className="flex md:hidden overflow-x-auto snap-x snap-mandatory gap-4 pb-6 pt-12 hide-scrollbar" 
         dir="rtl"
       >
         {posts.map((post) => (
@@ -64,7 +64,7 @@ export const RecommendedCarousel = ({ posts }: RecommendedCarouselProps) => {
             640: { slidesPerView: 1, slidesPerGroup: 1 },
             1024: { slidesPerView: 2, slidesPerGroup: 2 },
           }}
-          className="pb-14 pt-4"
+          className="pb-14 pt-12"
         >
           {posts.map((post) => (
             <SwiperSlide key={post.id} className="h-full py-2">

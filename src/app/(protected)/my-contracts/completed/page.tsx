@@ -14,8 +14,8 @@ export default function CompletedContractsPage() {
   const [activeTab, setActiveTab] = useState<ContractStatus>("completed");
   const [activeFilter, setActiveFilter] = useState<string>("الكل");
 
-  const handleTabChange = (status: ContractStatus) => {
-    setActiveTab(status);
+  const handleTabChange = (status: string) => {
+    setActiveTab(status as ContractStatus);
   };
 
   const handleViewDetails = (id: string) => {

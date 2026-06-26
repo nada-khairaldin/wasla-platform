@@ -180,7 +180,7 @@ export function PostFormModal({
       ? data.description 
       : (data.description || "") + " (مسودة قيد التعديل يرجى التجاهل...)";
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       title: titleValue ? titleValue : "مسودة بدون عنوان",
       description: descriptionValue,
       category: data.serviceType === "offer" ? "OFFER" : "REQUEST",
@@ -196,7 +196,7 @@ export function PostFormModal({
     }
 
     // Safe to pass 'لم يتم التحديد' for drafts if empty
-    executeSubmission(payload as CreatePostRequest, data.category || "لم يتم التحديد");
+    executeSubmission(payload as unknown as CreatePostRequest, data.category || "لم يتم التحديد");
   };
 
   const handlePublish = (e?: React.MouseEvent) => {

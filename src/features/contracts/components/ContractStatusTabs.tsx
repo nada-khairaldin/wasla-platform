@@ -5,7 +5,7 @@ import { ContractStatus } from "../contract.types";
 
 interface ContractStatusTabsProps {
   active: string;
-  onChange?: (status: any) => void;
+  onChange?: (status: string) => void;
   tabs?: { key: string; label: string; route?: string }[];
 }
 

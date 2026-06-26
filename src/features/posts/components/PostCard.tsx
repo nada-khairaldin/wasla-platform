@@ -1,6 +1,6 @@
 "use client";
 import { useRouter, usePathname } from "next/navigation";
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import {
   Bookmark,
@@ -60,10 +60,14 @@ const PostCardComponent = ({
   const { mutate: toggleSave } = useSaveToggle();
   const { navigateToProfile, isSelf, canMessage, isLoading: isUserLoading } = useUserActions(post.userId || post.user?.id);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
-    setMounted(true);
     if (isMobileMenuOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
     return () => {
@@ -95,7 +99,7 @@ const PostCardComponent = ({
       router.push(`/messages?conversationId=${conversationId}`);
     } else {
       try {
-        const conversation = await createConversation.mutateAsync(post.id);
+        const conversation = await createConversation.mutateAsync({ postId: post.id, postOwnerId: post.userId || post.user?.id || 0 });
         router.push(`/messages?conversationId=${conversation.id}`);
       } catch {
         // Silently handle — the mutation error state can be used for UI feedback
@@ -163,10 +167,10 @@ const PostCardComponent = ({
           {!isSelf && !isUserLoading && (
             <button
               onClick={handleSave}
-              className={`group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 shadow-sm z-20 ${isSaved ? "bg-primary-600 text-white" : "bg-white text-primary-300 hover:text-primary-600 hover:shadow-md"}`}
+              className={`group/btn relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 shadow-sm z-20 ${isSaved ? "bg-primary-600 text-white" : "bg-white text-primary-300 hover:text-primary-600 hover:shadow-md"}`}
             >
               <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
                 {isSaved ? "إلغاء الحفظ" : "حفظ المنشور"}
               </span>
             </button>
@@ -178,10 +182,10 @@ const PostCardComponent = ({
                 e.stopPropagation();
                 onEdit(post);
               }}
-              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+              className="group/btn relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
             >
               <Edit3 size={16} />
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
                 تعديل المنشور
               </span>
             </button>
@@ -193,10 +197,10 @@ const PostCardComponent = ({
                 e.stopPropagation();
                 onArchive(post.id);
               }}
-              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+              className="group/btn relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
             >
               <Archive size={16} />
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
                 أرشفة المنشور
               </span>
             </button>
@@ -208,10 +212,10 @@ const PostCardComponent = ({
                 e.stopPropagation();
                 onRestore(post.id);
               }}
-              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+              className="group/btn relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
             >
               <RotateCcw size={16} />
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
                 إعادة نشر المنشور
               </span>
             </button>
@@ -223,10 +227,10 @@ const PostCardComponent = ({
                 e.stopPropagation();
                 onDelete(post.id);
               }}
-              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-error-500 hover:bg-error-50 hover:text-error-600 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+              className="group/btn relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-error-500 hover:bg-error-50 hover:text-error-600 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
             >
               <Trash2 size={16} />
-              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover/btn:opacity-100 group-hover/btn:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
                 حذف المنشور
               </span>
             </button>

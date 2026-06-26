@@ -27,9 +27,9 @@ export default function ContractsPage({
   const [activeTab, setActiveTab] = useState<ContractStatus>("active");
   const [completedFilter, setCompletedFilter] = useState<string>("الكل");
 
-  function handleTabChange(status: ContractStatus) {
-    setActiveTab(status);
-    onStatusChange?.(status);
+  function handleTabChange(status: string) {
+    setActiveTab(status as ContractStatus);
+    onStatusChange?.(status as ContractStatus);
   }
 
   function handleViewDetails(id: string) {

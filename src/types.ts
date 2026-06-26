@@ -28,6 +28,8 @@ export interface CurrentUser {
     userId: number;
     iat: number;
     exp: number;
+    username?: string;
+    full_name?: string;
   };
 }
 

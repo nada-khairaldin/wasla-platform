@@ -45,7 +45,7 @@ export default function ServiceDetailPage() {
       router.push(`/messages?conversationId=${conversationId}`);
     } else {
       try {
-        const conversation = await createConversation.mutateAsync(postId);
+        const conversation = await createConversation.mutateAsync({ postId, postOwnerId: post?.userId || post?.user?.id || 0 });
         router.push(`/messages?conversationId=${conversation.id}`);
       } catch {
         // Handle error silently
