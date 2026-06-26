@@ -39,7 +39,7 @@ export default function ProfileHeader(props: ProfileHeaderProps) {
           )}
           <button
             onClick={onEditClick}
-            className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white flex items-center justify-center shadow-md hover:bg-neutral-50 transition-colors border border-neutral-100"
+            className="absolute -top-1 -right-1 z-10 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white flex items-center justify-center shadow-md hover:bg-neutral-50 transition-colors border border-neutral-100"
           >
             <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-600" />
           </button>

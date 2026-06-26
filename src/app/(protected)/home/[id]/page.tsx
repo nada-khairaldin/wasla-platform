@@ -30,8 +30,7 @@ export default function ServiceDetailPage() {
   const { data: post, isLoading: isPostLoading, error } = usePost(postId);
   const { data: savedPosts } = useSavedPosts();
   const { mutate: toggleSave } = useSaveToggle();
-  const { mutate: toggleSave } = useSaveToggle();
-  const { navigateToProfile, isSelf, canMessage } = useUserActions(post?.userId);
+  const { navigateToProfile, isSelf, canMessage, isLoading: isUserLoading } = useUserActions(post?.userId || post?.user?.id);
   const isSaved = savedPosts?.some((sp) => sp.postId === postId) ?? false;
   const { hasConversation, conversationId } = useConversationForPost(postId);
   const createConversation = useCreateConversation();
@@ -160,7 +159,7 @@ export default function ServiceDetailPage() {
             >
               <ArrowRight size={16} />
             </button>
-            {isSelf && (
+            {!isSelf && !isUserLoading && (
               <button
                 onClick={handleSave}
                 className={`w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 border backdrop-blur-sm shadow-sm active:scale-90

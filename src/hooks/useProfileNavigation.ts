@@ -5,8 +5,9 @@ export const useProfileNavigation = () => {
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
 
-  const navigateToProfile = (targetUserId: number) => {
-    if (currentUser?.user?.userId === targetUserId) {
+  const navigateToProfile = (targetUserId: number | string) => {
+    const currentId = currentUser?.user?.userId;
+    if (currentId !== undefined && Number(currentId) === Number(targetUserId)) {
       router.push("/my-profile");
     } else {
       router.push(`/users/${targetUserId}`);

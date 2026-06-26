@@ -41,7 +41,7 @@ export default function RootLayout({
     <html lang="ar" dir="rtl">
       <body>
         <Providers>
-        <Toaster position="top-center" reverseOrder={false} />
+        <Toaster position="top-center" reverseOrder={false} containerStyle={{ zIndex: 99999999 }} />
         {children}
         </Providers>
       </body>

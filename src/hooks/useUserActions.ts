@@ -1,24 +1,33 @@
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "./useCurrentUser";
 
-export const useUserActions = (targetUserId?: number) => {
+export const useUserActions = (targetUserId?: number | string) => {
   const router = useRouter();
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isLoading } = useCurrentUser();
   const currentUserId = currentUser?.user?.userId;
 
-  const isSelf = targetUserId !== undefined && currentUserId === targetUserId;
-  const profileUrl = isSelf ? "/my-profile" : `/users/${targetUserId}`;
-  const canMessage = targetUserId !== undefined ? !isSelf : false;
+  const safeTargetId = targetUserId ? Number(targetUserId) : undefined;
+  const safeCurrentId = currentUserId ? Number(currentUserId) : undefined;
 
-  const navigateToProfile = (overrideId?: number) => {
-    const idToUse = overrideId ?? targetUserId;
+  const isSelf = 
+    safeTargetId !== undefined && 
+    safeCurrentId !== undefined && 
+    safeTargetId === safeCurrentId;
+
+  const profileUrl = isSelf ? "/my-profile" : `/users/${safeTargetId}`;
+  
+  // Do not allow messaging if still loading, or if it's the current user
+  const canMessage = safeTargetId !== undefined && !isLoading && !isSelf;
+
+  const navigateToProfile = (overrideId?: number | string) => {
+    const idToUse = overrideId ? Number(overrideId) : safeTargetId;
     if (!idToUse) return;
-    const targetIsSelf = currentUserId === idToUse;
+    const targetIsSelf = safeCurrentId === idToUse;
     router.push(targetIsSelf ? "/my-profile" : `/users/${idToUse}`);
   };
 
-  const resolveProfileRoute = (id: number) => {
-    return currentUserId === id ? "/my-profile" : `/users/${id}`;
+  const resolveProfileRoute = (id: number | string) => {
+    return safeCurrentId === Number(id) ? "/my-profile" : `/users/${id}`;
   };
 
   return {
@@ -27,6 +36,7 @@ export const useUserActions = (targetUserId?: number) => {
     canMessage,
     navigateToProfile,
     resolveProfileRoute,
-    currentUserId,
+    currentUserId: safeCurrentId,
+    isLoading,
   };
 };

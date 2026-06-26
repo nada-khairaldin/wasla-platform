@@ -1,6 +1,7 @@
 "use client";
 import { useRouter, usePathname } from "next/navigation";
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Bookmark,
   Clock,
@@ -12,6 +13,9 @@ import {
   Trash2,
   MessageSquare,
   ArrowLeft,
+  Archive,
+  RotateCcw,
+  MoreVertical,
 } from "lucide-react";
 import { getInitials } from "../../../utils";
 import { useSaveToggle, useSavedPosts } from "../hooks";
@@ -40,17 +44,33 @@ const PostCardComponent = ({
   isRecommended = false,
   onEdit,
   onDelete,
+  onArchive,
+  onRestore,
 }: {
   post: Post;
   isRecommended?: boolean;
   onEdit?: (post: Post) => void;
   onDelete?: (postId: number) => void;
+  onArchive?: (postId: number) => void;
+  onRestore?: (postId: number) => void;
 }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { data: savedPosts } = useSavedPosts();
   const { mutate: toggleSave } = useSaveToggle();
-  const { navigateToProfile, isSelf, canMessage } = useUserActions(post.userId);
+  const { navigateToProfile, isSelf, canMessage, isLoading: isUserLoading } = useUserActions(post.userId || post.user?.id);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (isMobileMenuOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
   const isSaved = savedPosts?.some((sp) => sp.postId === post.id) ?? false;
   const isMyPostsView = pathname === "/my-posts" || pathname?.startsWith("/my-posts/");
   const isHomeView = pathname === "/home" || pathname?.startsWith("/home");
@@ -94,8 +114,14 @@ const PostCardComponent = ({
 
   return (
     <div
-      onClick={() => router.push(`/home/${post.id}`)}
-      className={`relative flex flex-col p-5 md:p-6 rounded-xl transition-all duration-500 cursor-pointer overflow-hidden
+      onClick={() => {
+        if (post.status === "DRAFT") {
+          if (onEdit) onEdit(post);
+          return;
+        }
+        router.push(`/home/${post.id}`);
+      }}
+      className={`relative flex flex-col p-5 md:p-6 rounded-xl transition-all duration-500 cursor-pointer
       hover:[&_.identification-arrow]:-translate-x-1.25 hover:[&_.card-title]:text-primary-700
       ${(isSaved || isRecommended || isMyPostsView) ? "bg-white" : "bg-neutral-50"} ${
         isRecommended
@@ -119,40 +145,93 @@ const PostCardComponent = ({
       </div>
 
       <div className="flex gap-sm items-center mb-4 md:mb-5">
-        {!isSelf && (
-          <button
-            onClick={handleSave}
-            className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 shadow-sm z-20 ${isSaved ? "bg-primary-600 text-white" : "bg-white text-primary-300 hover:text-primary-600 hover:shadow-md"}`}
-          >
-            <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
-          </button>
-        )}
+        {/* Mobile menu trigger */}
+        <div className="flex md:hidden relative z-20">
+           <button 
+             onClick={(e) => { 
+               e.stopPropagation(); 
+               setIsMobileMenuOpen(true); 
+             }} 
+             className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-neutral-500 shadow-sm border border-neutral-100"
+           >
+             <MoreVertical size={18} />
+           </button>
+        </div>
 
-        {onEdit && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(post);
-            }}
-            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md"
-            title="تعديل المنشور"
-          >
-            <Edit3 size={16} />
-          </button>
-        )}
+        {/* Desktop inline actions */}
+        <div className="hidden md:flex gap-sm items-center">
+          {!isSelf && !isUserLoading && (
+            <button
+              onClick={handleSave}
+              className={`group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 shadow-sm z-20 ${isSaved ? "bg-primary-600 text-white" : "bg-white text-primary-300 hover:text-primary-600 hover:shadow-md"}`}
+            >
+              <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
+              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+                {isSaved ? "إلغاء الحفظ" : "حفظ المنشور"}
+              </span>
+            </button>
+          )}
 
-        {onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(post.id);
-            }}
-            className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-error-500 hover:bg-error-50 hover:text-error-600 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md"
-            title="حذف المنشور"
-          >
-            <Trash2 size={16} />
-          </button>
-        )}
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(post);
+              }}
+              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-amber-600 hover:bg-amber-50 hover:text-amber-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+            >
+              <Edit3 size={16} />
+              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+                تعديل المنشور
+              </span>
+            </button>
+          )}
+
+          {onArchive && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onArchive(post.id);
+              }}
+              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+            >
+              <Archive size={16} />
+              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+                أرشفة المنشور
+              </span>
+            </button>
+          )}
+
+          {onRestore && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRestore(post.id);
+              }}
+              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+            >
+              <RotateCcw size={16} />
+              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+                إعادة نشر المنشور
+              </span>
+            </button>
+          )}
+
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(post.id);
+              }}
+              className="group relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-white text-error-500 hover:bg-error-50 hover:text-error-600 transition-all duration-300 shadow-sm border border-neutral-100 hover:shadow-md z-20"
+            >
+              <Trash2 size={16} />
+              <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-neutral-800 text-white text-[10px] font-cairo rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] pointer-events-none">
+                حذف المنشور
+              </span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 md:gap-5 items-stretch md:items-start flex-1">
@@ -193,7 +272,7 @@ const PostCardComponent = ({
             />
           </div>
 
-          <p className="text-primary-800/70 text-[13px] leading-relaxed line-clamp-2 pt-1">
+          <p className="text-primary-800/70 text-[13px] leading-relaxed line-clamp-2 break-words pt-1">
             {post.description}
           </p>
 
@@ -231,6 +310,87 @@ const PostCardComponent = ({
             )}
           </button>
         </div>
+      )}
+
+      {mounted && isMobileMenuOpen && typeof window !== "undefined" && createPortal(
+        <div 
+          className="md:hidden fixed inset-0 z-[99999] bg-neutral-900/40 backdrop-blur-sm animate-in fade-in flex items-end" 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            setIsMobileMenuOpen(false); 
+          }}
+          dir="rtl"
+        >
+          <div 
+            className="bg-white w-full rounded-t-3xl p-5 space-y-2 animate-in slide-in-from-bottom-full duration-300 shadow-2xl pb-safe" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-1.5 bg-neutral-200 rounded-full mx-auto mb-5" />
+            
+            {!isSelf && !isUserLoading && (
+              <button 
+                onClick={(e) => { setIsMobileMenuOpen(false); handleSave(e); }} 
+                className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
+              >
+                <div className={`p-2 rounded-lg ${isSaved ? "bg-primary-50 text-primary-600" : "bg-neutral-100 text-neutral-500"}`}>
+                  <Bookmark size={20} fill={isSaved ? "currentColor" : "none"} />
+                </div>
+                <span className={`font-bold font-cairo text-base ${isSaved ? "text-primary-700" : "text-neutral-700"}`}>
+                  {isSaved ? "إلغاء الحفظ" : "حفظ المنشور"}
+                </span>
+              </button>
+            )}
+            
+            {onEdit && (
+              <button 
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onEdit(post); }} 
+                className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
+              >
+                <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+                  <Edit3 size={20} />
+                </div>
+                <span className="font-bold font-cairo text-base text-neutral-700">تعديل المنشور</span>
+              </button>
+            )}
+            
+            {onArchive && (
+              <button 
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onArchive(post.id); }} 
+                className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
+              >
+                <div className="p-2 rounded-lg bg-neutral-100 text-neutral-600">
+                  <Archive size={20} />
+                </div>
+                <span className="font-bold font-cairo text-base text-neutral-700">أرشفة المنشور</span>
+              </button>
+            )}
+            
+            {onRestore && (
+              <button 
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onRestore(post.id); }} 
+                className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
+              >
+                <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+                  <RotateCcw size={20} />
+                </div>
+                <span className="font-bold font-cairo text-base text-emerald-700">إعادة نشر المنشور</span>
+              </button>
+            )}
+
+            {onDelete && (
+              <button 
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onDelete(post.id); }} 
+                className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
+              >
+                <div className="p-2 rounded-lg bg-error-50 text-error-600">
+                  <Trash2 size={20} />
+                </div>
+                <span className="font-bold font-cairo text-base text-error-600">حذف المنشور</span>
+              </button>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

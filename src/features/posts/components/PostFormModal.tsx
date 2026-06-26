@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, PenLine, AlignRight } from "lucide-react";
@@ -13,6 +13,7 @@ import {
   createServiceSchema,
 } from "../schemas/postSchema";
 import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 import toast from "react-hot-toast";
 import { useCreatePost } from "../hooks/useCreatePost";
 import { useUpdatePost } from "../hooks/useUpdatePost";
@@ -34,10 +35,12 @@ export function PostFormModal({
 
   const {
     register,
-    handleSubmit,
     control,
     reset,
-    formState: { errors, isSubmitting },
+    getValues,
+    clearErrors,
+    setError,
+    formState: { errors, isDirty },
   } = useForm<CreateServiceFormData>({
     resolver: zodResolver(createServiceSchema),
     defaultValues: {
@@ -52,11 +55,12 @@ export function PostFormModal({
 
   useEffect(() => {
     if (isOpen && postToEdit) {
+      const isInvalidCat = postToEdit.category === "REQUEST" || postToEdit.category === "OFFER" || postToEdit.category === "لم يتم التحديد";
       reset({
         serviceType: postToEdit.category === "REQUEST" ? "request" : "offer",
         title: postToEdit.title,
         description: postToEdit.description,
-        category: postToEdit.category,
+        category: isInvalidCat ? "" : postToEdit.category,
         deliveryType:
           postToEdit.serviceMode?.toLowerCase() === "online"
             ? "online"
@@ -76,19 +80,24 @@ export function PostFormModal({
     };
   }, [isOpen]);
 
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const submitStatusRef = useRef<"PUBLISHED" | "DRAFT">("PUBLISHED");
+  const [activeAction, setActiveAction] = useState<"DRAFT" | "PUBLISH" | null>(null);
+
+  const handleClose = () => {
+    if (isDirty && !showExitConfirm) {
+      setShowExitConfirm(true);
+    } else {
+      setShowExitConfirm(false);
+      reset();
+      onClose();
+    }
+  };
+
   const { mutate: createPost, isPending: isCreating } = useCreatePost();
   const { mutate: updatePost, isPending: isUpdating } = useUpdatePost();
 
-  const onSubmit = async (data: CreateServiceFormData) => {
-    const payload: CreatePostRequest = {
-      title: data.title,
-      description: data.description,
-      category: data.serviceType === "offer" ? "OFFER" : "REQUEST",
-      serviceMode: data.deliveryType === "online" ? "ONLINE" : "OFFLINE",
-      assignedTimeCredits: data.hours,
-      status: "PUBLISHED",
-    };
-
+  const executeSubmission = (payload: CreatePostRequest, customCategoryStr: string) => {
     const registerCustomCategory = async (cat: string) => {
       if (!cat) return;
       try {
@@ -110,11 +119,15 @@ export function PostFormModal({
         { postId: postToEdit.id, postData: payload },
         {
           onSuccess: async () => {
-            await registerCustomCategory(data.category);
-            toast.success("تم تحديث الخدمة بنجاح!");
+            await registerCustomCategory(customCategoryStr);
+            const msg = submitStatusRef.current === "DRAFT" ? "تم حفظ المسودة — يمكنك إكمالها لاحقًا" : "تم تحديث الخدمة بنجاح!";
+            toast.success(msg);
+            setShowExitConfirm(false);
+            setActiveAction(null);
             onClose();
           },
           onError: (err: Error) => {
+            setActiveAction(null);
             toast.error(err.message || "حدث خطأ أثناء تعديل الخدمة");
           },
         },
@@ -122,16 +135,105 @@ export function PostFormModal({
     } else {
       createPost(payload, {
         onSuccess: async () => {
-          await registerCustomCategory(data.category);
-          toast.success("تم نشر الخدمة بنجاح!");
+          await registerCustomCategory(customCategoryStr);
+          const msg = submitStatusRef.current === "DRAFT" ? "تم حفظ المسودة — يمكنك إكمالها لاحقًا" : "تم نشر الخدمة بنجاح!";
+          toast.success(msg);
           reset();
+          setShowExitConfirm(false);
+          setActiveAction(null);
           onClose();
         },
         onError: (err: Error) => {
+          setActiveAction(null);
           toast.error(err.message || "حدث خطأ أثناء نشر الخدمة");
         },
       });
     }
+  };
+
+  const handleSaveDraft = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (activeAction !== null) return;
+
+    const data = getValues();
+    const isTitleEmpty = !data.title || data.title.trim() === "";
+    const isDescEmpty = !data.description || data.description.trim() === "";
+    const isCatEmpty = !data.category || data.category === "لم يتم التحديد" || data.category === "";
+
+    if (isTitleEmpty && isDescEmpty && isCatEmpty) {
+      toast.error("لا يمكن حفظ مسودة فارغة. يرجى إدخال بعض التفاصيل أولاً.");
+      return;
+    }
+
+    submitStatusRef.current = "DRAFT";
+    setActiveAction("DRAFT");
+    clearErrors(); // Remove any existing publish errors
+    onSubmitDraft(data);
+  };
+
+  const onSubmitDraft = (data: CreateServiceFormData) => {
+    // For drafts, we accept empty fields and auto-fallback
+    const titleValue = typeof data.title === "string" ? data.title.trim() : "";
+    
+    // We add dummy data to satisfy the backend Zod validation which doesn't know it's a draft
+    const descriptionValue = data.description?.length >= 20 
+      ? data.description 
+      : (data.description || "") + " (مسودة قيد التعديل يرجى التجاهل...)";
+
+    const payload: any = {
+      title: titleValue ? titleValue : "مسودة بدون عنوان",
+      description: descriptionValue,
+      category: data.serviceType === "offer" ? "OFFER" : "REQUEST",
+      serviceMode: data.deliveryType === "online" ? "ONLINE" : "OFFLINE",
+      assignedTimeCredits: data.hours || 12,
+      status: "DRAFT",
+    };
+
+    // Inject city and area if offline to bypass backend validation
+    if (data.deliveryType === "offline") {
+      payload.city = "غير محدد";
+      payload.area = "غير محدد";
+    }
+
+    // Safe to pass 'لم يتم التحديد' for drafts if empty
+    executeSubmission(payload as CreatePostRequest, data.category || "لم يتم التحديد");
+  };
+
+  const handlePublish = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (activeAction !== null) return;
+    submitStatusRef.current = "PUBLISHED";
+    setActiveAction("PUBLISH");
+
+    // Manually validate using the Zod schema
+    const data = getValues();
+    const result = createServiceSchema.safeParse(data);
+
+    if (!result.success) {
+      // Set field-level errors from Zod
+      clearErrors();
+      for (const issue of result.error.issues) {
+        const fieldName = issue.path[0] as keyof CreateServiceFormData;
+        setError(fieldName, { type: "manual", message: issue.message });
+      }
+      setActiveAction(null);
+      return;
+    }
+
+    // Validation passed — submit
+    onSubmitPublish(result.data);
+  };
+
+  const onSubmitPublish = async (data: CreateServiceFormData) => {
+    const payload: CreatePostRequest = {
+      title: data.title,
+      description: data.description,
+      category: data.serviceType === "offer" ? "OFFER" : "REQUEST",
+      serviceMode: data.deliveryType === "online" ? "ONLINE" : "OFFLINE",
+      assignedTimeCredits: data.hours,
+      status: "PUBLISHED",
+    };
+    executeSubmission(payload, data.category);
   };
 
   if (!isOpen || typeof window === "undefined") return null;
@@ -140,20 +242,54 @@ export function PostFormModal({
     <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 sm:p-6">
       <div
         className="fixed inset-0 bg-primary-900/60 backdrop-blur-md animate-in fade-in duration-300 z-10"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
+      <div
         className="relative bg-white w-full max-w-[600px] rounded-[32px] shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-300 flex flex-col max-h-[90vh] z-20"
         dir="rtl"
       >
+        {showExitConfirm && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm rounded-[32px]">
+            <div className="bg-white border border-neutral-100 rounded-2xl p-6 shadow-2xl  w-full text-center space-y-5 animate-in zoom-in-95">
+              <h3 className="font-cairo font-black text-lg text-primary-600">لديك تغييرات غير محفوظة</h3>
+              <div className="flex flex-col gap-3">
+                <button 
+                  type="button"
+                  onClick={handleSaveDraft}
+                  className="w-full py-3 rounded-xl font-bold text-white bg-primary-600 hover:bg-primary-700 transition-all"
+                >
+                  حفظ كمسودة
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setShowExitConfirm(false);
+                    reset();
+                    onClose();
+                  }}
+                  className="w-full py-3 rounded-xl font-bold text-error-600 bg-error-50 hover:bg-error-100 transition-all"
+                >
+                  تجاهل والخروج
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setShowExitConfirm(false)}
+                  className="w-full py-3 rounded-xl font-bold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 transition-all"
+                >
+                  متابعة التحرير
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="p-6 md:p-8 text-center border-b border-primary-50 relative shrink-0">
           <button
             type="button"
             className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center bg-primary-50 text-primary-400 rounded-full hover:bg-primary-100 transition-all active:scale-90 z-30"
-            onClick={onClose}
+            onClick={handleClose}
           >
             <X size={20} />
           </button>
@@ -276,28 +412,43 @@ export function PostFormModal({
 
         {/* Footer */}
         <div className="p-6 md:p-8 bg-primary-50/30 border-t border-primary-50 rounded-b-[32px] shrink-0">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="button"
-              className="py-4 rounded-2xl font-cairo font-bold text-primary-400 bg-white border border-primary-100 hover:bg-primary-50 transition-all active:scale-95"
-              onClick={onClose}
+              onClick={handleSaveDraft}
+              disabled={activeAction === "DRAFT"}
+              className={`flex-1 py-4 rounded-2xl font-cairo font-bold transition-all active:scale-95 ${
+                activeAction === "DRAFT"
+                  ? "text-primary-400 bg-primary-50/50 cursor-not-allowed"
+                  : "text-primary-600 bg-primary-50 hover:bg-primary-100"
+              }`}
             >
-              إلغاء
+              {activeAction === "DRAFT" ? "جاري الحفظ..." : "حفظ كمسودة"}
             </button>
             <button
-              type="submit"
-              disabled={isCreating || isUpdating || isSubmitting}
-              className="py-4 rounded-2xl font-cairo font-bold text-white bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-600/20 transition-all active:scale-95 disabled:opacity-50"
+              type="button"
+              onClick={handlePublish}
+              disabled={activeAction === "PUBLISH"}
+              className={`flex-[2] py-4 rounded-2xl font-cairo font-bold transition-all active:scale-95 ${
+                activeAction === "PUBLISH"
+                  ? "text-white/70 bg-primary-400 cursor-not-allowed"
+                  : "text-white bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-600/20"
+              }`}
             >
-              {isCreating || isUpdating || isSubmitting
-                ? "جاري الحفظ..."
+              {activeAction === "PUBLISH"
+                ? "جاري النشر..."
                 : isEditMode
                   ? "حفظ التعديلات"
                   : "نشر الخدمة الآن"}
             </button>
           </div>
+          {Object.keys(errors).length > 0 && activeAction !== "DRAFT" && (
+            <div className="mt-4 p-3 bg-error-50 text-error-600 border border-error-200 rounded-xl text-sm font-bold text-center animate-in fade-in zoom-in-95">
+              تعذر نشر المنشور بسبب وجود حقول غير مكتملة أو بيانات غير صحيحة. يرجى مراجعة جميع الحقول المطلوبة قبل المتابعة.
+            </div>
+          )}
         </div>
-      </form>
+      </div>
     </div>,
     document.body,
   );

@@ -4,20 +4,26 @@ import { useRouter } from "next/navigation";
 import { ContractStatus } from "../contract.types";
 
 interface ContractStatusTabsProps {
-  active: ContractStatus;
-  onChange?: (status: ContractStatus) => void;
+  active: string;
+  onChange?: (status: any) => void;
+  tabs?: { key: string; label: string; route?: string }[];
 }
 
-const TABS: { key: ContractStatus; label: string; route: string }[] = [
+const TABS: { key: string; label: string; route: string }[] = [
   { key: "active",  label: "نشطة", route: "/my-contracts" },
   { key: "pending", label: "قيد الانتظار", route: "/my-contracts" },
   { key: "completed", label: "منتهية", route: "/my-contracts/completed" },
 ];
 
-export function ContractStatusTabs({ active, onChange }: ContractStatusTabsProps) {
+export function ContractStatusTabs({ active, onChange, tabs }: ContractStatusTabsProps) {
   const router = useRouter();
 
-  const handleTabClick = (tab: typeof TABS[0]) => {
+  const currentTabs = tabs || TABS;
+  const activeIndex = currentTabs.findIndex((t) => t.key === active);
+  const safeActiveIndex = activeIndex === -1 ? 0 : activeIndex;
+  const tabCount = currentTabs.length;
+
+  const handleTabClick = (tab: typeof currentTabs[0]) => {
     onChange?.(tab.key);
   };
 
@@ -28,15 +34,13 @@ export function ContractStatusTabs({ active, onChange }: ContractStatusTabsProps
       <div
         className="absolute top-1.5 bottom-1.5 bg-primary-500 rounded-xl shadow-sm transition-all duration-300 ease-out"
         style={{
-          width: "calc((100% - 12px) / 3)",
+          width: `calc((100% - 12px) / ${tabCount})`,
           right: "6px",
-          transform: `translateX(${
-            active === "active" ? "0" : active === "pending" ? "-100%" : "-200%"
-          })`
+          transform: `translateX(calc(-100% * ${safeActiveIndex}))`
         }}
       />
 
-      {TABS.map((tab) => {
+      {currentTabs.map((tab) => {
         const isActive = active === tab.key;
         return (
           <button

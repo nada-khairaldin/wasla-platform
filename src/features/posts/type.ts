@@ -2,7 +2,7 @@ import { User } from '@/src/types';
 
 export type PostCategory = 'REQUEST' | 'OFFER'; 
 export type ServiceMode = 'ONLINE' | 'OFFLINE';
-export type PostStatus = 'PUBLISHED' | 'ARCHIVED';
+export type PostStatus = 'PUBLISHED' | 'ARCHIVED' | 'DRAFT';
 
 export interface Post {
   id: number;

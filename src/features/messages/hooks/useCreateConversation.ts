@@ -12,14 +12,16 @@ export function useCreateConversation() {
   const { data: currentUser } = useCurrentUser();
 
   return useMutation({
-    mutationFn: async (args: number | { recipientId: number }): Promise<ApiConversation> => {
+    mutationFn: async (args: { postId: number; postOwnerId: number } | { recipientId: number }): Promise<ApiConversation> => {
       const currentUserId = currentUser?.user?.userId;
-      if (typeof args !== "number" && currentUserId && args.recipientId === currentUserId) {
+      
+      const targetUserId = 'recipientId' in args ? args.recipientId : args.postOwnerId;
+      if (currentUserId !== undefined && Number(targetUserId) === Number(currentUserId)) {
         throw new Error("لا يمكنك مراسلة نفسك.");
       }
 
-      if (typeof args === "number") {
-        const { data, error } = await chatService.createConversation(args);
+      if ('postId' in args) {
+        const { data, error } = await chatService.createConversation(args.postId);
         if (error) throw new Error(error);
         return data!.conversation;
       } else {
