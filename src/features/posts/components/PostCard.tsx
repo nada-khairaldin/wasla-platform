@@ -16,8 +16,8 @@ import {
 import { getInitials } from "../../../utils";
 import { useSaveToggle, useSavedPosts } from "../hooks";
 import { Post } from "../type";
-import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { useCreateConversation, useConversationForPost } from "../../messages/hooks";
+import { useUserActions } from "../../../hooks/useUserActions";
 
 
 const Badge = ({
@@ -50,8 +50,7 @@ const PostCardComponent = ({
   const pathname = usePathname();
   const { data: savedPosts } = useSavedPosts();
   const { mutate: toggleSave } = useSaveToggle();
-  const { data: currentUser } = useCurrentUser();
-  const isOwnPost = post.userId === Number(currentUser?.user?.userId);
+  const { navigateToProfile, isSelf, canMessage } = useUserActions(post.userId);
   const isSaved = savedPosts?.some((sp) => sp.postId === post.id) ?? false;
   const isMyPostsView = pathname === "/my-posts" || pathname?.startsWith("/my-posts/");
   const isHomeView = pathname === "/home" || pathname?.startsWith("/home");
@@ -61,13 +60,10 @@ const PostCardComponent = ({
     toggleSave({ postId: post.id, isSavedBefore: isSaved });
   };
 
+
   const goToProfile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isOwnPost) {
-      router.push("/my-profile");
-    } else {
-      router.push(`/users/${post.userId}`);
-    }
+    navigateToProfile();
   };
 
   const { hasConversation, conversationId } = useConversationForPost(post.id);
@@ -123,7 +119,7 @@ const PostCardComponent = ({
       </div>
 
       <div className="flex gap-sm items-center mb-4 md:mb-5">
-        {!isOwnPost && (
+        {!isSelf && (
           <button
             onClick={handleSave}
             className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 shadow-sm z-20 ${isSaved ? "bg-primary-600 text-white" : "bg-white text-primary-300 hover:text-primary-600 hover:shadow-md"}`}
@@ -208,7 +204,7 @@ const PostCardComponent = ({
         </div>
       </div>
 
-      {!isOwnPost && (
+      {canMessage && (
         <div className="mt-5 md:mt-6 flex w-full md:w-auto md:justify-end z-20">
           <button
             onClick={goToChat}

@@ -12,11 +12,13 @@ interface CreateContractFormProps {
     serviceMode?: "online" | "offline";
     timeCredits?: number;
   };
+  isSubmitting?: boolean;
   onCancel: () => void;
   onSubmit: (data: ContractFormValues) => void;
 }
 export function CreateContractForm({
   initialData,
+  isSubmitting = false,
   onCancel,
   onSubmit,
 }: CreateContractFormProps) {
@@ -29,7 +31,6 @@ export function CreateContractForm({
   } = useForm<ContractFormValues>({
     resolver: zodResolver(contractSchema),
     defaultValues: {
-      contractId: "CON-2", 
       contractTitle: initialData?.postTitle || "عنوان الخدمة المتفق عليها",
       providerName: initialData?.providerName || "",
       seekerName: initialData?.seekerName || "",
@@ -63,19 +64,8 @@ export function CreateContractForm({
       </div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-neutral-50/60 p-3.5 rounded-2xl border border-neutral-100">
-        <div className="flex items-center gap-2 pr-2">
-          <Hash size={16} className="text-neutral-400 shrink-0" />
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-neutral-400">
-              رقم العقد
-            </span>
-            <span className="text-xs font-black text-neutral-700">
-              {watch("contractId")}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 md:col-span-2 border-r border-neutral-200/60 pr-4">
+      <div className="grid grid-cols-1 gap-3 bg-neutral-50/60 p-3.5 rounded-2xl border border-neutral-100">
+        <div className="flex items-center gap-2 pr-4">
           <Briefcase size={16} className="text-[#1B4B72] shrink-0" />
           <div className="flex flex-col min-w-0 w-full">
             <span className="text-xs font-bold text-[#1B4B72] truncate">
@@ -117,7 +107,8 @@ export function CreateContractForm({
           label="تاريخ الانتهاء الأقصى"
           type="date"
           error={errors.maxEndDate?.message}
-          className="bg-neutral-50/50 border border-neutral-100 focus:bg-white text-neutral-800 font-medium rounded-2xl p-4 transition-all cursor-pointer relative"
+          disabled={isSubmitting}
+          className="bg-neutral-50/50 border border-neutral-100 focus:bg-white text-neutral-800 font-medium rounded-2xl p-4 transition-all cursor-pointer relative disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ colorScheme: "light" }}
           {...register("maxEndDate")}
         />
@@ -128,8 +119,8 @@ export function CreateContractForm({
         <div className="flex items-center justify-between sm:justify-start gap-4 bg-neutral-100/70 p-1.5 rounded-xl w-full sm:w-auto">
           <button
             type="button"
-            onClick={() => setValue("timeCredits", timeCreditsValue + 1)}
-            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-neutral-700 font-bold text-lg hover:bg-neutral-50 active:scale-95 transition-all cursor-pointer"
+            disabled
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 shadow-none flex items-center justify-center text-neutral-400 font-bold text-lg cursor-not-allowed"
           >
             +
           </button>
@@ -138,11 +129,8 @@ export function CreateContractForm({
           </span>
           <button
             type="button"
-            onClick={() =>
-              timeCreditsValue > 1 &&
-              setValue("timeCredits", timeCreditsValue - 1)
-            }
-            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-neutral-700 font-bold text-lg hover:bg-neutral-50 active:scale-95 transition-all cursor-pointer"
+            disabled
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 shadow-none flex items-center justify-center text-neutral-400 font-bold text-lg cursor-not-allowed"
           >
             -
           </button>
@@ -161,14 +149,23 @@ export function CreateContractForm({
       <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full">
         <button
           type="submit"
-          className="flex-1 order-1 sm:order-2 py-4 rounded-2xl bg-[#1B4B72] text-white font-bold text-sm hover:bg-[#153b5a] active:scale-[0.99] transition-all shadow-sm cursor-pointer"
+          disabled={isSubmitting}
+          className="flex-1 order-1 sm:order-2 py-4 rounded-2xl bg-[#1B4B72] text-white font-bold text-sm hover:bg-[#153b5a] active:scale-[0.99] transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          ارسال العقد للعميل
+          {isSubmitting ? (
+            <>
+              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              جاري الارسال...
+            </>
+          ) : (
+            "ارسال العقد للعميل"
+          )}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 order-2 sm:order-1 py-4 rounded-2xl border-2 border-[#1B4B72] text-[#1B4B72] bg-white font-bold text-sm hover:text-red-600 hover:border-red-600 hover:bg-red-50/40 active:scale-[0.99] transition-all cursor-pointer text-center"
+          disabled={isSubmitting}
+          className="flex-1 order-2 sm:order-1 py-4 rounded-2xl border-2 border-[#1B4B72] text-[#1B4B72] bg-white font-bold text-sm hover:text-red-600 hover:border-red-600 hover:bg-red-50/40 active:scale-[0.99] transition-all cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
           إلغاء
         </button>

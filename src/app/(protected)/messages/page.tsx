@@ -20,6 +20,9 @@ import {
   generateUUID,
 } from "@/src/features/messages/hooks";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { usePost } from "@/src/features/posts/hooks";
+import { useCreateContract } from "@/src/features/contracts/hooks/useCreateContract";
+import toast from "react-hot-toast";
 
 function MessagesPageContent() {
   const isMounted = useSyncExternalStore(
@@ -64,6 +67,13 @@ function MessagesPageContent() {
       ? (activePerson.rooms.find((r) => r.id === activeChat.roomId) ?? null)
       : null;
 
+  const activeConversation = activeChat
+    ? conversations?.find((c) => c.id === activeChat.roomId)
+    : null;
+
+  const { data: postData } = usePost(activeConversation?.postId ?? 0);
+  const createContractMutation = useCreateContract();
+
   // Connect Socket.IO and manage room join/leave
   useChatSocket(activeChat?.roomId ?? null);
 
@@ -97,43 +107,43 @@ function MessagesPageContent() {
   };
 
   const handleCreateContractClick = () => {
-    if (activeChat) {
-      setIsContractModalOpen(true);
+    if (!activeChat || !activeConversation?.postId || !postData) {
+      toast.error("لا يمكن انشاء العقد حالياً: بيانات الخدمة غير متوفرة");
+      return;
+    }
+    setIsContractModalOpen(true);
+  };
+
+  const handleContractSubmit = async (data: ContractFormValues) => {
+    if (!activeConversation?.postId || !postData || !currentUserId) return;
+    try {
+      await createContractMutation.mutateAsync({
+        postId: activeConversation.postId,
+        providerId: postData.userId,
+        duration: data.timeCredits,
+      });
+      toast.success("تم انشاء العقد بنجاح");
+      setIsContractModalOpen(false);
+    } catch (error: any) {
+      if (error?.message?.includes("already exists") || error?.message?.includes("active")) {
+         toast.error("يوجد عقد نشط أو معلق مسبقاً لهذه الخدمة");
+         setIsContractModalOpen(false);
+      } else {
+         toast.error(error?.message || "حدث خطأ غير متوقع");
+      }
     }
   };
 
-  const handleContractSubmit = (data: ContractFormValues) => {
-    setIsContractModalOpen(false);
-    // TODO: integrate with exchanges API
-  };
-
-  // Determine if the current user is the provider (initiator, NOT the post owner)
-  const activeConversation = activeChat
-    ? conversations?.find((c) => c.id === activeChat.roomId)
-    : null;
-
-  // The provider is the person who started the conversation (not the post owner).
-  // In the API, participants[0] is typically the initiator. We compare against the post owner.
-  const isProvider = (() => {
-    if (!activeConversation || !currentUserId) return false;
-    // The post owner is the person who created the post
-    // The provider (who contacted) is the OTHER person
-    // Find the post owner from participants — the one whose userId matches a participant
-    // Since we don't have post.userId in the conversation, we check:
-    // If the current user is NOT the post owner, they are the provider (they initiated contact)
-    const postOwnerParticipant = activeConversation.participants.find(
-      (p) => p.userId !== currentUserId
-    );
-    // If there's no other participant, we can't determine
-    if (!postOwnerParticipant) return false;
-    // The current user is the provider if they are NOT the post owner
-    // Since conversations are linked to posts, the person who clicked "تواصل" is the initiator
-    // We'll use a simple heuristic: the first participant who joined is the initiator
-    const sortedParticipants = [...activeConversation.participants].sort(
-      (a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
-    );
-    return sortedParticipants[0]?.userId === currentUserId;
-  })();
+  const isProvider = currentUserId === postData?.userId;
+  
+  // A contract exists if there is an exchange attached to the conversation or post
+  const hasActiveContract = !!(activeConversation as any)?.exchange || !!(postData as any)?.exchange;
+  
+  const showContractButton = Boolean(
+    isProvider && 
+    currentUserId && 
+    !hasActiveContract
+  );
 
   if (!isMounted) {
     return null; // The Suspense fallback will effectively be what the user sees, but returning null or skeleton ensures no mismatch
@@ -143,12 +153,18 @@ function MessagesPageContent() {
     return <MessagesEmptyState onBrowseServices={() => {}} />;
   }
 
+  const seekerName = (() => {
+    if (!activeConversation) return "";
+    const seekerParticipant = activeConversation.participants.find(p => p.userId !== postData?.userId);
+    return seekerParticipant?.username || "";
+  })();
+
   const contractInitialData = {
-    postTitle: activeRoom?.postTitle || "عنوان الخدمة المتفق عليها",
-    providerName: activePerson?.personName || "",
-    seekerName: "",
-    serviceMode: "online" as "online" | "offline",
-    timeCredits: 2,
+    postTitle: postData?.title || activeRoom?.postTitle || "عنوان الخدمة المتفق عليها",
+    providerName: postData?.user?.full_name || postData?.user?.username || activePerson?.personName || "",
+    seekerName: currentUserId !== postData?.userId ? (currentUser?.user?.full_name || currentUser?.user?.username || "") : seekerName,
+    serviceMode: (postData?.serviceMode?.toLowerCase() as "online" | "offline") || "online",
+    timeCredits: postData?.assignedTimeCredits || 2,
   };
 
   return (
@@ -192,7 +208,7 @@ function MessagesPageContent() {
               room={activeRoom}
               onBack={handleBack}
               onCreateContract={handleCreateContractClick}
-              showContractButton={isProvider}
+              showContractButton={showContractButton}
             />
 
             <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-neutral-50/20">
@@ -237,6 +253,7 @@ function MessagesPageContent() {
       >
         <CreateContractForm
           initialData={contractInitialData}
+          isSubmitting={createContractMutation.isPending}
           onCancel={() => setIsContractModalOpen(false)}
           onSubmit={handleContractSubmit}
         />

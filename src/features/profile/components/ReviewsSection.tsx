@@ -2,6 +2,7 @@
 import { Star, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { Review } from "../types";
+import { useProfileNavigation } from "@/src/hooks/useProfileNavigation";
 
 interface ReviewsSectionProps {
   reviews: Review[];
@@ -24,6 +25,7 @@ function StarRating(props: { rating: number }) {
 
 export default function ReviewsSection(props: ReviewsSectionProps) {
   const { reviews, onViewAll } = props;
+  const { navigateToProfile } = useProfileNavigation();
 
   return (
     <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 sm:p-6" dir="rtl">
@@ -53,7 +55,7 @@ export default function ReviewsSection(props: ReviewsSectionProps) {
                   className={`flex items-center gap-2.5 ${review.reviewerId ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
                   onClick={() => {
                     if (review.reviewerId) {
-                      window.location.href = `/users/${review.reviewerId}`;
+                      navigateToProfile(review.reviewerId);
                     }
                   }}
                 >

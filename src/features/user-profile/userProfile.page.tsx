@@ -11,6 +11,7 @@ import { useUserProfile } from "@/src/features/profile/hooks/useUserProfile";
 import { useUserReviews } from "@/src/features/profile/hooks/useUserReviews";
 import { mapProfileRecentExchangeToContract, mapApiReviewToReview } from "@/src/features/profile/utils/profileMappers";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
 interface UserProfilePageProps {
   userId: number;
@@ -18,6 +19,14 @@ interface UserProfilePageProps {
 
 export default function UserProfilePage({ userId }: UserProfilePageProps) {
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
+  const isCurrentUser = currentUser?.user?.userId === userId;
+
+  React.useEffect(() => {
+    if (isCurrentUser) {
+      router.replace('/my-profile');
+    }
+  }, [isCurrentUser, router]);
   
   const { data: userProfile, isLoading: isProfileLoading, isError: isProfileError } = useUserProfile(userId);
   const { 
@@ -33,6 +42,8 @@ export default function UserProfilePage({ userId }: UserProfilePageProps) {
   }, [reviewsData]);
 
   const isLoading = isProfileLoading;
+
+  if (isCurrentUser) return null;
 
   if (isProfileError) {
     return (

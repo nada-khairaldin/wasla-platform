@@ -2,6 +2,7 @@ import React from "react";
 import { Star, MessageSquare, Loader2 } from "lucide-react";
 import { Review } from "@/src/features/profile/types";
 import { Skeleton } from "@/src/components/ui/Skeleton";
+import { useProfileNavigation } from "@/src/hooks/useProfileNavigation";
 
 interface PublicReviewsSectionProps {
   reviews: Review[];
@@ -26,6 +27,7 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function PublicReviewsSection(props: PublicReviewsSectionProps) {
   const { reviews, isLoading, hasNextPage, isFetchingNextPage, onLoadMore } = props;
+  const { navigateToProfile } = useProfileNavigation();
 
   return (
     <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm overflow-hidden flex flex-col h-full" dir="rtl">
@@ -67,7 +69,7 @@ export default function PublicReviewsSection(props: PublicReviewsSectionProps) {
                     className={`flex items-center gap-2.5 ${review.reviewerId ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
                     onClick={() => {
                       if (review.reviewerId) {
-                        window.location.href = `/users/${review.reviewerId}`;
+                        navigateToProfile(review.reviewerId);
                       }
                     }}
                   >

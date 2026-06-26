@@ -19,8 +19,8 @@ import {
   useSavedPosts,
 } from "@/src/features/posts/hooks";
 import { Skeleton } from "../../../../components/ui/Skeleton";
-import { useCurrentUser } from "../../../../hooks/useCurrentUser";
 import { useCreateConversation, useConversationForPost } from "@/src/features/messages/hooks";
+import { useUserActions } from "@/src/hooks/useUserActions";
 
 export default function ServiceDetailPage() {
   const router = useRouter();
@@ -30,9 +30,9 @@ export default function ServiceDetailPage() {
   const { data: post, isLoading: isPostLoading, error } = usePost(postId);
   const { data: savedPosts } = useSavedPosts();
   const { mutate: toggleSave } = useSaveToggle();
-  const { data: currentUser } = useCurrentUser();
+  const { mutate: toggleSave } = useSaveToggle();
+  const { navigateToProfile, isSelf, canMessage } = useUserActions(post?.userId);
   const isSaved = savedPosts?.some((sp) => sp.postId === postId) ?? false;
-  const isOwnPost = post?.userId === Number(currentUser?.user?.userId);
   const { hasConversation, conversationId } = useConversationForPost(postId);
   const createConversation = useCreateConversation();
 
@@ -160,7 +160,7 @@ export default function ServiceDetailPage() {
             >
               <ArrowRight size={16} />
             </button>
-            {isOwnPost && (
+            {isSelf && (
               <button
                 onClick={handleSave}
                 className={`w-11 h-11 flex items-center justify-center rounded-full transition-all duration-300 border backdrop-blur-sm shadow-sm active:scale-90
@@ -232,7 +232,7 @@ export default function ServiceDetailPage() {
               </h3>
 
               <div
-                onClick={() => router.push(`/users/${post.userId}`)}
+                onClick={() => navigateToProfile()}
                 className="flex items-center justify-between bg-neutral-50/60 p-3.5 rounded-2xl cursor-pointer hover:bg-neutral-50 transition-colors group"
               >
                 <div className="flex items-center gap-3">
@@ -253,7 +253,7 @@ export default function ServiceDetailPage() {
               </div>
             </div>
 
-            {!isOwnPost && (
+            {canMessage && (
               <Button
                 onClick={handleContact}
                 disabled={createConversation.isPending}

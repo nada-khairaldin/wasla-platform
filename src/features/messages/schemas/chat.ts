@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const contractSchema = z.object({
-  contractId: z.string(),
   contractTitle: z.string(),
   providerName: z.string(),
   seekerName: z.string(),

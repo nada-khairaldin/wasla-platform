@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { UserProfile } from "@/src/types";
-import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { useUserActions } from "@/src/hooks/useUserActions";
 import { useCreateConversation } from "@/src/features/messages/hooks/useCreateConversation";
 import { useRouter } from "next/navigation";
 import { MessageCircle } from "lucide-react";
@@ -13,11 +13,9 @@ interface UserProfileHeaderProps {
 
 export default function UserProfileHeader({ profile, userId }: UserProfileHeaderProps) {
   const { name, username, bio, profilePicture } = profile;
-  const { data: currentUser } = useCurrentUser();
+  const { isSelf, canMessage } = useUserActions(userId);
   const createConversation = useCreateConversation();
   const router = useRouter();
-
-  const isCurrentUser = currentUser?.user?.userId === userId;
 
   const handleMessageClick = async () => {
     try {
@@ -49,7 +47,7 @@ export default function UserProfileHeader({ profile, userId }: UserProfileHeader
               <h1 className="text-lg sm:text-xl font-bold text-primary-500 truncate">{name}</h1>
               <p className="text-neutral-400 text-xs sm:text-sm truncate">@{username}</p>
             </div>
-            {!isCurrentUser && (
+            {canMessage && (
               <button
                 onClick={handleMessageClick}
                 disabled={createConversation.isPending}

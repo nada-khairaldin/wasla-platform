@@ -5,6 +5,8 @@ import { SearchUser } from "../types/search.types";
 import { getInitials } from "../../../utils";
 import { MapPin, Star, Activity, MessageCircle, ExternalLink, Loader2 } from "lucide-react";
 import { useCreateConversation } from "../../messages/hooks/useCreateConversation";
+import { useProfileNavigation } from "../../../hooks/useProfileNavigation";
+import { useUserActions } from "../../../hooks/useUserActions";
 
 const UserCardComponent = ({
   user,
@@ -18,13 +20,13 @@ const UserCardComponent = ({
   onNavigate?: () => void;
 }) => {
   const router = useRouter();
-
   const createConversation = useCreateConversation();
+  const { navigateToProfile, isSelf, canMessage } = useUserActions(user.id);
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onNavigate?.();
-    router.push(`/users/${user.id}`);
+    navigateToProfile();
   };
 
   const handleMessageClick = async (e: React.MouseEvent) => {
@@ -182,23 +184,25 @@ const UserCardComponent = ({
           <span>عرض الملف</span>
           <ExternalLink size={14} />
         </button>
-        <button
-          onClick={handleMessageClick}
-          disabled={createConversation.isPending}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-[12px] font-bold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] outline-none focus:outline-none disabled:opacity-70 disabled:hover:scale-100 disabled:active:scale-100"
-        >
-          {createConversation.isPending ? (
-            <>
-              <span>جاري...</span>
-              <Loader2 size={14} className="animate-spin" />
-            </>
-          ) : (
-            <>
-              <span>مراسلة</span>
-              <MessageCircle size={14} />
-            </>
-          )}
-        </button>
+        {canMessage && (
+          <button
+            onClick={handleMessageClick}
+            disabled={createConversation.isPending}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-[12px] font-bold rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] outline-none focus:outline-none disabled:opacity-70 disabled:hover:scale-100 disabled:active:scale-100"
+          >
+            {createConversation.isPending ? (
+              <>
+                <span>جاري...</span>
+                <Loader2 size={14} className="animate-spin" />
+              </>
+            ) : (
+              <>
+                <span>مراسلة</span>
+                <MessageCircle size={14} />
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );
