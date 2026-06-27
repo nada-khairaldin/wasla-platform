@@ -6,12 +6,25 @@ import { ProgressRing } from "./ProgressRing";
 
 interface ContractStatsRowProps {
   stats?: ContractStats; // Safe fallback handle
+  highlight?: boolean;
+  deadlineRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 
-function StatCard({ children }: { children: React.ReactNode }) {
+function StatCard({ 
+  children, 
+  className = "",
+  deadlineRef,
+}: { 
+  children: React.ReactNode; 
+  className?: string;
+  deadlineRef?: React.RefObject<HTMLDivElement | null>;
+}) {
   return (
-    <div className="shrink-0 snap-center w-[208px] h-[248px] rounded-[24px] bg-primary-500 pt-[32px] pb-[28px] px-[20px] flex flex-col items-center justify-between text-center shadow-sm hover:shadow-md transition-all duration-200">
+    <div 
+      ref={deadlineRef}
+      className={`relative shrink-0 snap-center w-[208px] h-[248px] rounded-[24px] bg-primary-500 pt-[32px] pb-[28px] px-[20px] flex flex-col items-center justify-between text-center shadow-sm hover:shadow-md transition-all duration-200 ${className}`}
+    >
       {children}
     </div>
   );
@@ -26,19 +39,24 @@ function IconCircle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ContractStatsRow({ stats }: ContractStatsRowProps) {
+export function ContractStatsRow({ 
+  stats,
+  highlight,
+  deadlineRef,
+}: ContractStatsRowProps) {
   const {
     completedHours = 0,
     totalHours = 0,
     endDate = "—",
     remainingHours = 0,
+    proposedEndDate,
   } = stats || {};
 
   const progressPercentage =
     totalHours > 0 ? (completedHours / totalHours) * 100 : 0;
 
   return (
-    <div className="w-full flex md:flex-wrap items-center justify-start md:justify-between gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className="relative z-10 w-full flex md:flex-wrap items-center justify-start md:justify-between gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory p-2 pb-4 md:p-2 md:pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* 1 – Completed Hours (Progress Ring) */}
       <StatCard>
         <div className="flex flex-col items-center gap-2">
@@ -90,16 +108,30 @@ export function ContractStatsRow({ stats }: ContractStatsRowProps) {
       </StatCard>
 
       {/* 4 – Target End Date */}
-      <StatCard>
+      <StatCard
+        deadlineRef={deadlineRef}
+        className={`transition-all duration-500 ${
+          highlight 
+            ? "!z-20 ring-4 ring-secondary-300 ring-offset-2 scale-[1.02] shadow-lg animate-pulse" 
+            : "z-10"
+        }`}
+      >
         <div className="flex flex-col items-center gap-2">
           <IconCircle>
             <Calendar size={22} strokeWidth={1.8} />
           </IconCircle>
           <p className="text-xs font-bold text-white/70">تاريخ الانتهاء</p>
         </div>
-        <p className="text-base font-black text-white tracking-tight mt-auto leading-none pb-1">
-          {endDate}
-        </p>
+        <div className="mt-auto space-y-1">
+          <p className="text-base font-black text-white tracking-tight leading-none">
+            {endDate}
+          </p>
+          {proposedEndDate && (
+            <p className="text-xs font-bold text-secondary-300 leading-none pt-1">
+              مقترح: {proposedEndDate}
+            </p>
+          )}
+        </div>
       </StatCard>
     </div>
   );

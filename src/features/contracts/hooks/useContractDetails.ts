@@ -22,6 +22,8 @@ export function useContractDetails(contractId: string) {
       serviceType: ex.post?.category === "OFFER" ? "عرض خدمة" : "طلب خدمة",
       deliveryType: ex.post?.service_mode === "ONLINE" ? "أونلاين" : "حضوري" as "أونلاين" | "أوفلاين",
       status: ex.status?.toLowerCase() as ContractStatus,
+      proposedEndDate: ex.proposedEndDate,
+      contractEndDate: ex.contractEndDate,
       stats: {
         totalHours: ex.duration || 0,
         completedHours: 0, // Placeholder as required fields may not be present in schema yet
@@ -33,6 +35,13 @@ export function useContractDetails(contractId: string) {
               year: "numeric"
             })
           : "—",
+        proposedEndDate: ex.proposedEndDate
+          ? new Date(ex.proposedEndDate).toLocaleDateString("ar-EG", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric"
+            })
+          : null,
       },
       providerId: ex.providerId,
       requesterId: ex.requesterId,

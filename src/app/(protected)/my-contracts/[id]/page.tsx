@@ -24,6 +24,12 @@ import { useConfirmSession } from "@/src/features/contracts/hooks/useConfirmSess
 import { useRejectSession } from "@/src/features/contracts/hooks/useRejectSession";
 import { WorkSession } from "@/src/features/contracts/contract.types";
 import toast from "react-hot-toast";
+import { useState } from "react";
+import { useProposeDeadline } from "@/src/features/contracts/hooks/useProposeDeadline";
+import { useApproveDeadline } from "@/src/features/contracts/hooks/useApproveDeadline";
+import { useRejectDeadline } from "@/src/features/contracts/hooks/useRejectDeadline";
+import { ProposeDeadlineModal } from "@/src/features/contracts/components/ProposeDeadlineModal";
+import { useNotifications } from "@/src/features/notifications/hooks/useNotifications";
 
 export default function ContractDetailsPage() {
   const params = useParams();
@@ -46,7 +52,21 @@ export default function ContractDetailsPage() {
 
   const tabParam = searchParams.get("tab");
   const statusParam = searchParams.get("status");
+  const highlightParam = searchParams.get("highlight");
   const sessionsRef = useRef<HTMLDivElement>(null);
+  const deadlineRef = useRef<HTMLDivElement>(null);
+
+  const [isProposeDeadlineModalOpen, setIsProposeDeadlineModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (highlightParam === "deadline" && deadlineRef.current) {
+      setTimeout(() => {
+        if (deadlineRef.current) {
+          deadlineRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    }
+  }, [highlightParam]);
 
   useEffect(() => {
     if (tabParam === "sessions" && statusParam === "pending") {
@@ -69,6 +89,42 @@ export default function ContractDetailsPage() {
   const confirmMutation = useConfirmSession(contract?.id);
   const rejectMutation = useRejectSession(contract?.id);
 
+  const proposeDeadlineMutation = useProposeDeadline(contract?.id);
+  const approveDeadlineMutation = useApproveDeadline(contract?.id);
+  const rejectDeadlineMutation = useRejectDeadline(contract?.id);
+
+  const { notifications } = useNotifications();
+
+  const deadlineApproachingNotification = notifications?.find((n) => {
+    if (n.type !== "DEADLINE_APPROACHING") return false;
+
+    let payloadData: Record<string, unknown> = {};
+    if (typeof n.data === "string") {
+      try {
+        payloadData = JSON.parse(n.data);
+      } catch {}
+    } else if (n.data && typeof n.data === "object") {
+      payloadData = n.data as Record<string, unknown>;
+    }
+
+    return String(payloadData.contractId) === String(contract?.id);
+  });
+
+  const sessionsList = sessionsData || [];
+
+  const completedHours = sessionsList
+    .filter((s) => s.status.toUpperCase() === "CONFIRMED" || s.status === "مؤكدة")
+    .reduce((acc, s) => acc + Number(s.hours), 0);
+
+  const totalHours = contract?.stats?.totalHours || 0;
+  const remainingHours = Math.max(0, totalHours - completedHours);
+
+  const computedStats = contract?.stats ? {
+    ...contract.stats,
+    completedHours,
+    remainingHours,
+  } : undefined;
+
   const isSeeker = Boolean(
     currentUser?.user?.userId && 
     contract?.requesterId && 
@@ -82,17 +138,13 @@ export default function ContractDetailsPage() {
       return;
     }
 
-    const sessionsList = sessionsData || [];
     const sessionToConfirm = sessionsList.find((s) => String(s.id) === String(sessionId));
-    const confirmedHoursSum = sessionsList
-      .filter((s) => s.status.toUpperCase() === "CONFIRMED" || s.status === "مؤكدة")
-      .reduce((acc, s) => acc + Number(s.hours), 0);
     const sessionHours = sessionToConfirm ? Number(sessionToConfirm.hours) : 0;
     const contractHours = contract?.stats?.totalHours || 0;
 
-    if (confirmedHoursSum + sessionHours > contractHours) {
+    if (completedHours + sessionHours > contractHours) {
       toast.error(
-        `لا يمكن تأكيد الجلسة. مجموع ساعات الجلسات المؤكدة مسبقاً (${confirmedHoursSum} ساعة) مع ساعات الجلسة الحالية (${sessionHours} ساعة) يتجاوز الساعات الإجمالية للعقد (${contractHours} ساعة).`
+        `لا يمكن تأكيد الجلسة. مجموع ساعات الجلسات المؤكدة مسبقاً (${completedHours} ساعة) مع ساعات الجلسة الحالية (${sessionHours} ساعة) يتجاوز الساعات الإجمالية للعقد (${contractHours} ساعة).`
       );
       return;
     }
@@ -123,16 +175,47 @@ export default function ContractDetailsPage() {
     Number(currentUser.user.userId) === Number(contract.providerId)
   );
 
+  const normalizedStatus = contract?.status?.toUpperCase() || "";
+  const hasPendingProposal = 
+    (!!contract?.proposedEndDate || proposeDeadlineMutation.isPending) && 
+    normalizedStatus !== "COMPLETED";
+
+  const canEditDeadline = 
+    isProvider && 
+    (normalizedStatus === "IN_PROGRESS" || normalizedStatus === "WAITING_CONFIRMATION") && 
+    !hasPendingProposal;
+
+  const handleProposeDeadlineSubmit = async (proposedEndDate: string) => {
+    try {
+      await proposeDeadlineMutation.mutateAsync(proposedEndDate);
+      setIsProposeDeadlineModalOpen(false);
+    } catch (e) {
+      // Handled inside hook
+    }
+  };
+
+  const handleApproveDeadline = async () => {
+    try {
+      await approveDeadlineMutation.mutateAsync();
+    } catch (e) {
+      // Handled inside hook
+    }
+  };
+
+  const handleRejectDeadline = async () => {
+    try {
+      await rejectDeadlineMutation.mutateAsync();
+    } catch (e) {
+      // Handled inside hook
+    }
+  };
+
   const handleAddSessionSubmit = async (hours: number, notes: string) => {
-    const sessionsList = sessionsData || [];
-    const confirmedHoursSum = sessionsList
-      .filter((s) => s.status.toUpperCase() === "CONFIRMED" || s.status === "مؤكدة")
-      .reduce((acc, s) => acc + Number(s.hours), 0);
     const contractHours = contract?.stats?.totalHours || 0;
 
-    if (confirmedHoursSum + hours > contractHours) {
+    if (completedHours + hours > contractHours) {
       toast.error(
-        `لا يمكن إنشاء الجلسة. مجموع ساعات الجلسات المؤكدة (${confirmedHoursSum} ساعة) مع الجلسة الجديدة (${hours} ساعة) يتجاوز الساعات الإجمالية للعقد (${contractHours} ساعة).`
+        `لا يمكن إنشاء الجلسة. مجموع ساعات الجلسات المؤكدة (${completedHours} ساعة) مع الجلسة الجديدة (${hours} ساعة) يتجاوز الساعات الإجمالية للعقد (${contractHours} ساعة).`
       );
       return;
     }
@@ -273,13 +356,90 @@ export default function ContractDetailsPage() {
                 </div>
               </div>
             </div>
-            <button className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 shadow-sm active:scale-95 transition-all ">
-              <Pencil size={16} />
-            </button>
+            {canEditDeadline && (
+              <button 
+                onClick={() => setIsProposeDeadlineModalOpen(true)}
+                className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 shadow-sm active:scale-95 transition-all"
+                title="تعديل تاريخ الانتهاء"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
           </div>
 
+          {/* ─── Warning Banner for Approaching Deadline ─── */}
+          {deadlineApproachingNotification && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3 animate-in fade-in duration-300">
+              <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
+              <div className="space-y-1">
+                <h4 className="font-bold text-red-900 text-sm">
+                  {deadlineApproachingNotification.title || "اقترب موعد انتهاء العقد"}
+                </h4>
+                <p className="text-xs text-red-700 leading-relaxed">
+                  {deadlineApproachingNotification.description}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Action Banners for Deadline Proposals ─── */}
+          {hasPendingProposal && (
+            <div className="animate-in fade-in duration-300">
+              {isSeeker ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={20} />
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-amber-900 text-sm">طلب تعديل تاريخ الانتهاء</h4>
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        اقترح مقدم الخدمة (<span className="font-bold">{contract.providerName}</span>) تاريخ انتهاء جديد للعقد:{" "}
+                        <span className="font-black text-amber-900">
+                          {contract.stats?.proposedEndDate || (proposeDeadlineMutation.isPending ? "قيد المعالجة..." : "")}
+                        </span>{" "}
+                        بدلاً من التاريخ الحالي: <span className="font-bold">{contract.stats?.endDate}</span>.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 self-end md:self-auto">
+                    <button
+                      onClick={handleRejectDeadline}
+                      disabled={rejectDeadlineMutation.isPending || approveDeadlineMutation.isPending}
+                      className="px-5 py-2 border border-red-200 bg-white hover:bg-red-50 text-red-600 rounded-xl text-xs font-bold transition-all disabled:opacity-50 active:scale-95 shrink-0"
+                    >
+                      {rejectDeadlineMutation.isPending ? "جاري الرفض..." : "رفض المقترح"}
+                    </button>
+                    <button
+                      onClick={handleApproveDeadline}
+                      disabled={rejectDeadlineMutation.isPending || approveDeadlineMutation.isPending}
+                      className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all disabled:opacity-50 active:scale-95 shrink-0"
+                    >
+                      {approveDeadlineMutation.isPending ? "جاري القبول..." : "قبول وتحديث التاريخ"}
+                    </button>
+                  </div>
+                </div>
+              ) : isProvider ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-3">
+                  <AlertCircle className="text-blue-600 shrink-0 mt-0.5" size={20} />
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-blue-900 text-sm">مقترح تعديل تاريخ الانتهاء قيد الانتظار</h4>
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      لقد اقترحت تاريخ انتهاء جديد للعقد:{" "}
+                      <span className="font-black text-blue-900">
+                        {contract.stats?.proposedEndDate || (proposeDeadlineMutation.isPending ? "قيد المعالجة..." : "")}
+                      </span>. بانتظار موافقة المستفيد (<span className="font-bold">{contract.seekerName}</span>).
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+
           {/* ─── Render Extracted Stats Grid Row ─── */}
-          <ContractStatsRow stats={contract.stats} />
+          <ContractStatsRow 
+            stats={computedStats} 
+            highlight={highlightParam === "deadline" && hasPendingProposal}
+            deadlineRef={deadlineRef}
+          />
 
           {/* ─── Dynamic Log & Sessions Layout Grid ─── */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2.5fr] gap-6 items-stretch mt-8">
@@ -340,7 +500,20 @@ export default function ContractDetailsPage() {
           onClose={closeAddSessionModal}
           onSubmit={handleAddSessionSubmit}
           isSubmitting={createSessionMutation.isPending}
-          remainingHours={contract.stats?.remainingHours || 0}
+          remainingHours={remainingHours}
+          contractStatus={contract.status}
+        />
+      )}
+
+      {/* Propose Deadline Modal */}
+      {contract && (
+        <ProposeDeadlineModal
+          isOpen={isProposeDeadlineModalOpen}
+          onClose={() => setIsProposeDeadlineModalOpen(false)}
+          onSubmit={handleProposeDeadlineSubmit}
+          isSubmitting={proposeDeadlineMutation.isPending}
+          currentEndDate={contract.stats?.endDate || ""}
+          seekerName={contract.seekerName}
           contractStatus={contract.status}
         />
       )}

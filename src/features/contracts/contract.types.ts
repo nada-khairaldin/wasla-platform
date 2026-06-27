@@ -23,6 +23,7 @@ export interface ContractStats {
   totalHours: number;
   endDate: string;
   remainingHours: number;
+  proposedEndDate?: string | null;
 }
 
 export interface Contract {
@@ -38,6 +39,8 @@ export interface Contract {
   operationLogs?: OperationLogEntry[];
   providerId?: number;
   requesterId?: number;
+  proposedEndDate?: string | null;
+  contractEndDate?: string | null;
 }
 
 export type CompletedContractStatus = "انتهى بنجاح" | "انتهى بنزاع" | "مرفوض" | "ملغي";

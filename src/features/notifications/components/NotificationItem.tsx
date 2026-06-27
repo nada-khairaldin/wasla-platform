@@ -71,10 +71,16 @@ export function NotificationItem({ notification, onNavigate, onClick }: Notifica
       } else {
         router.push("/my-contracts");
       }
+    } else if (type === "DEADLINE_PROPOSED") {
+      const cId = payloadData.contractId;
+      if (cId) {
+        router.push(`/my-contracts/${cId}?tab=active&highlight=deadline`);
+      } else {
+        router.push("/my-contracts?tab=active");
+      }
+    } else if (type === "DEADLINE_APPROVED" || type === "DEADLINE_REJECTED") {
+      router.push("/my-contracts?tab=active");
     } else if (
-      type === "DEADLINE_PROPOSED" ||
-      type === "DEADLINE_APPROVED" ||
-      type === "DEADLINE_REJECTED" ||
       type === "DEADLINE_APPROACHING" ||
       type === "CONTRACT_AUTO_RESOLVED"
     ) {

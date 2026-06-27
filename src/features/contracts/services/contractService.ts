@@ -70,4 +70,29 @@ export const contractService = {
     throwApiError(error, status);
     return data!;
   },
+  proposeDeadline: async (id: number, proposedEndDate: string): Promise<unknown> => {
+    const { data, error, status } = await apiRequest<unknown, { proposedEndDate: string }>({
+      method: "post",
+      url: `/exchanges/${id}/deadline`,
+      payload: { proposedEndDate },
+    });
+    throwApiError(error, status);
+    return data!;
+  },
+  approveDeadline: async (id: number): Promise<unknown> => {
+    const { data, error, status } = await apiRequest<unknown>({
+      method: "put",
+      url: `/exchanges/${id}/deadline/approve`,
+    });
+    throwApiError(error, status);
+    return data!;
+  },
+  rejectDeadline: async (id: number): Promise<unknown> => {
+    const { data, error, status } = await apiRequest<unknown>({
+      method: "put",
+      url: `/exchanges/${id}/deadline/reject`,
+    });
+    throwApiError(error, status);
+    return data!;
+  },
 };
