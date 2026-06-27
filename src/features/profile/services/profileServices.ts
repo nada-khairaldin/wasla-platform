@@ -36,6 +36,8 @@ export interface Exchange {
   duration: number;
   status: "PENDING" | "ACCEPTED" | "IN_PROGRESS" | "WAITING_CONFIRMATION" | "COMPLETED" | "CANCELED" | "REJECTED" | "DISPUTED";
   escrowStatus: string;
+  contractEndDate?: string | null;
+  proposedEndDate?: string | null;
   acceptedAt: string | null;
   deliveredAt: string | null;
   completedAt: string | null;
@@ -137,6 +139,13 @@ export const profileServices = {
       method: "GET",
       url: "/exchanges",
       payload: params,
+    });
+  },
+
+  getExchangeById: (id: number) => {
+    return apiRequest<{ exchange: Exchange }>({
+      method: "GET",
+      url: `/exchanges/${id}`,
     });
   },
 

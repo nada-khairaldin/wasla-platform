@@ -1,21 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { contractService } from "../services/contractService";
-import { CreateContractRequest } from "../types/contract.types";
+import { contractService, CreateContractPayload, CreateContractResponse } from "../api/contractService";
 
 export function useCreateContract() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (data: CreateContractRequest) => {
-      const response = await contractService.createContract(data);
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      return response.data;
-    },
+  return useMutation<CreateContractResponse, unknown, CreateContractPayload>({
+    mutationFn: contractService.createContract,
     onSuccess: () => {
+      // Invalidate relevant queries like messages or conversations if needed
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      // Invalidate specific chat or exchange queries if they exist
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["userExchanges"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

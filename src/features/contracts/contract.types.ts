@@ -1,4 +1,4 @@
-export type ContractStatus = "active" | "pending" | "completed";
+export type ContractStatus = "active" | "pending" | "completed" | "accepted" | "in_progress" | "waiting_confirmation" | "canceled" | "cancelled" | "rejected" | "disputed";
 export type UserRole = "provider" | "seeker";
 export type WorkSessionConfirmation = "مؤكدة" | "غير مؤكدة" | "ملغية" | "قيد الانتظار";
 
@@ -31,13 +31,13 @@ export interface Contract {
   providerName: string;
   serviceType: string;
   status: ContractStatus;
-  deliveryType: "أونلاين" | "أوفلاين";
+  deliveryType: "أونلاين" | "أوفلاين" | "حضوري";
   stats?: ContractStats;
   workSessions?: WorkSession[];
   operationLogs?: OperationLogEntry[];
 }
 
-export type CompletedContractStatus = "انتهى بنجاح" | "انتهى بنزاع";
+export type CompletedContractStatus = "انتهى بنجاح" | "انتهى بنزاع" | "مرفوض" | "ملغي";
 
 export interface CompletedContract {
   id: string;

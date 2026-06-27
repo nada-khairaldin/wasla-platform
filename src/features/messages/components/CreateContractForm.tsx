@@ -119,8 +119,9 @@ export function CreateContractForm({
         <div className="flex items-center justify-between sm:justify-start gap-4 bg-neutral-100/70 p-1.5 rounded-xl w-full sm:w-auto">
           <button
             type="button"
-            disabled
-            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 shadow-none flex items-center justify-center text-neutral-400 font-bold text-lg cursor-not-allowed"
+            disabled={isSubmitting}
+            onClick={() => setValue("timeCredits", timeCreditsValue + 1, { shouldValidate: true })}
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 shadow-none flex items-center justify-center text-neutral-600 font-bold text-lg hover:bg-neutral-200 active:scale-95 disabled:opacity-50 transition-all"
           >
             +
           </button>
@@ -129,8 +130,9 @@ export function CreateContractForm({
           </span>
           <button
             type="button"
-            disabled
-            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 shadow-none flex items-center justify-center text-neutral-400 font-bold text-lg cursor-not-allowed"
+            disabled={isSubmitting || timeCreditsValue <= 1}
+            onClick={() => setValue("timeCredits", Math.max(1, timeCreditsValue - 1), { shouldValidate: true })}
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-neutral-100 shadow-none flex items-center justify-center text-neutral-600 font-bold text-lg hover:bg-neutral-200 active:scale-95 disabled:opacity-50 transition-all"
           >
             -
           </button>

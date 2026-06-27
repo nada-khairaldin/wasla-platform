@@ -1,6 +1,7 @@
 import { ChevronRight, FilePlus } from "lucide-react";
 import type { PersonFolder, ChatRoom } from "../chat.types";
 import { PersonAvatar } from "./PersonAvatar";
+import toast from "react-hot-toast";
 
 type ChatHeaderProps = {
   person: PersonFolder;
@@ -9,6 +10,7 @@ type ChatHeaderProps = {
   onCreateContract?: () => void;
   /** Show the contract creation button only for the provider (initiator) */
   showContractButton?: boolean;
+  hasActiveContract?: boolean;
 };
 
 export function ChatHeader({
@@ -17,6 +19,7 @@ export function ChatHeader({
   onBack,
   onCreateContract,
   showContractButton = true,
+  hasActiveContract = false,
 }: ChatHeaderProps) {
   return (
     <div className="relative z-10 flex items-center justify-between px-4 md:px-xl py-3.5 md:py-sm bg-white border-b border-neutral-50 shrink-0 text-right w-full">
@@ -61,14 +64,14 @@ export function ChatHeader({
         <div className="shrink-0">
           <button
             type="button"
-            onClick={onCreateContract}
-            className="flex items-center justify-center gap-1.5 md:gap-2 px-3 py-2 md:px-base md:py-[15px] 
-                       rounded-full  border border-neutral-200
-                       bg-primary-50 text-neutral-600 font-bold text-[11px] md:text-xs 
-                       shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] 
-                       hover:bg-primary-500 hover:text-white hover:border-primary-500 hover:cursor-pointer
-                       active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] 
-                       active:scale-[0.98] transition-all shrink-0"
+            onClick={hasActiveContract ? () => toast.error("يوجد عقد مسبق لهذه الخدمة") : onCreateContract}
+            className={`flex items-center justify-center gap-1.5 md:gap-2 px-3 py-2 md:px-base md:py-[15px] 
+                       rounded-full border 
+                       font-bold text-[11px] md:text-xs transition-all shrink-0
+                       ${hasActiveContract 
+                         ? "bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed opacity-80" 
+                         : "bg-primary-50 text-neutral-600 border-neutral-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] hover:bg-primary-500 hover:text-white hover:border-primary-500 hover:cursor-pointer active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] active:scale-[0.98]"
+                       }`}
           >
             <FilePlus className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" strokeWidth={2.5} />
             <span className="hidden sm:inline">إنشاء عقد خدمة</span>

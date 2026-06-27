@@ -7,7 +7,7 @@ import { CompletedContractsHeader } from "@/src/features/contracts/components/co
 import { CompletedStatsRow } from "@/src/features/contracts/components/completed/CompletedStatsRow";
 import { CompletedContractCard } from "@/src/features/contracts/components/completed/CompletedContractCard";
 import { COMPLETED_MOCK_CONTRACTS } from "@/src/features/contracts/data/completed-contracts.data";
-import { ContractStatus } from "@/src/features/contracts/contract.types";
+import { ContractStatus, Contract } from "@/src/features/contracts/contract.types";
 
 export default function CompletedContractsPage() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export default function CompletedContractsPage() {
           />
 
           {/* Stats Row */}
-          <CompletedStatsRow />
+          <CompletedStatsRow contracts={filteredContracts} />
 
           {/* Contracts List Header */}
           <h2 className="text-xl font-bold text-neutral-800 mt-2">قائمة العقود المنتهية</h2>
@@ -58,7 +58,6 @@ export default function CompletedContractsPage() {
               <CompletedContractCard 
                 key={contract.id} 
                 contract={contract} 
-                onViewDetails={handleViewDetails}
               />
             ))}
 

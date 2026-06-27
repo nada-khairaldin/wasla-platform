@@ -1,4 +1,4 @@
-import { FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { FileText, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 
 interface CompletedContractsHeaderProps {
   activeFilter: string;
@@ -14,9 +14,6 @@ export function CompletedContractsHeader({ activeFilter, onFilterChange }: Compl
         <FileText size={28} className="text-primary-500 mt-1" />
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-black text-primary-900">العقود المنتهية</h1>
-          <p className="text-sm font-medium text-neutral-500">
-            عرض جميع العقود التي تم انهاؤها
-          </p>
         </div>
       </div>
 
@@ -49,12 +46,24 @@ export function CompletedContractsHeader({ activeFilter, onFilterChange }: Compl
           onClick={() => onFilterChange("انتهى بنزاع")}
           className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
             activeFilter === "انتهى بنزاع" 
-              ? "bg-red-50 border border-red-500 text-red-700 shadow-sm" 
-              : "bg-white border border-red-200 text-red-600 hover:bg-red-50"
+              ? "bg-orange-50 border border-orange-500 text-orange-700 shadow-sm" 
+              : "bg-white border border-orange-200 text-orange-600 hover:bg-orange-50"
           }`}
         >
           <AlertCircle size={16} />
           نزاعات
+        </button>
+
+        <button 
+          onClick={() => onFilterChange("مرفوض")}
+          className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+            activeFilter === "مرفوض" 
+              ? "bg-red-50 border border-red-500 text-red-700 shadow-sm" 
+              : "bg-white border border-red-200 text-red-600 hover:bg-red-50"
+          }`}
+        >
+          <XCircle size={16} />
+          عقود مرفوضة
         </button>
       </div>
 

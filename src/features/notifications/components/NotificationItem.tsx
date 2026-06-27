@@ -43,6 +43,9 @@ export function NotificationItem({ notification, onNavigate, onClick }: Notifica
       } else {
         router.push(`/messages`);
       }
+    } else if (category === "contracts") {
+      if (onNavigate) onNavigate();
+      router.push("/my-contracts");
     }
   };
 

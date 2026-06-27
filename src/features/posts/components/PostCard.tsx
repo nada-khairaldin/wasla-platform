@@ -62,7 +62,7 @@ const PostCardComponent = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const mounted = useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => true,
     () => false
   );
@@ -127,22 +127,20 @@ const PostCardComponent = ({
       }}
       className={`relative flex flex-col p-5 md:p-6 rounded-xl transition-all duration-500 cursor-pointer
       hover:[&_.identification-arrow]:-translate-x-1.25 hover:[&_.card-title]:text-primary-700
-      ${(isSaved || isRecommended || isMyPostsView) ? "bg-white" : "bg-neutral-50"} ${
-        isRecommended
+      ${(isSaved || isRecommended || isMyPostsView) ? "bg-white" : "bg-neutral-50"} ${isRecommended
           ? "border-2 border-secondary-400 shadow-[0_10px_35px_rgb(239,207,133,0.15)] hover:shadow-secondary-300/40"
           : isHomeView
-          ? "border border-transparent shadow-sm hover:shadow-lg hover:border-primary-300"
-          : "border border-neutral-200/80 shadow-sm hover:shadow-lg hover:border-primary-300"
-      }`}
+            ? "border border-transparent shadow-sm hover:shadow-lg hover:border-primary-300"
+            : "border border-neutral-200/80 shadow-sm hover:shadow-lg hover:border-primary-300"
+        }`}
     >
       <div className="absolute top-0 left-4 md:left-6">
         <div
           className={`px-4 md:px-5 py-2 rounded-b-xl md:rounded-b-2xl text-[12px] md:text-[13px] font-black font-cairo tracking-wide shadow-sm
-          ${
-            isRequest
+          ${isRequest
               ? "bg-white text-primary-500 border-x border-b border-primary-50"
               : "bg-primary-700 text-white border-x border-b border-primary-800"
-          }`}
+            }`}
         >
           {postTypeLabel}
         </div>
@@ -151,15 +149,15 @@ const PostCardComponent = ({
       <div className="flex gap-sm items-center mb-4 md:mb-5">
         {/* Mobile menu trigger */}
         <div className="flex md:hidden relative z-20">
-           <button 
-             onClick={(e) => { 
-               e.stopPropagation(); 
-               setIsMobileMenuOpen(true); 
-             }} 
-             className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-neutral-500 shadow-sm border border-neutral-100"
-           >
-             <MoreVertical size={18} />
-           </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMobileMenuOpen(true);
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-neutral-500 shadow-sm border border-neutral-100"
+          >
+            <MoreVertical size={18} />
+          </button>
         </div>
 
         {/* Desktop inline actions */}
@@ -293,12 +291,11 @@ const PostCardComponent = ({
             onClick={goToChat}
             disabled={createConversation.isPending}
             className={`w-full md:w-auto px-8 py-3.5 md:py-3 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm text-center flex items-center justify-center gap-2 disabled:opacity-60
-              ${
-                hasConversation
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                  : isRecommended
-                    ? "bg-primary-600 text-white hover:bg-primary-700 shadow-primary-200"
-                    : "bg-white text-primary-600 border border-primary-200 hover:bg-primary-50"
+              ${hasConversation
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                : isRecommended
+                  ? "bg-primary-600 text-white hover:bg-primary-700 shadow-primary-200"
+                  : "bg-white text-primary-600 border border-primary-200 hover:bg-primary-50"
               }`}
           >
             {createConversation.isPending ? (
@@ -317,23 +314,23 @@ const PostCardComponent = ({
       )}
 
       {mounted && isMobileMenuOpen && typeof window !== "undefined" && createPortal(
-        <div 
-          className="md:hidden fixed inset-0 z-[99999] bg-neutral-900/40 backdrop-blur-sm animate-in fade-in flex items-end" 
-          onClick={(e) => { 
-            e.stopPropagation(); 
-            setIsMobileMenuOpen(false); 
+        <div
+          className="md:hidden fixed inset-0 z-[99999] bg-neutral-900/40 backdrop-blur-sm animate-in fade-in flex items-end"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsMobileMenuOpen(false);
           }}
           dir="rtl"
         >
-          <div 
-            className="bg-white w-full rounded-t-3xl p-5 space-y-2 animate-in slide-in-from-bottom-full duration-300 shadow-2xl pb-safe" 
+          <div
+            className="bg-white w-full rounded-t-3xl p-5 space-y-2 animate-in slide-in-from-bottom-full duration-300 shadow-2xl pb-safe"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-1.5 bg-neutral-200 rounded-full mx-auto mb-5" />
-            
+
             {!isSelf && !isUserLoading && (
-              <button 
-                onClick={(e) => { setIsMobileMenuOpen(false); handleSave(e); }} 
+              <button
+                onClick={(e) => { setIsMobileMenuOpen(false); handleSave(e); }}
                 className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
               >
                 <div className={`p-2 rounded-lg ${isSaved ? "bg-primary-50 text-primary-600" : "bg-neutral-100 text-neutral-500"}`}>
@@ -344,10 +341,10 @@ const PostCardComponent = ({
                 </span>
               </button>
             )}
-            
+
             {onEdit && (
-              <button 
-                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onEdit(post); }} 
+              <button
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onEdit(post); }}
                 className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
               >
                 <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
@@ -356,10 +353,10 @@ const PostCardComponent = ({
                 <span className="font-bold font-cairo text-base text-neutral-700">تعديل المنشور</span>
               </button>
             )}
-            
+
             {onArchive && (
-              <button 
-                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onArchive(post.id); }} 
+              <button
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onArchive(post.id); }}
                 className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
               >
                 <div className="p-2 rounded-lg bg-neutral-100 text-neutral-600">
@@ -368,10 +365,10 @@ const PostCardComponent = ({
                 <span className="font-bold font-cairo text-base text-neutral-700">أرشفة المنشور</span>
               </button>
             )}
-            
+
             {onRestore && (
-              <button 
-                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onRestore(post.id); }} 
+              <button
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onRestore(post.id); }}
                 className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
               >
                 <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
@@ -382,8 +379,8 @@ const PostCardComponent = ({
             )}
 
             {onDelete && (
-              <button 
-                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onDelete(post.id); }} 
+              <button
+                onClick={(e) => { setIsMobileMenuOpen(false); e.stopPropagation(); onDelete(post.id); }}
                 className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-neutral-50 active:bg-neutral-100 transition-colors text-right"
               >
                 <div className="p-2 rounded-lg bg-error-50 text-error-600">

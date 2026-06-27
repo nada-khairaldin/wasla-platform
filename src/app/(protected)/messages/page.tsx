@@ -22,6 +22,8 @@ import {
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { usePost } from "@/src/features/posts/hooks";
 import { useCreateContract } from "@/src/features/contracts/hooks/useCreateContract";
+import { useUserProfile } from "@/src/features/profile/hooks/useUserProfile";
+import { useUserExchanges } from "@/src/features/profile/hooks/useUserExchanges";
 import toast from "react-hot-toast";
 
 function MessagesPageContent() {
@@ -36,6 +38,7 @@ function MessagesPageContent() {
 
   const { data: currentUser } = useCurrentUser();
   const currentUserId = Number(currentUser?.user?.userId);
+  const { data: currentUserProfile } = useUserProfile(currentUserId);
 
   const {
     personFolders,
@@ -73,6 +76,7 @@ function MessagesPageContent() {
 
   const { data: postData } = usePost(activeConversation?.postId ?? 0);
   const createContractMutation = useCreateContract();
+  const { data: userExchanges } = useUserExchanges();
 
   // Connect Socket.IO and manage room join/leave
   useChatSocket(activeChat?.roomId ?? null);
@@ -114,37 +118,58 @@ function MessagesPageContent() {
     setIsContractModalOpen(true);
   };
 
+  const isPostOwner = currentUserId === postData?.userId;
+  
+  // Strict Role Logic based on Offer/Request
+  let providerId = 0;
+  let seekerId = 0;
+  
+  if (postData) {
+    if (postData.category === "OFFER") {
+      providerId = postData.userId;
+      seekerId = isPostOwner ? (activeConversation?.participants.find(p => p.userId !== postData.userId)?.userId || 0) : currentUserId;
+    } else {
+      // REQUEST
+      providerId = isPostOwner ? (activeConversation?.participants.find(p => p.userId !== postData.userId)?.userId || 0) : currentUserId;
+      seekerId = postData.userId;
+    }
+  }
+
+  const isSeeker = currentUserId === seekerId;
+  const hasActiveContract = 
+    !!(activeConversation as { exchange?: unknown })?.exchange || 
+    !!(postData as { exchange?: unknown })?.exchange ||
+    (userExchanges?.some(e => e.postId === activeConversation?.postId && !["CANCELED", "REJECTED"].includes(e.status)) ?? false);
+  
+  const showContractButton = Boolean(
+    isSeeker && 
+    currentUserId
+  );
+
   const handleContractSubmit = async (data: ContractFormValues) => {
-    if (!activeConversation?.postId || !postData || !currentUserId) return;
+    if (!activeConversation?.postId || !postData || !currentUserId || !providerId) return;
     try {
       await createContractMutation.mutateAsync({
         postId: activeConversation.postId,
-        providerId: postData.userId,
+        providerId: providerId,
         duration: data.timeCredits,
+        contractEndDate: new Date(data.maxEndDate).toISOString(),
       });
       toast.success("تم انشاء العقد بنجاح");
       setIsContractModalOpen(false);
     } catch (error: unknown) {
-      const err = error as Error;
-      if (err?.message?.includes("already exists") || err?.message?.includes("active")) {
+      const err = error as Error & { response?: { status: number, data?: { message?: string } } };
+      if (err?.response?.status === 409 || err?.message?.includes("already exists") || err?.message?.includes("active")) {
          toast.error("يوجد عقد نشط أو معلق مسبقاً لهذه الخدمة");
-         setIsContractModalOpen(false);
+      } else if (err?.response?.status === 400 && err?.response?.data?.message === "Insufficient time credits") {
+         toast.error("رصيدك غير كافٍ لإنشاء هذا العقد");
+      } else if (err?.response?.status === 400) {
+         toast.error("بيانات غير صالحة. الرجاء التأكد من صحة المدخلات.");
       } else {
-         toast.error(err?.message || "حدث خطأ غير متوقع");
+         toast.error(err?.response?.data?.message || err?.message || "حدث خطأ غير متوقع");
       }
     }
   };
-
-  const isProvider = currentUserId === postData?.userId;
-  
-  // A contract exists if there is an exchange attached to the conversation or post
-  const hasActiveContract = !!(activeConversation as { exchange?: unknown })?.exchange || !!(postData as { exchange?: unknown })?.exchange;
-  
-  const showContractButton = Boolean(
-    isProvider && 
-    currentUserId && 
-    !hasActiveContract
-  );
 
   if (!isMounted) {
     return null; // The Suspense fallback will effectively be what the user sees, but returning null or skeleton ensures no mismatch
@@ -154,16 +179,20 @@ function MessagesPageContent() {
     return <MessagesEmptyState onBrowseServices={() => {}} />;
   }
 
-  const seekerName = (() => {
-    if (!activeConversation) return "";
-    const seekerParticipant = activeConversation.participants.find(p => p.userId !== postData?.userId);
-    return seekerParticipant?.user?.username || "";
-  })();
+  const currentUserDisplayName = currentUserProfile?.profile?.name || currentUserProfile?.profile?.username || currentUser?.user?.full_name || currentUser?.user?.username || "";
+
+  const providerName = providerId === currentUserId 
+    ? (currentUserDisplayName ? `${currentUserDisplayName} (أنا)` : "(أنا)") 
+    : (providerId === postData?.userId ? (postData?.user?.full_name || postData?.user?.username || "") : activePerson?.personName || "");
+
+  const seekerNameValue = seekerId === currentUserId 
+    ? (currentUserDisplayName ? `${currentUserDisplayName} (أنا)` : "(أنا)") 
+    : (seekerId === postData?.userId ? (postData?.user?.full_name || postData?.user?.username || "") : activePerson?.personName || "");
 
   const contractInitialData = {
     postTitle: postData?.title || activeRoom?.postTitle || "عنوان الخدمة المتفق عليها",
-    providerName: postData?.user?.full_name || postData?.user?.username || activePerson?.personName || "",
-    seekerName: currentUserId !== postData?.userId ? (currentUser?.user?.full_name || currentUser?.user?.username || "") : seekerName,
+    providerName: providerName,
+    seekerName: seekerNameValue,
     serviceMode: (postData?.serviceMode?.toLowerCase() as "online" | "offline") || "online",
     timeCredits: postData?.assignedTimeCredits || 2,
   };
@@ -210,6 +239,7 @@ function MessagesPageContent() {
               onBack={handleBack}
               onCreateContract={handleCreateContractClick}
               showContractButton={showContractButton}
+              hasActiveContract={hasActiveContract}
             />
 
             <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-neutral-50/20">

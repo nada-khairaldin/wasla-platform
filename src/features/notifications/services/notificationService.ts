@@ -26,6 +26,12 @@ export const mapNotificationPayloadToUI = (payload: NotificationPayload): Notifi
   if (payload.type === "NEW_MESSAGE" || payload.type === "CONVERSATION_STARTED") {
     category = "messages";
     iconType = "message";
+  } else if (
+    payload.type.toUpperCase().includes("EXCHANGE") ||
+    payload.type.toUpperCase().includes("CONTRACT")
+  ) {
+    category = "contracts";
+    iconType = "contract";
   }
 
   // Simple relative time formatter
