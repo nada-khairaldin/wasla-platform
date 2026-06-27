@@ -2,14 +2,29 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Filter, Check } from "lucide-react";
 import { WorkSession } from "../contract.types";
 
+interface Tab {
+  key: string;
+  label: string;
+}
+
+const TABS: readonly Tab[] = [
+  { key: "all", label: "الكل" },
+  { key: "confirmed", label: "المؤكدة" },
+  { key: "rejected", label: "غير مؤكدة" },
+  { key: "pending", label: "قيد الانتظار" },
+] as const;
+
 interface WorkSessionsListProps {
   sessions: WorkSession[];
   activeTab: string;
   onTabChange: (tab: string) => void;
   contractId: string;
+  isSeeker?: boolean;
+  onConfirm?: (sessionId: string | number) => void;
+  onReject?: (sessionId: string | number) => void;
+  isConfirming?: boolean;
+  isRejecting?: boolean;
 }
-
-const TABS = ["الكل", "المؤكدة", "غير مؤكدة", "قيد الانتظار"];
 const ITEMS_PER_PAGE = 4;
 type PaginationToken = number | "dots";
 
@@ -51,7 +66,17 @@ function getSmartPaginationTokens(currentPage: number, totalPages: number): Pagi
   return tokens;
 }
 
-export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId }: WorkSessionsListProps) {
+export function WorkSessionsList({ 
+  sessions, 
+  activeTab, 
+  onTabChange, 
+  contractId, 
+  isSeeker, 
+  onConfirm, 
+  onReject, 
+  isConfirming, 
+  isRejecting 
+}: WorkSessionsListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -84,16 +109,17 @@ export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId 
 
   // Determine styles for status
   const getStatusStyles = (status: string) => {
-    switch (status) {
-      case "مؤكدة":
-        return "text-[#079455] bg-[#ebfbf3]";
-      case "غير مؤكدة":
-        return "text-[#d92d20] bg-[#fef3f2]";
-      case "قيد الانتظار":
-        return "text-[#f79009] bg-[#fff8ea]";
-      default:
-        return "text-neutral-500 bg-neutral-100";
+    const s = status.toUpperCase();
+    if (s === "CONFIRMED" || status === "مؤكدة") {
+      return "text-[#079455] bg-[#ebfbf3]";
     }
+    if (s === "REJECTED" || status === "غير مؤكدة") {
+      return "text-[#d92d20] bg-[#fef3f2]";
+    }
+    if (s === "PENDING_CONFIRMATION" || s === "PENDING" || status === "قيد الانتظار") {
+      return "text-[#f79009] bg-[#fff8ea]";
+    }
+    return "text-neutral-500 bg-neutral-100";
   };
 
   return (
@@ -122,16 +148,16 @@ export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId 
             <div className="absolute top-12 left-0 w-52 bg-white rounded-xl shadow-xl border border-neutral-100 z-20 py-2 flex flex-col overflow-hidden">
               <div className="px-4 py-2.5 text-[11px] font-bold text-neutral-400 border-b border-neutral-50 mb-1">تصفية حسب الحالة</div>
               {TABS.map((tab) => {
-                const isActive = activeTab === tab;
+                const isActive = activeTab === tab.key;
                 return (
                   <button
-                    key={tab}
-                    onClick={() => { handleTabChange(tab); setIsFilterOpen(false); }}
+                    key={tab.key}
+                    onClick={() => { handleTabChange(tab.key); setIsFilterOpen(false); }}
                     className={`px-4 py-3 text-sm font-bold flex items-center justify-between text-right transition-colors ${
                       isActive ? "text-[#215077] bg-blue-50/40" : "text-neutral-600 hover:bg-neutral-50"
                     }`}
                   >
-                    {tab}
+                    {tab.label}
                     {isActive && <Check size={16} strokeWidth={3} />}
                   </button>
                 );
@@ -145,18 +171,18 @@ export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId 
       <div className="hidden md:flex items-center justify-between gap-4 shrink-0 overflow-hidden">
         <div className="flex items-center gap-2 bg-white rounded-xl p-1 shadow-sm border border-neutral-100 w-max">
           {TABS.map((tab) => {
-            const isActive = activeTab === tab;
+            const isActive = activeTab === tab.key;
             return (
               <button
-                key={tab}
-                onClick={() => handleTabChange(tab)}
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
                 className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
                   isActive
                     ? "bg-[#215077] text-white shadow-sm"
                     : "text-neutral-500 hover:bg-neutral-50"
                 }`}
               >
-                {tab}
+                {tab.label}
               </button>
             );
           })}
@@ -169,39 +195,64 @@ export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId 
           <table className="w-full text-sm text-right min-w-[600px]">
             <thead className="sticky top-0 bg-neutral-50/90 backdrop-blur-md z-10">
               <tr className="border-b border-neutral-100">
-                <th className="py-4 px-6 text-sm text-neutral-500 font-bold w-1/4">رقم العقد</th>
-                <th className="py-4 px-6 text-sm text-neutral-500 font-bold w-1/4">حالة الجلسة</th>
-                <th className="py-4 px-6 text-sm text-neutral-500 font-bold w-1/4">الساعات المتفق عليها</th>
-                <th className="py-4 px-6 text-sm text-neutral-500 font-bold w-1/4 text-left">الإجراءات</th>
+                <th className="py-4 px-6 text-sm text-neutral-500 font-bold">رقم الجلسة</th>
+                <th className="py-4 px-6 text-sm text-neutral-500 font-bold">حالة الجلسة</th>
+                <th className="py-4 px-6 text-sm text-neutral-500 font-bold">عدد الساعات</th>
+                <th className="py-4 px-6 text-sm text-neutral-500 font-bold">الملاحظات</th>
+                <th className="py-4 px-6 text-sm text-neutral-500 font-bold text-left">الإجراءات</th>
               </tr>
             </thead>
             <tbody>
               {paginatedSessions.map((session) => {
-                const isPending = session.status === "قيد الانتظار";
+                const s = session.status.toUpperCase();
+                const isPending = s === "PENDING_CONFIRMATION" || s === "PENDING" || session.status === "قيد الانتظار";
+                const displayStatus = 
+                  isPending ? "قيد الانتظار" :
+                  (s === "CONFIRMED" || session.status === "مؤكدة") ? "مؤكدة" :
+                  (s === "REJECTED" || session.status === "غير مؤكدة") ? "غير مؤكدة" :
+                  session.status;
+                const sessionNumber = sessions.findIndex(s => s.id === session.id) + 1;
                 
-                // Using contract id with a prefix
-                const displayContractId = `#W-20240${contractId.padStart(2, '0')}`;
-
                 return (
                   <tr key={session.id} className="border-b border-neutral-50 last:border-b-0 hover:bg-neutral-50/40 transition-colors">
                     <td className="py-4 px-6 text-base font-bold text-neutral-800">
-                      {displayContractId}
+                      جلسة #{sessionNumber}
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center justify-center px-4 py-1.5 rounded-full text-xs font-bold ${getStatusStyles(session.status)}`}>
-                        {session.status}
+                        {displayStatus}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-base text-neutral-800 font-black">
                       {session.hours} <span className="text-sm font-medium text-neutral-500">ساعات</span>
                     </td>
+                    <td className="py-4 px-6 text-sm text-neutral-500 truncate max-w-[200px]">
+                      {session.notes || "لا توجد ملاحظات"}
+                    </td>
                     <td className="py-4 px-6 text-left">
                       {isPending ? (
-                        <button className="px-6 py-2 bg-[#215077] text-white rounded-lg text-xs font-bold shadow-sm hover:bg-[#1c4464] active:scale-95 transition-all">
-                          تأكيد
-                        </button>
+                        isSeeker ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => onConfirm?.(session.id)}
+                              disabled={isConfirming || isRejecting}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
+                            >
+                              تأكيد
+                            </button>
+                            <button
+                              onClick={() => onReject?.(session.id)}
+                              disabled={isConfirming || isRejecting}
+                              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
+                            >
+                              رفض
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs font-semibold text-neutral-400">بانتظار موافقة المستفيد</span>
+                        )
                       ) : (
-                        <div className="w-full h-8"></div>
+                        <span className="text-neutral-300 font-bold">—</span>
                       )}
                     </td>
                   </tr>
@@ -210,8 +261,8 @@ export function WorkSessionsList({ sessions, activeTab, onTabChange, contractId 
               
               {sessions.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-12 px-6 text-center text-neutral-400 font-medium bg-neutral-50/30">
-                    لا توجد جلسات عمل مطابقة.
+                  <td colSpan={5} className="py-12 px-6 text-center text-neutral-400 font-medium bg-neutral-50/30">
+                    لا توجد جلسات عمل مسجلة حتى الآن.
                   </td>
                 </tr>
               )}

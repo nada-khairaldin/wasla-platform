@@ -62,7 +62,7 @@ export function WorkSessionsTable({ sessions, totalHours }: WorkSessionsTablePro
             </span>
 
             <span
-              className={`text-sm font-semibold text-center ${statusStyles[session.status]}`}
+              className={`text-sm font-semibold text-center ${statusStyles[session.status as WorkSessionConfirmation] || "text-neutral-500"}`}
             >
               {session.status}
             </span>

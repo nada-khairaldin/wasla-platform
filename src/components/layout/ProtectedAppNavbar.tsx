@@ -40,13 +40,14 @@ export default function ProtectedAppNavbar() {
 
   const { notifications, unreadCount, unreadMsgCount } = useNotifications();
 
-  // Notifications badge: count only NON-message notifications
-  const displayUnreadNotifCount = unreadCount
-    ?? notifications.filter((n) => !n.isRead && n.category !== "messages").length;
+  // Notifications badge: counts ONLY (Contracts + Sessions + Ratings)
+  const localUnreadChatCount = notifications.filter((n) => !n.isRead && n.category === "chat").length;
+  const displayUnreadNotifCount = unreadCount !== undefined 
+    ? Math.max(0, unreadCount - localUnreadChatCount)
+    : notifications.filter((n) => !n.isRead && n.category !== "chat").length;
 
-  // Messages badge: count only MESSAGE notifications (type === NEW_MESSAGE)
-  const displayUnreadMsgCount = unreadMsgCount
-    ?? notifications.filter((n) => !n.isRead && n.category === "messages").length;
+  // Messages badge: counts chat ONLY (NEW_MESSAGE)
+  const displayUnreadMsgCount = notifications.filter((n) => !n.isRead && n.category === "chat").length;
 
 
   function toggleNotif(e: React.MouseEvent) {

@@ -1,8 +1,13 @@
 import { useEffect, useRef, useCallback } from "react";
+import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { getSocket, disconnectSocket } from "../services/socketService";
 import { useConversations } from "./useConversations";
+import { notificationService, mapNotificationPayloadToUI } from "@/src/features/notifications/services/notificationService";
+import type { NotificationPayload } from "@/src/features/notifications/services/notificationService";
+import { Notification } from "@/src/features/notifications/notificationTypes ";
+import type { Exchange } from "@/src/features/profile/services/profileServices";
 import type {
   ApiMessage,
   ApiConversation,
@@ -64,6 +69,43 @@ export function useGlobalSocket() {
 
     socketRef.current = socket;
 
+    const syncNotifications = async () => {
+      try {
+        const { data, error } = await notificationService.getNotifications();
+        if (error || !data) return;
+        
+        const backendData = data;
+        let mapped: Notification[] = [];
+        let nextCursor: string | null = null;
+        let unreadCount: number | undefined = undefined;
+        let unreadMsgCount: number | undefined = undefined;
+
+        if (Array.isArray(backendData)) {
+          mapped = (backendData as unknown as NotificationPayload[]).map(mapNotificationPayloadToUI);
+        } else if (backendData) {
+          mapped = (backendData.notifications || []).map(mapNotificationPayloadToUI);
+          nextCursor = backendData.nextCursor || null;
+          unreadCount = backendData.unreadCount;
+          unreadMsgCount = backendData.unreadMsgCount;
+        }
+
+        queryClient.setQueryData(["notifications"], {
+          pages: [{
+            notifications: mapped,
+            nextCursor,
+            unreadCount,
+            unreadMsgCount
+          }],
+          pageParams: [undefined]
+        });
+      } catch (err) {
+        console.error("Failed to sync notifications", err);
+      }
+    };
+
+    // Sync notifications on app load
+    syncNotifications();
+
     const onNewMessage = (msg: ChatMessageNewEvent) => {
       const queryKey = ["messages", msg.conversationId];
 
@@ -93,7 +135,7 @@ export function useGlobalSocket() {
       try {
         const audio = new Audio('/notification.mp3');
         audio.play().catch((err) => console.log('Audio autoplay prevented by browser:', err));
-      } catch (e) {
+      } catch {
         // ignore error
       }
     };
@@ -122,7 +164,7 @@ export function useGlobalSocket() {
       if (!dedupeKey || dedupeKey === "undefined" || dedupeKey === "null") {
         try {
           dedupeKey = `hash-${JSON.stringify(payload)}`;
-        } catch (e) {
+        } catch {
           dedupeKey = `unknown-${Date.now()}`;
         }
       }
@@ -139,7 +181,74 @@ export function useGlobalSocket() {
       }
 
       playNotificationSound();
+
+      // Invalidate the generic notifications list
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+
+      // Handle contract, session, and rating notifications
+      const type = String(payload.type);
+      if (type && type !== "NEW_MESSAGE" && type !== "CONVERSATION_STARTED") {
+        // Show a visual toast notification in real-time
+        if (payload.title) {
+          toast(String(payload.title) + (payload.body ? `: ${String(payload.body)}` : ""), {
+            icon: "🔔",
+            duration: 5000,
+          });
+        }
+
+        // Extract contract rich payload data to optimistically update queries in cache
+        if (payload.data && typeof payload.data === "object") {
+          const data = payload.data as Record<string, unknown>;
+          const contractId = data.contractId ? String(data.contractId) : undefined;
+          const contractEndDate = (data.contractEndDate !== undefined) ? (data.contractEndDate === null ? null : String(data.contractEndDate)) : undefined;
+          const proposedEndDate = (data.proposedEndDate !== undefined) ? (data.proposedEndDate === null ? null : String(data.proposedEndDate)) : undefined;
+          const status = data.status ? (data.status as Exchange["status"]) : undefined;
+
+          if (contractId) {
+            // Update active contract details query cache immediately
+            queryClient.setQueryData<{ exchange: Exchange }>(
+              ["contractDetails", contractId],
+              (old) => {
+                if (!old) return old;
+                return {
+                  ...old,
+                  exchange: {
+                    ...old.exchange,
+                    contractEndDate: contractEndDate !== undefined ? contractEndDate : old.exchange.contractEndDate,
+                    proposedEndDate: proposedEndDate !== undefined ? proposedEndDate : old.exchange.proposedEndDate,
+                    status: status ? status : old.exchange.status,
+                  },
+                };
+              }
+            );
+
+            // Update user exchanges list query cache immediately
+            queryClient.setQueryData<Exchange[]>(
+              ["userExchanges", undefined],
+              (old) => {
+                if (!old) return old;
+                return old.map((ex) => {
+                  if (String(ex.id) === contractId) {
+                    return {
+                      ...ex,
+                      contractEndDate: contractEndDate !== undefined ? contractEndDate : ex.contractEndDate,
+                      proposedEndDate: proposedEndDate !== undefined ? proposedEndDate : ex.proposedEndDate,
+                      status: status ? status : ex.status,
+                    };
+                  }
+                  return ex;
+                });
+              }
+            );
+          }
+        }
+
+        // Invalidate queries so React Query updates them from server in the background
+        queryClient.invalidateQueries({ queryKey: ["userExchanges"] });
+        queryClient.invalidateQueries({ queryKey: ["contractDetails"] });
+        queryClient.invalidateQueries({ queryKey: ["contractSessions"] });
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      }
     };
 
     const onMessageSent = (msg: ChatMessageNewEvent) => {
@@ -247,6 +356,9 @@ export function useGlobalSocket() {
       joinedConversationsRef.current.clear();
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       
+      // Overwrite notifications cache on socket reconnect
+      syncNotifications();
+      
       // If we already have conversations in cache, join them immediately.
       // Otherwise, the separate useEffect will catch them when they load.
       const cached = queryClient.getQueryData<ApiConversation[]>(["conversations"]);
@@ -272,6 +384,7 @@ export function useGlobalSocket() {
     // Notifications
     socket.on("notification:new", handleNewNotification); 
     socket.on("chat:notification:new", handleNewNotification); 
+    socket.on("contract:notification:new", handleNewNotification);
     socket.on("chat:message:new", handleNewNotification);
 
     return () => {
@@ -286,6 +399,7 @@ export function useGlobalSocket() {
 
       socket.off("notification:new", handleNewNotification);
       socket.off("chat:notification:new", handleNewNotification);
+      socket.off("contract:notification:new", handleNewNotification);
       socket.off("chat:message:new", handleNewNotification);
 
       disconnectSocket();

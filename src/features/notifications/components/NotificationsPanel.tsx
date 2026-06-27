@@ -37,15 +37,15 @@ export function NotificationsPanel({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen, onClose]);
 
-  // STRICT: Exclude message notifications (type === NEW_MESSAGE) — they belong to MessagesPanel
-  const nonMessageNotifications = notifications.filter(n => n.category !== "messages");
+  // STRICT: Exclude chat notifications (NEW_MESSAGE/CONVERSATION_STARTED) from Notifications panel
+  const nonChatNotifications = notifications.filter((n) => n.category !== "chat");
   const filtered =
     activeTab === "all"
-      ? nonMessageNotifications
-      : nonMessageNotifications.filter((n) => n.category === activeTab);
+      ? nonChatNotifications
+      : nonChatNotifications.filter((n) => n.category === activeTab);
 
-  // Unread count: only NON-message notifications
-  const displayUnreadCount = unreadCount ?? nonMessageNotifications.filter((n) => !n.isRead).length;
+  // Unread count: counts only platform notifications (Contracts + Sessions + Ratings)
+  const displayUnreadCount = nonChatNotifications.filter((n) => !n.isRead).length;
 
   const handleMarkAllAsRead = () => {
     markAllAsRead.mutate();

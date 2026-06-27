@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FileX, PlusCircle } from "lucide-react";
 import { ContractStatus } from "@/src/features/contracts/contract.types";
 import { ContractStatusTabs } from "@/src/features/contracts/components/ContractStatusTabs";
@@ -21,16 +21,33 @@ interface ContractsPageProps {
   onStatusChange?: (status: ContractStatus) => void;
 }
 
-export default function ContractsPage({
+function ContractsPageContent({
   onViewDetails,
   onStatusChange,
 }: ContractsPageProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<ContractStatus>("active");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const statusParam = searchParams.get("status");
+
+  const activeTab = (tabParam === "pending" || tabParam === "active" || tabParam === "completed")
+    ? (tabParam as ContractStatus)
+    : "active";
+
   const [completedFilter, setCompletedFilter] = useState<string>("الكل");
+  const [prevParams, setPrevParams] = useState({ activeTab, statusParam });
+
+  if (prevParams.activeTab !== activeTab || prevParams.statusParam !== statusParam) {
+    setPrevParams({ activeTab, statusParam });
+    if (activeTab === "completed" && statusParam === "rejected") {
+      setCompletedFilter("مرفوض");
+    } else if (activeTab === "completed" && !statusParam) {
+      setCompletedFilter("الكل");
+    }
+  }
 
   function handleTabChange(status: string) {
-    setActiveTab(status as ContractStatus);
+    router.push(`/my-contracts?tab=${status}`);
     onStatusChange?.(status as ContractStatus);
   }
 
@@ -226,5 +243,17 @@ export default function ContractsPage({
         )}
       </div>
     </div>
+  );
+}
+
+export default function ContractsPage(props: ContractsPageProps) {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ContractsPageContent {...props} />
+    </Suspense>
   );
 }

@@ -7,7 +7,15 @@ import { notificationService, GetNotificationsResponse, NotificationPayload, map
 import { Notification } from "../notificationTypes ";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
-
+interface NotificationsCache {
+  pages: {
+    notifications: Notification[];
+    nextCursor?: string | null;
+    unreadCount?: number;
+    unreadMsgCount?: number;
+  }[];
+  pageParams: unknown[];
+}
 
 export const useNotifications = () => {
   const queryClient = useQueryClient();
@@ -41,8 +49,6 @@ export const useNotifications = () => {
     initialPageParam: undefined,
   });
 
-
-
   const markAsRead = useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),
     onMutate: async (id: string) => {
@@ -51,16 +57,33 @@ export const useNotifications = () => {
 
       queryClient.setQueryData(
         ["notifications"],
-        (data: { pages: { notifications: Notification[]; nextCursor?: string | null }[]; pageParams: unknown[] } | undefined) => {
+        (data: NotificationsCache | undefined) => {
           if (!data) return data;
+
+          let wasUnread = false;
+          data.pages.forEach((page) => {
+            const found = page.notifications?.find((n) => n.id === id);
+            if (found && !found.isRead) {
+              wasUnread = true;
+            }
+          });
+
           return {
             ...data,
-            pages: data.pages.map((page) => ({
-              ...page,
-              notifications: page.notifications?.map((n) =>
-                n.id === id ? { ...n, isRead: true } : n
-              ),
-            })),
+            pages: data.pages.map((page, index) => {
+              const updatedPage = {
+                ...page,
+                notifications: page.notifications?.map((n) =>
+                  n.id === id ? { ...n, isRead: true } : n
+                ),
+              };
+
+              if (wasUnread && index === 0 && updatedPage.unreadCount !== undefined) {
+                updatedPage.unreadCount = Math.max(0, updatedPage.unreadCount - 1);
+              }
+
+              return updatedPage;
+            }),
           };
         }
       );
@@ -85,14 +108,13 @@ export const useNotifications = () => {
 
       queryClient.setQueryData(
         ["notifications"],
-        (data: { pages: { notifications: Notification[]; nextCursor?: string | null; unreadCount?: number; unreadMsgCount?: number }[]; pageParams: unknown[] } | undefined) => {
+        (data: NotificationsCache | undefined) => {
           if (!data) return data;
           return {
             ...data,
             pages: data.pages.map((page, index) => ({
               ...page,
               unreadCount: index === 0 ? 0 : page.unreadCount,
-              unreadMsgCount: index === 0 ? 0 : page.unreadMsgCount,
               notifications: page.notifications?.map((n) => ({ ...n, isRead: true })),
             })),
           };
@@ -111,9 +133,17 @@ export const useNotifications = () => {
     },
   });
 
+  const notificationsRaw = query.data?.pages.flatMap((p) => p.notifications || []) || [];
+  const seenIds = new Set<string>();
+  const notifications = notificationsRaw.filter((n) => {
+    if (seenIds.has(n.id)) return false;
+    seenIds.add(n.id);
+    return true;
+  });
+
   return {
     ...query,
-    notifications: query.data?.pages.flatMap((p) => p.notifications || []) || [],
+    notifications,
     unreadCount: query.data?.pages[0]?.unreadCount,
     unreadMsgCount: query.data?.pages[0]?.unreadMsgCount,
     markAsRead,

@@ -1,4 +1,4 @@
-export type NotificationCategory = "all" | "contracts" | "sessions" | "ratings" | "messages";
+export type NotificationCategory = "all" | "contracts" | "sessions" | "ratings" | "chat";
 
 export interface Notification {
   id: string;

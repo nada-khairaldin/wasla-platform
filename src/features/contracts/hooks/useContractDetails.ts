@@ -42,24 +42,34 @@ export function useContractDetails(contractId: string) {
   }, [data]);
 
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("الكل");
+  const [activeTab, setActiveTab] = useState("all");
 
   const openAddSessionModal = () => setIsAddSessionModalOpen(true);
   const closeAddSessionModal = () => setIsAddSessionModalOpen(false);
 
   // Add session logic
-  const handleAddSession = (hours: number, notes: string) => {
-    if (!contract) return;
-
-    // Mock addition for UI logic since sessions aren't fully baked in backend yet
-    toast.success("تم إنشاء الجلسة بنجاح", { duration: 3000 });
-    closeAddSessionModal();
+  const handleAddSession = async (hours: number, notes: string) => {
+    // This is now passed from page.tsx using the mutation hook directly,
+    // or we can remove it from here entirely.
+    // Let's remove this mock implementation and rely on useCreateSession in page.tsx.
   };
 
   // Filter sessions based on active tab
   let filteredSessions = contract?.workSessions || [];
-  if (activeTab !== "الكل") {
-    filteredSessions = filteredSessions.filter(session => session.status === activeTab);
+  if (activeTab !== "all") {
+    filteredSessions = filteredSessions.filter((session: WorkSession) => {
+      const s = session.status.toUpperCase();
+      if (activeTab === "pending") {
+        return s === "PENDING_CONFIRMATION" || s === "PENDING" || session.status === "قيد الانتظار";
+      }
+      if (activeTab === "confirmed") {
+        return s === "CONFIRMED" || session.status === "مؤكدة";
+      }
+      if (activeTab === "rejected") {
+        return s === "REJECTED" || session.status === "غير مؤكدة";
+      }
+      return false;
+    });
   }
 
   return {

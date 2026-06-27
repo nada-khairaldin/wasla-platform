@@ -5,23 +5,43 @@ interface AddSessionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (hours: number, notes: string) => void;
+  isSubmitting?: boolean;
+  remainingHours: number;
+  contractStatus: string;
 }
 
-export function AddSessionModal({ isOpen, onClose, onSubmit }: AddSessionModalProps) {
+export function AddSessionModal({ isOpen, onClose, onSubmit, isSubmitting, remainingHours, contractStatus }: AddSessionModalProps) {
   const [hours, setHours] = useState(1);
   const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
+    setError(null);
+
+    const validStatuses = ["active", "in_progress", "accepted"];
+    if (!validStatuses.includes(contractStatus.toLowerCase())) {
+      setError(`لا يمكن إضافة جلسات جديدة لأن العقد غير نشط حالياً. (الحالة الحالية: ${contractStatus})`);
+      return;
+    }
+    if (hours <= 0) {
+      setError("يجب أن تكون الساعات المنجزة أكبر من 0.");
+      return;
+    }
+    if (hours > remainingHours) {
+      setError(`عدد الساعات المدخلة يتجاوز الساعات المتبقية للعقد (${remainingHours} ساعات).`);
+      return;
+    }
+
     onSubmit(hours, notes);
-    setHours(1);
-    setNotes("");
   };
 
   const handleClose = () => {
+    if (isSubmitting) return;
     setHours(1);
     setNotes("");
+    setError(null);
     onClose();
   };
 
@@ -49,7 +69,8 @@ export function AddSessionModal({ isOpen, onClose, onSubmit }: AddSessionModalPr
             <div className="flex items-center bg-[#f0f2f5] rounded-xl h-14 overflow-hidden px-1">
               <button 
                 onClick={() => setHours(prev => prev + 1)}
-                className="w-12 h-12 flex items-center justify-center bg-[#215077] text-white rounded-lg hover:bg-[#1c4464] transition-colors shrink-0 m-1"
+                disabled={isSubmitting}
+                className="w-12 h-12 flex items-center justify-center bg-[#215077] text-white rounded-lg hover:bg-[#1c4464] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0 m-1"
               >
                 <Plus size={20} />
               </button>
@@ -61,12 +82,19 @@ export function AddSessionModal({ isOpen, onClose, onSubmit }: AddSessionModalPr
 
               <button 
                 onClick={() => setHours(prev => Math.max(1, prev - 1))}
-                className="w-12 h-12 flex items-center justify-center text-[#215077] hover:bg-neutral-200 rounded-lg transition-colors shrink-0 m-1"
+                disabled={isSubmitting}
+                className="w-12 h-12 flex items-center justify-center text-[#215077] hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shrink-0 m-1"
               >
                 <Minus size={20} />
               </button>
             </div>
           </div>
+
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium border border-red-100">
+              {error}
+            </div>
+          )}
 
           <hr className="border-t border-neutral-100" />
 
@@ -77,7 +105,8 @@ export function AddSessionModal({ isOpen, onClose, onSubmit }: AddSessionModalPr
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="ما الذي تم إنجازه في هذه الجلسة؟"
-              className="w-full bg-[#f0f2f5] rounded-xl p-5 min-h-[160px] resize-none outline-none text-sm font-medium text-[#1a2332] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#215077]/20 transition-all"
+              disabled={isSubmitting}
+              className="w-full bg-[#f0f2f5] rounded-xl p-5 min-h-[160px] resize-none outline-none text-sm font-medium text-[#1a2332] placeholder:text-neutral-400 focus:ring-2 focus:ring-[#215077]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             />
           </div>
         </div>
@@ -86,13 +115,19 @@ export function AddSessionModal({ isOpen, onClose, onSubmit }: AddSessionModalPr
         <div className="p-8 pt-4 flex items-center gap-4">
           <button 
             onClick={handleSubmit}
-            className="flex-1 py-4 bg-[#215077] text-white rounded-full text-base font-bold hover:bg-[#1c4464] active:scale-95 transition-all"
+            disabled={isSubmitting}
+            className="flex-1 py-4 bg-[#215077] text-white rounded-full text-base font-bold hover:bg-[#1c4464] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all flex justify-center items-center gap-2"
           >
-            اضافة الجلسة
+            {isSubmitting ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              "اضافة الجلسة"
+            )}
           </button>
           <button 
             onClick={handleClose}
-            className="flex-1 py-4 bg-white border border-[#215077] text-[#215077] rounded-full text-base font-bold hover:bg-neutral-50 active:scale-95 transition-all"
+            disabled={isSubmitting}
+            className="flex-1 py-4 bg-white border border-[#215077] text-[#215077] rounded-full text-base font-bold hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all"
           >
             الغاء
           </button>

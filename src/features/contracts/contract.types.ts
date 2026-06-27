@@ -3,11 +3,12 @@ export type UserRole = "provider" | "seeker";
 export type WorkSessionConfirmation = "مؤكدة" | "غير مؤكدة" | "ملغية" | "قيد الانتظار";
 
 export interface WorkSession {
-  id: string;
-  date: string;
+  id: string | number;
+  createdAt?: string;
+  date?: string;
   hours: number;
-  notes: string;
-  status: WorkSessionConfirmation;
+  notes?: string;
+  status: string;
 }
 
 export interface OperationLogEntry {
@@ -35,6 +36,8 @@ export interface Contract {
   stats?: ContractStats;
   workSessions?: WorkSession[];
   operationLogs?: OperationLogEntry[];
+  providerId?: number;
+  requesterId?: number;
 }
 
 export type CompletedContractStatus = "انتهى بنجاح" | "انتهى بنزاع" | "مرفوض" | "ملغي";

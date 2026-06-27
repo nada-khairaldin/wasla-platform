@@ -20,16 +20,42 @@ export interface GetNotificationsResponse {
 }
 
 export const mapNotificationPayloadToUI = (payload: NotificationPayload): Notification => {
-  let category: NotificationCategory = "all";
+  let category: Exclude<NotificationCategory, "all"> = "contracts";
   let iconType: "contract" | "offer" | "message" | "rating" | "session" = "contract";
 
-  if (payload.type === "NEW_MESSAGE" || payload.type === "CONVERSATION_STARTED") {
-    category = "messages";
-    iconType = "message";
-  } else if (
-    payload.type.toUpperCase().includes("EXCHANGE") ||
-    payload.type.toUpperCase().includes("CONTRACT")
+  const type = payload.type;
+  if (
+    type === "EXCHANGE_REQUESTED" ||
+    type === "EXCHANGE_ACCEPTED" ||
+    type === "EXCHANGE_REJECTED" ||
+    type === "EXCHANGE_CANCELED" ||
+    type === "CONTRACT_AUTO_RESOLVED" ||
+    type.startsWith("DEADLINE_")
   ) {
+    category = "contracts";
+    iconType = "contract";
+  } else if (
+    type === "SESSION_RECORDED" ||
+    type === "SESSION_CONFIRMED" ||
+    type === "SESSION_REJECTED"
+  ) {
+    category = "sessions";
+    iconType = "session";
+  } else if (
+    type === "RATING_RECEIVED" ||
+    type === "RATING_REQUESTED" ||
+    type.startsWith("RATING_")
+  ) {
+    category = "ratings";
+    iconType = "rating";
+  } else if (
+    type === "NEW_MESSAGE" ||
+    type === "CONVERSATION_STARTED"
+  ) {
+    category = "chat";
+    iconType = "message";
+  } else {
+    // Default fallback
     category = "contracts";
     iconType = "contract";
   }
@@ -46,13 +72,13 @@ export const mapNotificationPayloadToUI = (payload: NotificationPayload): Notifi
 
   return {
     id: payload.id,
-    category: category as Exclude<NotificationCategory, "all">,
+    category,
     type: payload.type,
     title: payload.title,
     description: payload.body,
     time: timeStr,
     isRead: payload.isRead,
-    iconType: iconType,
+    iconType,
     data: payload.data,
   };
 };

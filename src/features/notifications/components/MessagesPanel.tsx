@@ -57,7 +57,7 @@ export function MessagesPanel({
   };
 
   // STRICT: Only show message notifications (type === NEW_MESSAGE)
-  const messages = notifications.filter((n) => n.category === "messages");
+  const messages = notifications.filter((n) => n.category === "chat");
 
   // Messages unread count: only MESSAGE notifications
   const displayUnreadCount = unreadMsgCount

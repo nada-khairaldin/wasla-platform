@@ -10,8 +10,9 @@ interface NotificationItemProps {
   onClick?: () => void;
 }
 
+
 export function NotificationItem({ notification, onNavigate, onClick }: NotificationItemProps) {
-  const { id, title, description, time, isRead, iconType, category, data } = notification;
+  const { id, title, description, time, isRead, iconType, data } = notification;
   const { markAsRead } = useNotifications();
   const router = useRouter();
 
@@ -21,31 +22,88 @@ export function NotificationItem({ notification, onNavigate, onClick }: Notifica
     }
     
     if (onClick) {
-      onClick();
+      try {
+        onClick();
+      } catch (e) {
+        console.error(e);
+      }
     }
 
-    if (category === "messages" || notification.type === "NEW_MESSAGE") {
-      if (onNavigate) onNavigate();
-      
-      let parsedData = data;
-      if (typeof data === "string") {
-        try {
-          parsedData = JSON.parse(data);
-        } catch (e) {
-          console.error("Failed to parse notification data", e);
+    if (onNavigate) {
+      try {
+        onNavigate();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    let parsedData: unknown = data;
+    if (typeof data === "string") {
+      try {
+        parsedData = JSON.parse(data);
+      } catch {
+        console.error("Failed to parse notification data");
+      }
+    }
+    const payloadData = (parsedData && typeof parsedData === "object") ? (parsedData as Record<string, unknown>) : {};
+
+    const type = notification.type;
+
+    if (type === "EXCHANGE_REQUESTED") {
+      router.push("/my-contracts?tab=pending");
+    } else if (type === "EXCHANGE_ACCEPTED") {
+      router.push("/my-contracts?tab=active");
+    } else if (type === "EXCHANGE_REJECTED") {
+      router.push("/my-contracts?tab=completed&status=rejected");
+    } else if (type === "EXCHANGE_CANCELED") {
+      router.push("/my-contracts?tab=completed");
+    } else if (type === "SESSION_RECORDED") {
+      const cId = payloadData.contractId;
+      if (cId) {
+        router.push(`/my-contracts/${cId}?tab=sessions&status=pending`);
+      } else {
+        router.push("/my-contracts");
+      }
+    } else if (type === "SESSION_CONFIRMED" || type === "SESSION_REJECTED") {
+      const cId = payloadData.contractId;
+      if (cId) {
+        router.push(`/my-contracts/${cId}?tab=sessions`);
+      } else {
+        router.push("/my-contracts");
+      }
+    } else if (
+      type === "DEADLINE_PROPOSED" ||
+      type === "DEADLINE_APPROVED" ||
+      type === "DEADLINE_REJECTED" ||
+      type === "DEADLINE_APPROACHING" ||
+      type === "CONTRACT_AUTO_RESOLVED"
+    ) {
+      const cId = payloadData.contractId;
+      if (cId) {
+        router.push(`/my-contracts/${cId}`);
+      } else {
+        router.push("/my-contracts");
+      }
+    } else if (type === "NEW_MESSAGE" || type === "CONVERSATION_STARTED") {
+      const convId = payloadData.conversationId;
+      if (convId) {
+        router.push(`/messages?conversationId=${convId}`);
+      } else {
+        router.push("/messages");
+      }
+    } else {
+      // Fallback/other types
+      const cId = payloadData.contractId;
+      if (cId) {
+        router.push(`/my-contracts/${cId}`);
+      } else {
+        const convId = payloadData.conversationId;
+        if (convId) {
+          router.push(`/messages?conversationId=${convId}`);
+        } else {
+          router.push("/my-contracts");
         }
       }
-
-      const chatData = parsedData as Record<string, unknown> | undefined;
-      const chatId = chatData?.conversationId || chatData?.chatId;
-      if (chatId) {
-        router.push(`/messages?conversationId=${chatId}`);
-      } else {
-        router.push(`/messages`);
-      }
-    } else if (category === "contracts") {
-      if (onNavigate) onNavigate();
-      router.push("/my-contracts");
     }
   };
 
@@ -77,7 +135,9 @@ export function NotificationItem({ notification, onNavigate, onClick }: Notifica
         <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed line-clamp-2">
           {description}
         </p>
-        <p className="text-[11px] text-neutral-200 mt-1">{time}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-[10px] text-neutral-400 font-medium">{time}</span>
+        </div>
       </div>
 
       <ChevronLeft

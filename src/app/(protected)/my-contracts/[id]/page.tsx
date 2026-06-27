@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { 
   ChevronLeft, 
   FilePlus, 
@@ -16,10 +17,18 @@ import { ContractStatsRow } from "../../../../features/contracts/components/Cont
 import { useContractDetails } from "@/src/features/contracts/hooks/useContractDetails";
 import { WorkSessionsList } from "@/src/features/contracts/components/WorkSessionsList";
 import { AddSessionModal } from "@/src/features/contracts/components/AddSessionModal";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { useContractSessions } from "@/src/features/contracts/hooks/useContractSessions";
+import { useCreateSession } from "@/src/features/contracts/hooks/useCreateSession";
+import { useConfirmSession } from "@/src/features/contracts/hooks/useConfirmSession";
+import { useRejectSession } from "@/src/features/contracts/hooks/useRejectSession";
+import { WorkSession } from "@/src/features/contracts/contract.types";
+import toast from "react-hot-toast";
 
 export default function ContractDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const contractId = params.id as string;
 
   const {
@@ -31,11 +40,129 @@ export default function ContractDetailsPage() {
     isAddSessionModalOpen,
     openAddSessionModal,
     closeAddSessionModal,
-    handleAddSession,
     activeTab,
     setActiveTab,
-    filteredSessions
   } = useContractDetails(contractId);
+
+  const tabParam = searchParams.get("tab");
+  const statusParam = searchParams.get("status");
+  const sessionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (tabParam === "sessions" && statusParam === "pending") {
+      setActiveTab("pending");
+      setTimeout(() => {
+        sessionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    } else if (tabParam === "active") {
+      setActiveTab("all");
+    } else if (tabParam === "completed") {
+      setActiveTab("confirmed");
+    } else if (statusParam === "pending") {
+      setActiveTab("pending");
+    }
+  }, [tabParam, statusParam, setActiveTab]);
+
+  const { data: currentUser } = useCurrentUser();
+  const { data: sessionsData, isLoading: isSessionsLoading } = useContractSessions(contract?.id);
+  const createSessionMutation = useCreateSession(contract?.id);
+  const confirmMutation = useConfirmSession(contract?.id);
+  const rejectMutation = useRejectSession(contract?.id);
+
+  const isSeeker = Boolean(
+    currentUser?.user?.userId && 
+    contract?.requesterId && 
+    Number(currentUser.user.userId) === Number(contract.requesterId)
+  );
+
+  const handleConfirmSession = async (sessionId: string | number) => {
+    const status = contract?.status?.toUpperCase();
+    if (status !== "ACTIVE" && status !== "ACCEPTED" && status !== "IN_PROGRESS") {
+      toast.error("هذا العقد غير نشط");
+      return;
+    }
+
+    const sessionsList = sessionsData || [];
+    const sessionToConfirm = sessionsList.find((s) => String(s.id) === String(sessionId));
+    const confirmedHoursSum = sessionsList
+      .filter((s) => s.status.toUpperCase() === "CONFIRMED" || s.status === "مؤكدة")
+      .reduce((acc, s) => acc + Number(s.hours), 0);
+    const sessionHours = sessionToConfirm ? Number(sessionToConfirm.hours) : 0;
+    const contractHours = contract?.stats?.totalHours || 0;
+
+    if (confirmedHoursSum + sessionHours > contractHours) {
+      toast.error(
+        `لا يمكن تأكيد الجلسة. مجموع ساعات الجلسات المؤكدة مسبقاً (${confirmedHoursSum} ساعة) مع ساعات الجلسة الحالية (${sessionHours} ساعة) يتجاوز الساعات الإجمالية للعقد (${contractHours} ساعة).`
+      );
+      return;
+    }
+
+    try {
+      await confirmMutation.mutateAsync(sessionId);
+    } catch (e) {
+      // Handled inside hook
+    }
+  };
+
+  const handleRejectSession = async (sessionId: string | number) => {
+    const status = contract?.status?.toUpperCase();
+    if (status !== "ACTIVE" && status !== "ACCEPTED" && status !== "IN_PROGRESS") {
+      toast.error("هذا العقد غير نشط");
+      return;
+    }
+    try {
+      await rejectMutation.mutateAsync(sessionId);
+    } catch (e) {
+      // Handled inside hook
+    }
+  };
+
+  const isProvider = Boolean(
+    currentUser?.user?.userId && 
+    contract?.providerId && 
+    Number(currentUser.user.userId) === Number(contract.providerId)
+  );
+
+  const handleAddSessionSubmit = async (hours: number, notes: string) => {
+    const sessionsList = sessionsData || [];
+    const confirmedHoursSum = sessionsList
+      .filter((s) => s.status.toUpperCase() === "CONFIRMED" || s.status === "مؤكدة")
+      .reduce((acc, s) => acc + Number(s.hours), 0);
+    const contractHours = contract?.stats?.totalHours || 0;
+
+    if (confirmedHoursSum + hours > contractHours) {
+      toast.error(
+        `لا يمكن إنشاء الجلسة. مجموع ساعات الجلسات المؤكدة (${confirmedHoursSum} ساعة) مع الجلسة الجديدة (${hours} ساعة) يتجاوز الساعات الإجمالية للعقد (${contractHours} ساعة).`
+      );
+      return;
+    }
+
+    try {
+      await createSessionMutation.mutateAsync({ hours, notes });
+      toast.success("تم إنشاء الجلسة بنجاح");
+      closeAddSessionModal();
+    } catch (err) {
+      // Error is handled in the mutation hook (toast)
+    }
+  };
+
+  const sessions: WorkSession[] = sessionsData || [];
+  let filteredSessions = sessions;
+  if (activeTab !== "all") {
+    filteredSessions = sessions.filter((session) => {
+      const s = session.status.toUpperCase();
+      if (activeTab === "pending") {
+        return s === "PENDING_CONFIRMATION" || s === "PENDING" || session.status === "قيد الانتظار";
+      }
+      if (activeTab === "confirmed") {
+        return s === "CONFIRMED" || session.status === "مؤكدة";
+      }
+      if (activeTab === "rejected") {
+        return s === "REJECTED" || session.status === "غير مؤكدة";
+      }
+      return false;
+    });
+  }
 
   // --- Loading State ---
   if (isLoading) {
@@ -120,12 +247,14 @@ export default function ContractDetailsPage() {
             </button>
             <div className="flex flex-col md:flex-row md:items-center justify-between w-full mt-6 gap-4">
               <h1 className="text-3xl md:text-h3 font-black text-neutral-900">تفاصيل العقد</h1>
-              <button 
-                onClick={openAddSessionModal}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary-500 hover:bg-primary-600 active:scale-95 transition-all shadow-sm w-full md:w-auto"
-              >
-                <FilePlus size={16} /> اضافة جلسة عمل
-              </button>
+              {isProvider && (
+                <button 
+                  onClick={openAddSessionModal}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary-500 hover:bg-primary-600 active:scale-95 transition-all shadow-sm w-full md:w-auto"
+                >
+                  <FilePlus size={16} /> اضافة جلسة عمل
+                </button>
+              )}
             </div>
           </div>
 
@@ -178,13 +307,26 @@ export default function ContractDetailsPage() {
             </div>
 
             {/* Work Sessions Data Table Container (Left side in RTL, top on mobile) */}
-          <div className="order-1 lg:order-2 bg-neutral-50 rounded-2xl p-6 shadow-sm flex flex-col h-full min-h-[400px] hover:shadow-md transition-shadow">
-            <WorkSessionsList 
-              sessions={filteredSessions} 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab}
-              contractId={contract.id}
-            />
+          <div ref={sessionsRef} className="order-1 lg:order-2 bg-neutral-50 rounded-2xl p-6 shadow-sm flex flex-col h-full min-h-[400px] hover:shadow-md transition-shadow">
+            {isSessionsLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="w-1/3 h-8 bg-neutral-200 rounded"></div>
+                <div className="w-full h-12 bg-neutral-200 rounded mt-6"></div>
+                <div className="w-full h-12 bg-neutral-200 rounded"></div>
+              </div>
+            ) : (
+              <WorkSessionsList 
+                sessions={filteredSessions} 
+                activeTab={activeTab} 
+                onTabChange={setActiveTab}
+                contractId={contract.id}
+                isSeeker={isSeeker}
+                onConfirm={handleConfirmSession}
+                onReject={handleRejectSession}
+                isConfirming={confirmMutation.isPending}
+                isRejecting={rejectMutation.isPending}
+              />
+            )}
           </div>
 
           </div>
@@ -192,11 +334,16 @@ export default function ContractDetailsPage() {
       </div>
 
       {/* Add Session Modal */}
-      <AddSessionModal 
-        isOpen={isAddSessionModalOpen}
-        onClose={closeAddSessionModal}
-        onSubmit={handleAddSession}
-      />
+      {contract && (
+        <AddSessionModal 
+          isOpen={isAddSessionModalOpen}
+          onClose={closeAddSessionModal}
+          onSubmit={handleAddSessionSubmit}
+          isSubmitting={createSessionMutation.isPending}
+          remainingHours={contract.stats?.remainingHours || 0}
+          contractStatus={contract.status}
+        />
+      )}
     </>
   );
 }
