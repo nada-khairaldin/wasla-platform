@@ -47,6 +47,11 @@ export function useContractDetails(contractId: string) {
       requesterId: ex.requesterId,
       workSessions: [], // To be extended when API supports sessions
       operationLogs: [], // To be extended when API supports logs
+      createdAt: ex.createdAt,
+      acceptedAt: ex.acceptedAt,
+      deliveredAt: ex.deliveredAt,
+      completedAt: ex.completedAt,
+      canceledAt: ex.canceledAt,
     } as Contract;
   }, [data]);
 

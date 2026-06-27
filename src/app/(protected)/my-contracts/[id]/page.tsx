@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { 
   ChevronLeft, 
   FilePlus, 
@@ -12,8 +12,8 @@ import {
   Ban
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { OperationLogEntry } from "@/src/features/contracts/contract.types";
 import { ContractStatsRow } from "../../../../features/contracts/components/ContractStatsRow";
+import { ContractActivityTimeline, TimelineEvent } from "@/src/features/contracts/components/ContractActivityTimeline";
 import { useContractDetails } from "@/src/features/contracts/hooks/useContractDetails";
 import { WorkSessionsList } from "@/src/features/contracts/components/WorkSessionsList";
 import { AddSessionModal } from "@/src/features/contracts/components/AddSessionModal";
@@ -24,7 +24,6 @@ import { useConfirmSession } from "@/src/features/contracts/hooks/useConfirmSess
 import { useRejectSession } from "@/src/features/contracts/hooks/useRejectSession";
 import { WorkSession } from "@/src/features/contracts/contract.types";
 import toast from "react-hot-toast";
-import { useState } from "react";
 import { useProposeDeadline } from "@/src/features/contracts/hooks/useProposeDeadline";
 import { useApproveDeadline } from "@/src/features/contracts/hooks/useApproveDeadline";
 import { useRejectDeadline } from "@/src/features/contracts/hooks/useRejectDeadline";
@@ -111,6 +110,208 @@ export default function ContractDetailsPage() {
   });
 
   const sessionsList = sessionsData || [];
+
+  const timelineEvents = useMemo(() => {
+    if (!contract) return [];
+
+    const events: TimelineEvent[] = [];
+    const notifs = notifications || [];
+
+    // --- 1. Contract Events (Canonical Sources) ---
+    if (contract.createdAt) {
+      events.push({
+        id: `contract-created-${contract.id}`,
+        type: "CONTRACT_CREATED",
+        title: "تم إنشاء العقد",
+        description: `عقد خدمة: ${contract.title}`,
+        date: new Date(contract.createdAt)
+      });
+    }
+    if (contract.acceptedAt) {
+      events.push({
+        id: `contract-accepted-${contract.id}`,
+        type: "CONTRACT_ACCEPTED",
+        title: "تم قبول العقد",
+        description: "تمت الموافقة على بدء العقد من كلا الطرفين",
+        date: new Date(contract.acceptedAt)
+      });
+    }
+    if (contract.deliveredAt) {
+      events.push({
+        id: `contract-delivered-${contract.id}`,
+        type: "CONTRACT_DELIVERED",
+        title: "تم تسليم العقد",
+        description: "تم تسليم الخدمة المطلوبة وإرسالها للمراجعة",
+        date: new Date(contract.deliveredAt)
+      });
+    }
+    if (contract.completedAt) {
+      events.push({
+        id: `contract-completed-${contract.id}`,
+        type: "CONTRACT_COMPLETED",
+        title: "تم إكمال العقد",
+        description: "تم تأكيد اكتمال العقد واستلام الساعات بالكامل",
+        date: new Date(contract.completedAt)
+      });
+    }
+    if (contract.canceledAt) {
+      events.push({
+        id: `contract-canceled-${contract.id}`,
+        type: "CONTRACT_CANCELED",
+        title: "تم إلغاء العقد",
+        description: "تم إلغاء عقد الخدمة",
+        date: new Date(contract.canceledAt)
+      });
+    }
+
+    // --- 2. Session Events ---
+    sessionsList.forEach((session) => {
+      const sessionNum = session.session_number || sessionsList.findIndex(s => s.id === session.id) + 1;
+      const createdAtStr = session.created_at || session.createdAt || session.date;
+      const confirmedAtStr = session.confirmed_at || (session as { confirmed_at?: string; confirmedAt?: string }).confirmedAt;
+
+      // Session Recorded event
+      if (createdAtStr) {
+        events.push({
+          id: `session-recorded-${session.id}`,
+          type: "SESSION_RECORDED",
+          title: `تم تسجيل جلسة عمل #${sessionNum}`,
+          description: `تم تسجيل جلسة عمل بمقدار ${session.hours} ساعات. الملاحظات: ${session.notes || "لا توجد"}`,
+          date: new Date(createdAtStr)
+        });
+      }
+
+      // Session Confirmed event (if confirmed_at exists and session is CONFIRMED)
+      const isConfirmed = session.status?.toUpperCase() === "CONFIRMED" || session.status === "مؤكدة";
+      if (isConfirmed && confirmedAtStr) {
+        events.push({
+          id: `session-confirmed-${session.id}`,
+          type: "SESSION_CONFIRMED",
+          title: `تم اعتماد الجلسة #${sessionNum}`,
+          description: "تمت الموافقة على الساعات المسجلة وتأكيدها",
+          date: new Date(confirmedAtStr)
+        });
+      }
+
+      // Session Rejected event (sourced from notification timestamp for SESSION_REJECTED)
+      const isRejected = session.status?.toUpperCase() === "REJECTED" || session.status === "غير مؤكدة";
+      if (isRejected) {
+        const rejectNotif = notifs.find((n) => {
+          if (n.type !== "SESSION_REJECTED") return false;
+          let payloadData: { sessionId?: string | number; contractId?: string | number } = {};
+          try {
+            const parsed = typeof n.data === "string" ? JSON.parse(n.data) : n.data;
+            if (parsed && typeof parsed === "object") {
+              payloadData = parsed as { sessionId?: string | number; contractId?: string | number };
+            }
+          } catch {}
+          return String(payloadData?.sessionId) === String(session.id) && String(payloadData?.contractId) === String(contract.id);
+        });
+
+        // Only add if we can find a notification timestamp for the rejection
+        if (rejectNotif && rejectNotif.createdAt) {
+          events.push({
+            id: `session-rejected-${session.id}`,
+            type: "SESSION_REJECTED",
+            title: `تم رفض الجلسة #${sessionNum}`,
+            description: rejectNotif.description || "تم رفض الجلسة المسجلة من قبل المستفيد",
+            date: new Date(rejectNotif.createdAt)
+          });
+        }
+      }
+    });
+
+    // --- 3. Notification-derived Events (Secondary fallback for non-canonical timeline entries) ---
+    notifs.forEach((n) => {
+      let payloadData: { contractId?: string | number } = {};
+      try {
+        const parsed = typeof n.data === "string" ? JSON.parse(n.data) : n.data;
+        if (parsed && typeof parsed === "object") {
+          payloadData = parsed as { contractId?: string | number };
+        }
+      } catch {}
+
+      // Only match notifications for this specific contract
+      if (String(payloadData?.contractId) !== String(contract.id)) return;
+
+      const notifDate = n.createdAt ? new Date(n.createdAt) : null;
+      if (!notifDate) return; // Ignore events without timestamps
+
+      if (n.type === "DEADLINE_PROPOSED") {
+        events.push({
+          id: `deadline-proposed-${n.id}`,
+          type: "DEADLINE_PROPOSED",
+          title: "تم اقتراح تمديد الموعد النهائي",
+          description: n.description || "تم تقديم اقتراح لتغيير تاريخ انتهاء العقد",
+          date: notifDate
+        });
+      } else if (n.type === "DEADLINE_APPROVED") {
+        events.push({
+          id: `deadline-approved-${n.id}`,
+          type: "DEADLINE_APPROVED",
+          title: "تمت الموافقة على تمديد الموعد النهائي",
+          description: n.description || "تمت الموافقة على تاريخ الانتهاء الجديد للعقد",
+          date: notifDate
+        });
+      } else if (n.type === "DEADLINE_REJECTED") {
+        events.push({
+          id: `deadline-rejected-${n.id}`,
+          type: "DEADLINE_REJECTED",
+          title: "تم رفض تمديد الموعد النهائي",
+          description: n.description || "تم رفض اقتراح تاريخ الانتهاء الجديد للعقد",
+          date: notifDate
+        });
+      } else if (n.type === "EXCHANGE_REJECTED") {
+        events.push({
+          id: `contract-rejected-${n.id}`,
+          type: "CONTRACT_REJECTED",
+          title: "تم رفض العقد",
+          description: n.description || "تم رفض العقد من قبل الطرف الآخر",
+          date: notifDate
+        });
+      } else if (n.type === "EXCHANGE_ACCEPTED" && !contract.acceptedAt) {
+        events.push({
+          id: `contract-accepted-notif-${n.id}`,
+          type: "CONTRACT_ACCEPTED",
+          title: "تم قبول العقد",
+          description: n.description || "تمت الموافقة على بدء العقد من كلا الطرفين",
+          date: notifDate
+        });
+      } else if (n.type === "EXCHANGE_CANCELED" && !contract.canceledAt) {
+        events.push({
+          id: `contract-canceled-notif-${n.id}`,
+          type: "CONTRACT_CANCELED",
+          title: "تم إلغاء العقد",
+          description: n.description || "تم إلغاء عقد الخدمة",
+          date: notifDate
+        });
+      } else if (n.type === "EXCHANGE_COMPLETED" && !contract.completedAt) {
+        events.push({
+          id: `contract-completed-notif-${n.id}`,
+          type: "CONTRACT_COMPLETED",
+          title: "تم إكمال العقد",
+          description: n.description || "تم تأكيد اكتمال العقد واستلام الساعات بالكامل",
+          date: notifDate
+        });
+      } else if (n.type === "EXCHANGE_REQUESTED" && !contract.createdAt) {
+        events.push({
+          id: `contract-created-notif-${n.id}`,
+          type: "CONTRACT_CREATED",
+          title: "تم إنشاء العقد",
+          description: n.description || `عقد خدمة: ${contract.title}`,
+          date: notifDate
+        });
+      }
+    });
+
+    // Deduplicate by ID to prevent any duplicate issues
+    const uniqueEvents = Array.from(new Map(events.map(item => [item.id, item])).values());
+
+    // Sort descending by event timestamp. Events without timestamps are ignored.
+    return uniqueEvents
+      .filter(e => e.date instanceof Date && !isNaN(e.date.getTime()))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [contract, sessionsList, notifications]);
 
   const completedHours = sessionsList
     .filter((s) => s.status.toUpperCase() === "CONFIRMED" || s.status === "مؤكدة")
@@ -447,23 +648,7 @@ export default function ContractDetailsPage() {
             {/* Operation Logs Sidebar Container (Right side in RTL, bottom on mobile) */}
             <div className="order-2 lg:order-1 bg-neutral-50 rounded-2xl p-6 shadow-sm flex flex-col gap-5 hover:shadow-md transition-shadow">
               <h3 className="font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">سجل العمليات</h3>
-              <div className="flex-1 flex flex-col gap-4 max-h-[380px] overflow-y-auto pl-1">
-                {contract.operationLogs?.map((log: OperationLogEntry) => (
-                  <div key={log.id} className="flex gap-3 relative pb-4 text-right">
-                    <div className="w-3.5 h-3.5 rounded-full bg-primary-50 border-2 border-primary-400 mt-0.5 shrink-0 z-10" />
-                    <div className="absolute top-4 right-[6.5px] w-px h-[calc(100%-8px)] bg-neutral-100" />
-                    <div className="space-y-0.5 min-w-0">
-                      <p className="text-xs font-bold text-neutral-800 truncate">{log.title}</p>
-                      <p className="text-[10px] font-medium text-neutral-400">{log.byLine}</p>
-                      {log.description && <p className="text-[11px] text-neutral-500 pt-0.5 leading-relaxed">{log.description}</p>}
-                    </div>
-                  </div>
-                ))}
-                
-                {(!contract.operationLogs || contract.operationLogs.length === 0) && (
-                  <p className="text-center text-sm text-neutral-500 py-4">لا توجد عمليات مسجلة.</p>
-                )}
-              </div>
+              <ContractActivityTimeline events={timelineEvents} />
             </div>
 
             {/* Work Sessions Data Table Container (Left side in RTL, top on mobile) */}

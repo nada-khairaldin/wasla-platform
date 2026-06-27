@@ -80,6 +80,7 @@ export const mapNotificationPayloadToUI = (payload: NotificationPayload): Notifi
     isRead: payload.isRead,
     iconType,
     data: payload.data,
+    createdAt: payload.createdAt,
   };
 };
 

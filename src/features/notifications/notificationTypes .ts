@@ -10,4 +10,5 @@ export interface Notification {
   isRead: boolean;
   iconType: "contract" | "offer" | "message" | "rating" | "session";
   data?: unknown;
+  createdAt?: string;
 }

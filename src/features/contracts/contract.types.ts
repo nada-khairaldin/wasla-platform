@@ -9,6 +9,9 @@ export interface WorkSession {
   hours: number;
   notes?: string;
   status: string;
+  created_at?: string;
+  confirmed_at?: string;
+  session_number?: number;
 }
 
 export interface OperationLogEntry {
@@ -41,6 +44,11 @@ export interface Contract {
   requesterId?: number;
   proposedEndDate?: string | null;
   contractEndDate?: string | null;
+  createdAt?: string;
+  acceptedAt?: string | null;
+  deliveredAt?: string | null;
+  completedAt?: string | null;
+  canceledAt?: string | null;
 }
 
 export type CompletedContractStatus = "انتهى بنجاح" | "انتهى بنزاع" | "مرفوض" | "ملغي";
