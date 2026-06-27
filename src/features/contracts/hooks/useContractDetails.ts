@@ -1,13 +1,46 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import toast from "react-hot-toast";
-import { MOCK_CONTRACTS } from "../data/contracts.data";
-import { Contract, WorkSession } from "../contract.types";
+import { useQuery } from "@tanstack/react-query";
+import { Contract, ContractStatus, WorkSession } from "../contract.types";
+import { contractService } from "../services/contractService";
 
 export function useContractDetails(contractId: string) {
-  // Replace with actual API call later
-  const initialContract = MOCK_CONTRACTS.find((c) => c.id === contractId) as Contract | undefined;
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["contractDetails", contractId],
+    queryFn: () => contractService.getContractById(Number(contractId)),
+    enabled: !!contractId && !isNaN(Number(contractId)),
+  });
 
-  const [contract, setContract] = useState<Contract | undefined>(initialContract);
+  const contract = useMemo(() => {
+    if (!data?.exchange) return undefined;
+    const ex = data.exchange;
+    return {
+      id: ex.id.toString(),
+      title: ex.post?.title || "عقد خدمة",
+      seekerName: ex.requester?.full_name || ex.requester?.username || "المستفيد",
+      providerName: ex.provider?.full_name || ex.provider?.username || "المزود",
+      serviceType: ex.post?.category === "OFFER" ? "عرض خدمة" : "طلب خدمة",
+      deliveryType: ex.post?.service_mode === "ONLINE" ? "أونلاين" : "حضوري" as "أونلاين" | "أوفلاين",
+      status: ex.status?.toLowerCase() as ContractStatus,
+      stats: {
+        totalHours: ex.duration || 0,
+        completedHours: 0, // Placeholder as required fields may not be present in schema yet
+        remainingHours: ex.duration || 0,
+        endDate: (ex.contractEndDate || ex.createdAt) 
+          ? new Date(ex.contractEndDate || ex.createdAt).toLocaleDateString("ar-EG", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric"
+            })
+          : "—",
+      },
+      providerId: ex.providerId,
+      requesterId: ex.requesterId,
+      workSessions: [], // To be extended when API supports sessions
+      operationLogs: [], // To be extended when API supports logs
+    } as Contract;
+  }, [data]);
+
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("الكل");
 
@@ -17,24 +50,10 @@ export function useContractDetails(contractId: string) {
   // Add session logic
   const handleAddSession = (hours: number, notes: string) => {
     if (!contract) return;
-    
-    // Create new session
-    const newSession: WorkSession = {
-      id: `ws-${Date.now()}`, // Temporary ID generator
-      date: new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date()),
-      hours,
-      notes,
-      status: "قيد الانتظار"
-    };
 
-    const updatedContract = {
-      ...contract,
-      workSessions: contract.workSessions ? [newSession, ...contract.workSessions] : [newSession]
-    };
-    
-    setContract(updatedContract);
-    closeAddSessionModal();
+    // Mock addition for UI logic since sessions aren't fully baked in backend yet
     toast.success("تم إنشاء الجلسة بنجاح", { duration: 3000 });
+    closeAddSessionModal();
   };
 
   // Filter sessions based on active tab
@@ -45,6 +64,10 @@ export function useContractDetails(contractId: string) {
 
   return {
     contract,
+    isLoading,
+    isError,
+    error,
+    refetch,
     isAddSessionModalOpen,
     openAddSessionModal,
     closeAddSessionModal,

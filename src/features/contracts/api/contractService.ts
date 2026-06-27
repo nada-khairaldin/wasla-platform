@@ -1,4 +1,5 @@
 import { api as axiosInstance } from "@/src/services/api";
+import { Exchange } from "@/src/features/profile/services/profileServices";
 
 export interface CreateContractPayload {
   postId: number;
@@ -20,6 +21,10 @@ export interface CreateContractResponse {
 }
 
 export const contractService = {
+  getContractById: async (id: number): Promise<{ exchange: Exchange }> => {
+    const response = await axiosInstance.get<{ exchange: Exchange }>(`/exchanges/${id}`);
+    return response.data;
+  },
   createContract: async (payload: CreateContractPayload): Promise<CreateContractResponse> => {
     const response = await axiosInstance.post<CreateContractResponse>("/exchanges/request", payload);
     return response.data;

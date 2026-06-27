@@ -1,11 +1,12 @@
-import { Calendar, Clock, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, AlertCircle, XCircle, ChevronLeft } from "lucide-react";
 import { CompletedContract } from "../../contract.types";
 
 interface CompletedContractCardProps {
   contract: CompletedContract;
+  onViewDetails?: (id: string) => void;
 }
 
-export function CompletedContractCard({ contract }: CompletedContractCardProps) {
+export function CompletedContractCard({ contract, onViewDetails }: CompletedContractCardProps) {
   const isDispute = contract.status === "انتهى بنزاع";
   const isRejected = contract.status === "مرفوض" || contract.status === "ملغي";
   
@@ -29,8 +30,17 @@ export function CompletedContractCard({ contract }: CompletedContractCardProps) 
     Icon = XCircle;
   }
   
+  const handleCardClick = () => {
+    if (!isRejected && onViewDetails) {
+      onViewDetails(contract.id);
+    }
+  };
+
   return (
-    <div className="w-full bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 text-right">
+    <div 
+      onClick={handleCardClick}
+      className={`w-full bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 text-right transition-all duration-300 ${!isRejected ? "cursor-pointer hover:shadow-[0_4px_24px_rgb(0,0,0,0.06)] group" : ""}`}
+    >
       
       {/* Right Section: Status Icon + Status Label + Title */}
       <div className="flex flex-col gap-3 flex-1 md:max-w-[40%]">
@@ -93,6 +103,21 @@ export function CompletedContractCard({ contract }: CompletedContractCardProps) 
         </div>
       </div>
       
+      {/* Left Section: Action */}
+      {!isRejected && (
+        <>
+          <div className="hidden md:block w-px h-16 bg-neutral-100 shrink-0"></div>
+          <div className="flex flex-col items-end md:items-center justify-center w-full md:w-auto mt-2 md:mt-0 pl-2 md:h-16 shrink-0">
+            <button 
+              className="flex w-10 h-10 rounded-full bg-neutral-50 text-neutral-500 items-center justify-center group-hover:bg-primary-500 group-hover:text-white group-hover:shadow-[0_2px_8px_rgb(0,0,0,0.04)] active:scale-95 transition-all cursor-pointer"
+              aria-label="View Details"
+            >
+              <ChevronLeft size={20} strokeWidth={2.5} />
+            </button>
+          </div>
+        </>
+      )}
+
     </div>
   );
 }

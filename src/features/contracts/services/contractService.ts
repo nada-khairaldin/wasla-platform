@@ -1,12 +1,73 @@
 import { apiRequest } from "@/src/services/api";
-import { CreateContractRequest, CreateContractResponse } from "../types/contract.types";
+import { Exchange } from "@/src/features/profile/services/profileServices";
+
+export interface CreateContractPayload {
+  postId: number;
+  providerId: number;
+  duration: number;
+  contractEndDate: string;
+}
+
+export interface CreateContractResponse {
+  exchange: {
+    id: number;
+    postId: number;
+    requesterId: number;
+    providerId: number;
+    duration: number;
+    contractEndDate: string;
+    status: string;
+  };
+}
+
+class ApiError extends Error {
+  response: { status?: number; data: { message: string } };
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = "ApiError";
+    this.response = { status, data: { message } };
+  }
+}
+
+const throwApiError = (error: string | null, status?: number) => {
+  if (error) {
+    throw new ApiError(error, status);
+  }
+};
 
 export const contractService = {
-  createContract: async (payload: CreateContractRequest) => {
-    return apiRequest<CreateContractResponse, CreateContractRequest>({
+  getContractById: async (id: number): Promise<{ exchange: Exchange }> => {
+    const { data, error, status } = await apiRequest<{ exchange: Exchange }>({
+      method: "get",
+      url: `/exchanges/${id}`,
+    });
+    throwApiError(error, status);
+    return data!;
+  },
+  createContract: async (payload: CreateContractPayload): Promise<CreateContractResponse> => {
+    const { data, error, status } = await apiRequest<CreateContractResponse, CreateContractPayload>({
       method: "post",
       url: "/exchanges/request",
       payload,
     });
+    throwApiError(error, status);
+    return data!;
+  },
+  acceptContract: async (id: number): Promise<CreateContractResponse> => {
+    const { data, error, status } = await apiRequest<CreateContractResponse>({
+      method: "put",
+      url: `/exchanges/${id}/accept`,
+    });
+    throwApiError(error, status);
+    return data!;
+  },
+  rejectContract: async (id: number): Promise<CreateContractResponse> => {
+    const { data, error, status } = await apiRequest<CreateContractResponse>({
+      method: "put",
+      url: `/exchanges/${id}/reject`,
+    });
+    throwApiError(error, status);
+    return data!;
   },
 };

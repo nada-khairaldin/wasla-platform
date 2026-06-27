@@ -5,8 +5,12 @@ import {
   ChevronLeft, 
   FilePlus, 
   Pencil, 
-  Briefcase 
+  Briefcase,
+  AlertCircle,
+  RefreshCw,
+  Ban
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { OperationLogEntry } from "@/src/features/contracts/contract.types";
 import { ContractStatsRow } from "../../../../features/contracts/components/ContractStatsRow";
 import { useContractDetails } from "@/src/features/contracts/hooks/useContractDetails";
@@ -20,6 +24,10 @@ export default function ContractDetailsPage() {
 
   const {
     contract,
+    isLoading,
+    isError,
+    error,
+    refetch,
     isAddSessionModalOpen,
     openAddSessionModal,
     closeAddSessionModal,
@@ -29,17 +37,64 @@ export default function ContractDetailsPage() {
     filteredSessions
   } = useContractDetails(contractId);
 
-  // --- Error Handling: Contract Not Found ---
-  if (!contract) {
+  // --- Loading State ---
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50/40 p-4 text-right">
-        <p className="text-lg font-bold text-neutral-500 mb-4">العقد المطلوب غير موجود أو تم حذفه.</p>
-        <button 
-          onClick={() => router.push("/my-contracts")}
-          className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-primary-600 active:scale-95 transition-all"
-        >
-          العودة لقائمة العقود
-        </button>
+      <div className="min-h-screen bg-white text-right p-8 animate-pulse" dir="rtl">
+        <div className="max-w-[1440px] mx-auto space-y-8">
+          <div className="w-48 h-4 bg-neutral-200 rounded"></div>
+          <div className="w-1/3 h-10 bg-neutral-200 rounded"></div>
+          <div className="w-full h-32 bg-neutral-100 rounded-2xl mt-6"></div>
+          <div className="flex gap-6 mt-8">
+            <div className="w-1/4 h-32 bg-neutral-100 rounded-2xl"></div>
+            <div className="w-1/4 h-32 bg-neutral-100 rounded-2xl"></div>
+            <div className="w-1/4 h-32 bg-neutral-100 rounded-2xl"></div>
+            <div className="w-1/4 h-32 bg-neutral-100 rounded-2xl"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Error Handling ---
+  if (isError || !contract) {
+    const err = error as Error & { response?: { status: number, data?: { message?: string } } };
+    const status = err?.response?.status;
+    const isNotFound = status === 404 || (!contract && !isError);
+    const isForbidden = status === 403;
+
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50/40 p-4 text-center text-right" dir="rtl">
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isNotFound ? 'bg-neutral-100 text-neutral-400' : isForbidden ? 'bg-orange-50 text-orange-500' : 'bg-red-50 text-red-500'}`}>
+          {isNotFound ? <FilePlus size={32} /> : isForbidden ? <Ban size={32} /> : <AlertCircle size={32} />}
+        </div>
+        <h3 className={`text-xl font-black mb-2 ${isNotFound ? 'text-neutral-700' : isForbidden ? 'text-orange-600' : 'text-red-600'}`}>
+          {isNotFound ? "العقد المطلوب غير موجود" : isForbidden ? "غير مصرح لك بالوصول" : "تعذر تحميل بيانات العقد"}
+        </h3>
+        <p className="text-neutral-500 text-sm mb-6 max-w-[300px]">
+          {isNotFound 
+            ? "يبدو أن العقد قد تم حذفه أو أن الرابط غير صحيح." 
+            : isForbidden 
+            ? "ليس لديك صلاحية لمشاهدة تفاصيل هذا العقد." 
+            : "حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى."}
+        </p>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => router.push("/my-contracts")}
+            className="px-6 py-2.5 bg-neutral-100 text-neutral-700 rounded-xl text-sm font-bold hover:bg-neutral-200 active:scale-95 transition-all"
+          >
+            العودة لقائمة العقود
+          </button>
+          {!isNotFound && !isForbidden && (
+            <button 
+              onClick={() => refetch()}
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary-500 text-white rounded-xl text-sm font-bold shadow-sm hover:bg-primary-600 active:scale-95 transition-all"
+            >
+              <RefreshCw size={16} />
+              إعادة المحاولة
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -48,12 +103,17 @@ export default function ContractDetailsPage() {
     <>
       <div className="min-h-screen bg-white text-right" dir="rtl">
         {/* ─── Main Content Container ─── */}
-        <main className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 space-y-8">
+        <motion.main 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="max-w-[1440px] mx-auto px-4 md:px-8 py-8 space-y-8"
+        >
           
           {/* ─── Header Section ─── */}
           <div className="flex flex-col gap-2 items-start">
             <button 
-              onClick={() => router.back()} 
+              onClick={() => router.push("/my-contracts")} 
               className="flex items-center gap-1 text-xs font-bold text-neutral-400 hover:text-primary-500 transition-colors"
             >
               <ChevronLeft size={14} /> العودة لقائمة العقود
@@ -70,7 +130,7 @@ export default function ContractDetailsPage() {
           </div>
 
           {/* ─── Contract Overview Banner Card ─── */}
-          <div className="bg-neutral-50 rounded-2xl p-6 shadow-sm flex items-center gap-5 justify-between mt-6">
+          <div className="bg-neutral-50 rounded-2xl p-6 shadow-sm flex items-center gap-5 justify-between mt-6 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-5 flex-1 min-w-0">
               <div className="space-y-3">
                 <h2 className="text-xl font-bold text-neutral-900 leading-snug">{contract.title}</h2>
@@ -84,7 +144,7 @@ export default function ContractDetailsPage() {
                 </div>
               </div>
             </div>
-            <button className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-all ">
+            <button className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 shadow-sm active:scale-95 transition-all ">
               <Pencil size={16} />
             </button>
           </div>
@@ -96,7 +156,7 @@ export default function ContractDetailsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_2.5fr] gap-6 items-stretch mt-8">
             
             {/* Operation Logs Sidebar Container (Right side in RTL, bottom on mobile) */}
-            <div className="order-2 lg:order-1 bg-neutral-50 rounded-2xl p-6 shadow-sm flex flex-col gap-5">
+            <div className="order-2 lg:order-1 bg-neutral-50 rounded-2xl p-6 shadow-sm flex flex-col gap-5 hover:shadow-md transition-shadow">
               <h3 className="font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">سجل العمليات</h3>
               <div className="flex-1 flex flex-col gap-4 max-h-[380px] overflow-y-auto pl-1">
                 {contract.operationLogs?.map((log: OperationLogEntry) => (
@@ -118,7 +178,7 @@ export default function ContractDetailsPage() {
             </div>
 
             {/* Work Sessions Data Table Container (Left side in RTL, top on mobile) */}
-          <div className="order-1 lg:order-2 bg-neutral-50 rounded-2xl p-6 shadow-sm flex flex-col h-full min-h-[400px]">
+          <div className="order-1 lg:order-2 bg-neutral-50 rounded-2xl p-6 shadow-sm flex flex-col h-full min-h-[400px] hover:shadow-md transition-shadow">
             <WorkSessionsList 
               sessions={filteredSessions} 
               activeTab={activeTab} 
@@ -128,7 +188,7 @@ export default function ContractDetailsPage() {
           </div>
 
           </div>
-        </main>
+        </motion.main>
       </div>
 
       {/* Add Session Modal */}

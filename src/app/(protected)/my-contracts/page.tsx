@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FileX, PlusCircle } from "lucide-react"; 
+import { FileX, PlusCircle } from "lucide-react";
 import { ContractStatus } from "@/src/features/contracts/contract.types";
 import { ContractStatusTabs } from "@/src/features/contracts/components/ContractStatusTabs";
 import { ContractCard } from "@/src/features/contracts/components/ContractCard";
@@ -25,7 +25,7 @@ export default function ContractsPage({
   onViewDetails,
   onStatusChange,
 }: ContractsPageProps) {
-  const router = useRouter(); 
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ContractStatus>("active");
   const [completedFilter, setCompletedFilter] = useState<string>("الكل");
 
@@ -56,9 +56,9 @@ export default function ContractsPage({
     } catch (error: unknown) {
       const err = error as Error & { response?: { status: number, data?: { message?: string } } };
       if (err?.response?.status === 400 && err?.response?.data?.message === "Requester no longer has enough time credits") {
-         toast.error("لا يمكن تفعيل العقد لأن رصيد المستفيد غير كافي حالياً");
+        toast.error("لا يمكن تفعيل العقد لأن رصيد المستفيد غير كافي حالياً");
       } else {
-         toast.error(err?.response?.data?.message || err?.message || "حدث خطأ غير متوقع");
+        toast.error(err?.response?.data?.message || err?.message || "حدث خطأ غير متوقع");
       }
     }
   };
@@ -103,7 +103,7 @@ export default function ContractsPage({
       return mappedContracts.filter((c) => c.status === "pending");
     }
     if (activeTab === "active") {
-      return mappedContracts.filter((c) => 
+      return mappedContracts.filter((c) =>
         ["accepted", "in_progress", "waiting_confirmation"].includes(c.status)
       );
     }
@@ -116,7 +116,7 @@ export default function ContractsPage({
 
   const filteredCompleted = useMemo(() => {
     if (completedFilter === "الكل") return completedList;
-    
+
     let targetStatus = "";
     if (completedFilter === "انتهى بنجاح") targetStatus = "completed";
     else if (completedFilter === "انتهى بنزاع") targetStatus = "disputed";
@@ -137,22 +137,22 @@ export default function ContractsPage({
 
         {activeTab === "completed" ? (
           <div className="mt-2 flex flex-col gap-8 animate-fade-in">
-            <CompletedContractsHeader 
-              activeFilter={completedFilter} 
-              onFilterChange={setCompletedFilter} 
+            <CompletedContractsHeader
+              activeFilter={completedFilter}
+              onFilterChange={setCompletedFilter}
             />
             <CompletedStatsRow contracts={completedList} />
             <div className="flex flex-col gap-6">
               {filteredCompleted.map((contract) => {
                 const isProvider = String(currentUserId) === String(contract.providerId);
                 const otherPartyName = isProvider ? contract.seekerName : contract.providerName;
-                
+
                 let mappedStatus: import("@/src/features/contracts/contract.types").CompletedContractStatus = "انتهى بنجاح";
                 if (contract.status === "rejected") mappedStatus = "مرفوض";
                 else if (contract.status === "cancelled") mappedStatus = "ملغي";
                 else if (contract.status === "disputed") mappedStatus = "انتهى بنزاع";
-                
-                const completedContract = {
+
+                const completedContract: import("@/src/features/contracts/contract.types").CompletedContract = {
                   id: contract.id,
                   title: contract.title,
                   serviceDescription: contract.serviceType,
@@ -165,9 +165,10 @@ export default function ContractsPage({
                 };
 
                 return (
-                  <CompletedContractCard 
-                    key={completedContract.id} 
-                    contract={completedContract} 
+                  <CompletedContractCard
+                    key={completedContract.id}
+                    contract={completedContract}
+                    onViewDetails={handleViewDetails}
                   />
                 );
               })}
@@ -186,16 +187,17 @@ export default function ContractsPage({
                 <div className="p-4 bg-neutral-50 rounded-full text-neutral-400 mb-4 group-hover:scale-110 transition-transform duration-200">
                   <FileX size={40} strokeWidth={1.5} />
                 </div>
-                
+
                 <h3 className="text-lg font-bold text-neutral-800 mb-1">
                   {activeTab === "active" ? "لا توجد عقود نشطة حالياً" : "قائمة الانتظار فارغة"}
                 </h3>
-                
+
                 <p className="text-sm text-neutral-400 mb-6 leading-relaxed">
-                  {activeTab === "active" 
+                  {activeTab === "active"
                     ? "لم تقم ببدء أي عقد بعد. يمكنك تصفح المنشورات والخدمات المتاحة لبدء تبادل الساعات الفعلي."
                     : "كل الطلبات الحالية تمت معالجتها بنجاح! لا توجد عقود معلقة بانتظار الإجراء."
                   }
+
                 </p>
 
                 <button
@@ -222,7 +224,7 @@ export default function ContractsPage({
             )}
           </>
         )}
-      </div> 
+      </div>
     </div>
   );
 }
