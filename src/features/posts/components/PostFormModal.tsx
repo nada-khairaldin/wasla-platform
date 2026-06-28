@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, PenLine, AlignRight } from "lucide-react";
+import { X, PenLine, AlignRight, MapPin, Map } from "lucide-react";
 import Toggle from "./Toggle";
 import InputField from "../../../components/ui/InputField";
 import { HourRangeSlider } from "../../home/components/HourRangeSlider";
@@ -38,6 +38,8 @@ export function PostFormModal({
     control,
     reset,
     getValues,
+    setValue,
+    watch,
     clearErrors,
     setError,
     formState: { errors, isDirty },
@@ -50,8 +52,20 @@ export function PostFormModal({
       category: "",
       deliveryType: "offline",
       hours: 12,
+      city: "",
+      area: "",
     },
   });
+
+  const selectedDeliveryType = watch("deliveryType");
+
+  useEffect(() => {
+    if (selectedDeliveryType === "online") {
+      setValue("city", "");
+      setValue("area", "");
+      clearErrors(["city", "area"]);
+    }
+  }, [selectedDeliveryType, setValue, clearErrors]);
 
   useEffect(() => {
     if (isOpen && postToEdit) {
@@ -66,6 +80,8 @@ export function PostFormModal({
             ? "online"
             : "offline",
         hours: postToEdit.assignedTimeCredits || 12,
+        city: postToEdit.city || "",
+        area: postToEdit.area || "",
       });
     } else if (!isOpen) {
       reset();
@@ -174,10 +190,10 @@ export function PostFormModal({
   const onSubmitDraft = (data: CreateServiceFormData) => {
     // For drafts, we accept empty fields and auto-fallback
     const titleValue = typeof data.title === "string" ? data.title.trim() : "";
-    
+
     // We add dummy data to satisfy the backend Zod validation which doesn't know it's a draft
-    const descriptionValue = data.description?.length >= 20 
-      ? data.description 
+    const descriptionValue = data.description?.length >= 20
+      ? data.description
       : (data.description || "") + " (مسودة قيد التعديل يرجى التجاهل...)";
 
     const payload: Record<string, unknown> = {
@@ -189,10 +205,10 @@ export function PostFormModal({
       status: "DRAFT",
     };
 
-    // Inject city and area if offline to bypass backend validation
+    // Inject city and area if offline to bypass backend validation for drafts if empty
     if (data.deliveryType === "offline") {
-      payload.city = "غير محدد";
-      payload.area = "غير محدد";
+      payload.city = data.city || "غير محدد";
+      payload.area = data.area || "غير محدد";
     }
 
     // Safe to pass 'لم يتم التحديد' for drafts if empty
@@ -232,6 +248,10 @@ export function PostFormModal({
       serviceMode: data.deliveryType === "online" ? "ONLINE" : "OFFLINE",
       assignedTimeCredits: data.hours,
       status: "PUBLISHED",
+      ...(data.deliveryType === "offline" && {
+        city: data.city,
+        area: data.area,
+      }),
     };
     executeSubmission(payload, data.category);
   };
@@ -254,14 +274,14 @@ export function PostFormModal({
             <div className="bg-white border border-neutral-100 rounded-2xl p-6 shadow-2xl  w-full text-center space-y-5 animate-in zoom-in-95">
               <h3 className="font-cairo font-black text-lg text-primary-600">لديك تغييرات غير محفوظة</h3>
               <div className="flex flex-col gap-3">
-                <button 
+                <button
                   type="button"
                   onClick={handleSaveDraft}
                   className="w-full py-3 rounded-xl font-bold text-white bg-primary-600 hover:bg-primary-700 transition-all"
                 >
                   حفظ كمسودة
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => {
                     setShowExitConfirm(false);
@@ -272,7 +292,7 @@ export function PostFormModal({
                 >
                   تجاهل والخروج
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowExitConfirm(false)}
                   className="w-full py-3 rounded-xl font-bold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 transition-all"
@@ -392,6 +412,31 @@ export function PostFormModal({
             />
           </div>
 
+          {selectedDeliveryType === "offline" && (
+            <div className="flex flex-col sm:flex-row gap-4 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex-1">
+                <InputField
+                  id="service-city"
+                  label="المدينة"
+                  placeholder="مثال: غزة"
+                  icon={<MapPin size={18} />}
+                  error={errors.city?.message}
+                  {...register("city")}
+                />
+              </div>
+              <div className="flex-1">
+                <InputField
+                  id="service-area"
+                  label="المنطقة / الحي"
+                  placeholder="مثال: النصر"
+                  icon={<Map size={18} />}
+                  error={errors.area?.message}
+                  {...register("area")}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="pt-2">
             <Controller
               name="hours"
@@ -417,11 +462,10 @@ export function PostFormModal({
               type="button"
               onClick={handleSaveDraft}
               disabled={activeAction === "DRAFT"}
-              className={`flex-1 py-4 rounded-2xl font-cairo font-bold transition-all active:scale-95 ${
-                activeAction === "DRAFT"
-                  ? "text-primary-400 bg-primary-50/50 cursor-not-allowed"
-                  : "text-primary-600 bg-primary-50 hover:bg-primary-100"
-              }`}
+              className={`flex-1 py-4 rounded-2xl font-cairo font-bold transition-all active:scale-95 ${activeAction === "DRAFT"
+                ? "text-primary-400 bg-primary-50/50 cursor-not-allowed"
+                : "text-primary-600 bg-primary-50 hover:bg-primary-100"
+                }`}
             >
               {activeAction === "DRAFT" ? "جاري الحفظ..." : "حفظ كمسودة"}
             </button>
@@ -429,11 +473,10 @@ export function PostFormModal({
               type="button"
               onClick={handlePublish}
               disabled={activeAction === "PUBLISH"}
-              className={`flex-[2] py-4 rounded-2xl font-cairo font-bold transition-all active:scale-95 ${
-                activeAction === "PUBLISH"
-                  ? "text-white/70 bg-primary-400 cursor-not-allowed"
-                  : "text-white bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-600/20"
-              }`}
+              className={`flex-[2] py-4 rounded-2xl font-cairo font-bold transition-all active:scale-95 ${activeAction === "PUBLISH"
+                ? "text-white/70 bg-primary-400 cursor-not-allowed"
+                : "text-white bg-primary-600 hover:bg-primary-700 shadow-xl shadow-primary-600/20"
+                }`}
             >
               {activeAction === "PUBLISH"
                 ? "جاري النشر..."

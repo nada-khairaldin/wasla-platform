@@ -176,7 +176,7 @@ export default function HomePage() {
         )}
 
         <div className="grid grid-cols-12 gap-8 items-start">
-          <aside className="col-span-12 lg:col-span-3 sticky top-21 hidden lg:block">
+          <aside className="col-span-12 lg:col-span-3 sticky top-24 hidden lg:block">
             <SidebarFilters
               isLoading={false}
               onFilterChange={handleFilterChange}

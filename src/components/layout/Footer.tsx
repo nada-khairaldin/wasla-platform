@@ -1,11 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { scrollToSection } from "@/src/utils";
 import Logo from "../ui/Logo";
 import { useAuthStore } from "../../features/auth/store/useAuthStore";
 
 const Footer = () => {
+  const pathname = usePathname();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [mounted, setMounted] = useState(false);
 
@@ -49,13 +51,17 @@ const Footer = () => {
           <ul className="flex flex-col gap-4 ">
             {platformLinks.map((link, index) => (
               <li key={index}>
-                <a
-                  href={`${link.href}`}
-                  onClick={(e) => scrollToSection(e, link.href)}
+                <Link
+                  href={`/?allowLanding=true#${link.href}`}
+                  onClick={(e) => {
+                    if (pathname === "/") {
+                      scrollToSection(e, link.href);
+                    }
+                  }}
                   className="inline-block hover:text-primary-hover hover:-translate-x-1.5 transition-all duration-300 cursor-pointer"
                 >
                   {link.name}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

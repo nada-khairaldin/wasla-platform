@@ -15,10 +15,15 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/reset-password");
     
   const isPublicPage = pathname === "/";
+  const allowLanding = request.nextUrl.searchParams.get("allowLanding") === "true";
 
   const hasValidSession = token || refreshToken;
 
-  if (hasValidSession && (isAuthPage || isPublicPage)) {
+  if (hasValidSession && isAuthPage) {
+    return NextResponse.redirect(new URL("/home", request.url));
+  }
+
+  if (hasValidSession && isPublicPage && !allowLanding) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 

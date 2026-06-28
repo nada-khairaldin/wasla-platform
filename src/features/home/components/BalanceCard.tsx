@@ -51,7 +51,7 @@ export const BalanceCard = ({ points, isLoading }: { points?: number; isLoading:
         </p>
 
         <Link 
-          href="/profile/wallet" 
+          href="/my-profile/wallet" 
           className="w-full md:w-full bg-secondary-100 text-primary-hover py-2 md:py-3.5 rounded-xl font-bold text-xs md:text-sm border border-secondary-300 hover:bg-secondary-200 transition-all active:scale-95 flex items-center justify-center gap-2 text-center"
         >
           عرض السجل

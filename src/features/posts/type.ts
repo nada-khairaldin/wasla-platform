@@ -12,6 +12,8 @@ export interface Post {
   serviceMode: ServiceMode;
   assignedTimeCredits: number;
   status: PostStatus;
+  city?: string;
+  area?: string;
   userId: number;
   createdAt: string;
   updatedAt: string;
@@ -25,6 +27,8 @@ export interface CreatePostRequest {
   serviceMode: ServiceMode;
   assignedTimeCredits: number;
   status?: PostStatus;
+  city?: string;
+  area?: string;
 }
 
 export interface UpdatePostRequest {
@@ -34,6 +38,8 @@ export interface UpdatePostRequest {
   serviceMode?: ServiceMode;
   assignedTimeCredits?: number;
   status?: PostStatus;
+  city?: string;
+  area?: string;
 }
 
 export interface SavedPost {

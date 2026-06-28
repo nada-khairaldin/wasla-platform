@@ -7,7 +7,6 @@ import {
   Languages,
   X,
   LogIn,
-  Sparkles,
   Sprout,
   BriefcaseMedical,
   ChevronLeft,
@@ -15,6 +14,10 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Button from "../../ui/Button";
+import { useQuery } from "@tanstack/react-query";
+import { skillsService } from "@/src/features/skills/services/skillsService";
+import { useMemo } from "react";
+import { Code, Palette, Lightbulb } from "lucide-react";
 
 const INITIAL_CATEGORIES = [
   { id: 1, name: "إصلاح منزلي", icon: <Wrench size={32} /> },
@@ -23,9 +26,28 @@ const INITIAL_CATEGORIES = [
   { id: 4, name: "رعاية صحية", icon: <BriefcaseMedical size={32} /> },
   { id: 5, name: "ترجمة", icon: <Languages size={32} /> },
   { id: 6, name: "زراعة", icon: <Sprout size={32} /> },
-  { id: 7, name: "برمجة", icon: <Laptop size={32} /> },
-  { id: 8, name: "تصميم", icon: <Sparkles size={32} /> },
+  { id: 7, name: "برمجة", icon: <Code size={32} /> },
+  { id: 8, name: "تصميم", icon: <Palette size={32} /> },
 ];
+
+const getIconForCategory = (name: string) => {
+  const normalized = name.trim();
+  const iconMap: Record<string, React.ReactNode> = {
+    "إصلاح منزلي": <Wrench size={32} />,
+    "دعم تقني": <Laptop size={32} />,
+    "تعليم": <GraduationCap size={32} />,
+    "رعاية صحية": <BriefcaseMedical size={32} />,
+    "ترجمة": <Languages size={32} />,
+    "زراعة": <Sprout size={32} />,
+    "برمجة": <Code size={32} />,
+    "تصميم": <Palette size={32} />,
+  };
+  
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (normalized.includes(key)) return icon;
+  }
+  return <Lightbulb size={32} />;
+};
 
 const motivationalMessage =
   "هذا المجال مليء بالمبدعين المستعدين لتبادل خبراتهم معك. انضم إلينا الآن وابدأ رحلة تبادل المعرفة!";
@@ -33,6 +55,39 @@ const motivationalMessage =
 const CategorySection = () => {
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+
+  const { data: backendSkills = [], isLoading } = useQuery({
+    queryKey: ["skills", "landing"],
+    queryFn: async () => {
+      const { data, error } = await skillsService.getSkills();
+      if (error) throw new Error(error);
+      return data?.skills || [];
+    },
+    enabled: showAll,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const mergedCategories = useMemo(() => {
+    const map = new Map<string, { id: string | number; name: string; icon: React.ReactNode }>();
+    
+    INITIAL_CATEGORIES.forEach(cat => {
+      map.set(cat.name, cat);
+    });
+    
+    if (backendSkills && backendSkills.length > 0) {
+      backendSkills.forEach(skill => {
+        if (!map.has(skill.name)) {
+          map.set(skill.name, {
+            id: skill.id || `be-${skill.name}`,
+            name: skill.name,
+            icon: getIconForCategory(skill.name),
+          });
+        }
+      });
+    }
+    
+    return Array.from(map.values());
+  }, [backendSkills]);
 
   return (
     <section className="py-xl4 px-base md:px-xl8">
@@ -58,7 +113,7 @@ const CategorySection = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-xl">
           {INITIAL_CATEGORIES.slice(0, 6).map((cat) => (
             <motion.div
-              key={cat.id}
+              key={cat.name}
               whileHover={{ y: -5 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedCat(cat.name)}
@@ -108,11 +163,17 @@ const CategorySection = () => {
                     <X size={24} />
                   </button>
                 </div>
-                <div className="overflow-y-auto custom-scrollbar p-xs">
+                <div className="overflow-y-auto custom-scrollbar p-xs relative min-h-[200px]">
+                  {isLoading && backendSkills.length === 0 ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                      <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin"></div>
+                    </div>
+                  ) : null}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-base">
-                    {INITIAL_CATEGORIES.map((cat) => (
+                    {mergedCategories.map((cat) => (
                       <motion.div
-                        key={cat.id}
+                        key={cat.name}
+                        layout
                         whileHover={{ scale: 1.02 }}
                         onClick={() => {
                           setSelectedCat(cat.name);

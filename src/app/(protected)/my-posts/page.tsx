@@ -9,6 +9,7 @@ import { ArchiveX, Plus, Trash2, X, Archive, RotateCcw } from "lucide-react";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { ContractStatusTabs } from "../../../features/contracts/components/ContractStatusTabs";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function MyPostsPage() {
   const [activeTab, setActiveTab] = useState<PostStatus>("PUBLISHED");
@@ -167,18 +168,36 @@ export default function MyPostsPage() {
             حدث خطأ أثناء جلب البيانات: {error?.message}
           </div>
         ) : filteredPosts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700 outline-none">
-            {filteredPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onEdit={activeTab !== "ARCHIVED" ? handleOpenEdit : undefined}
-                onDelete={handleDeleteTrigger}
-                onArchive={activeTab === "PUBLISHED" ? () => setPostIdToArchive(post.id) : undefined}
-                onRestore={activeTab === "ARCHIVED" ? () => setPostIdToRestore(post.id) : undefined}
-              />
-            ))}
-          </div>
+          <motion.div 
+            layout="position"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 border-none outline-none ring-0 shadow-none bg-transparent"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredPosts.map((post, index) => (
+                <motion.div
+                  key={post.id}
+                  layout="position"
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ 
+                    duration: 0.4, 
+                    delay: Math.min(index * 0.08, 0.4), 
+                    ease: [0.25, 0.1, 0.25, 1] 
+                  }}
+                  className="border-none outline-none ring-0 shadow-none bg-transparent"
+                >
+                  <PostCard
+                    post={post}
+                    onEdit={activeTab !== "ARCHIVED" ? handleOpenEdit : undefined}
+                    onDelete={handleDeleteTrigger}
+                    onArchive={activeTab === "PUBLISHED" ? () => setPostIdToArchive(post.id) : undefined}
+                    onRestore={activeTab === "ARCHIVED" ? () => setPostIdToRestore(post.id) : undefined}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         ) : (
           <div className="text-center py-16 bg-white border border-dashed border-neutral-200 rounded-[24px] mx-auto shadow-sm">
             <ArchiveX className="mx-auto text-neutral-300 mb-4" size={44} />
