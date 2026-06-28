@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Wallet,
+  Lock,
 } from "lucide-react";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { useUserProfile, useWalletHistory } from "@/src/features/profile/hooks";
@@ -67,6 +68,11 @@ export default function WalletPage() {
       .filter((t) => t.type === "gift")
       .reduce((acc, t) => acc + t.hours, 0);
   }, [transactions]);
+
+  // Reserved Balance calculation
+  const reservedBalance = useMemo(() => {
+    return Math.max(0, (totalEarned + totalGifts) - (currentBalance + totalSpent));
+  }, [totalEarned, totalGifts, currentBalance, totalSpent]);
 
   // Filter and search logic
   const filteredTransactions = useMemo(() => {
@@ -180,7 +186,7 @@ export default function WalletPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-2">
           <div className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-5 shadow-sm text-center flex flex-col items-center gap-1">
             <div className="w-10 h-10 rounded-full bg-success-50 text-success-600 flex items-center justify-center mb-1">
               <TrendingUp size={20} />
@@ -203,6 +209,14 @@ export default function WalletPage() {
             </div>
             <span className="text-xs text-neutral-400 font-medium h-8 flex items-center justify-center text-center">هدايا ومنح</span>
             <span className="text-lg sm:text-xl font-bold text-warning-600">+{totalGifts.toFixed(1)} س</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-5 shadow-sm text-center flex flex-col items-center gap-1">
+            <div className="w-10 h-10 rounded-full bg-error-50 text-error-600 flex items-center justify-center mb-1">
+              <Lock size={20} />
+            </div>
+            <span className="text-xs text-neutral-400 font-medium h-8 flex items-center justify-center text-center">الرصيد المحجوز</span>
+            <span className="text-lg sm:text-xl font-bold text-error-600">{reservedBalance.toFixed(1)} س</span>
           </div>
         </div>
 

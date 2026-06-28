@@ -33,7 +33,7 @@ export default function ProfileRoute() {
 
   const { data: userProfile, isLoading: isProfileLoading } = useUserProfile(userId);
   const { data: savedPosts = [], isLoading: isSavedLoading } = useSavedPosts();
-  const { data: walletHistory = [], isLoading: isHistoryLoading } = useWalletHistory({ limit: 5 });
+  const { data: walletHistory = [], isLoading: isHistoryLoading } = useWalletHistory({ limit: 3 });
   const { data: reviewsData, isLoading: isReviewsLoading } = useUserReviews(userId as number, 5);
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);

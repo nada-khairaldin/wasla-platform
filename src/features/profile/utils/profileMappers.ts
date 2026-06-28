@@ -76,6 +76,13 @@ export const mapWalletTransactionToTransaction = (tx: WalletTransaction): Transa
     } else {
       description = `استلام خدمة من ${tx.counterparty.name} (عنوان الخدمة: "${tx.relatedServiceOrRequest?.title || ""}")`;
     }
+
+    // Force gift classification for Welcome bonus transactions from Wasla
+    const isWasla = tx.counterparty.name && tx.counterparty.name.toLowerCase() === "wasla";
+    const isWelcomeBonus = tx.relatedServiceOrRequest?.title === "Welcome bonus";
+    if (isWasla && isWelcomeBonus) {
+      type = "gift";
+    }
   } else {
     description = tx.relatedServiceOrRequest?.title || "عملية محفظة";
     const lowerDesc = description.toLowerCase();
