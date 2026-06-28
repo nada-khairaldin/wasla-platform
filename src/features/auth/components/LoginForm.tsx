@@ -36,9 +36,9 @@ function LoginForm() {
       return;
     }
     if (data) {
-      const { accessToken } = data;
+      const { accessToken, pendingReviewContracts } = data;
 
-      setAuth(accessToken);
+      setAuth(accessToken, pendingReviewContracts);
       router.replace("/home");
 
       await queryClient.invalidateQueries({

@@ -30,27 +30,29 @@ import { useAuthActions } from "../../../../../features/auth/store/useAuthStore"
 import { useQueryClient } from "@tanstack/react-query";
 
 function ConfirmationPage() {
-  const { formData } = useSignupStore();
+  const storeFormData = useSignupStore((state) => state.formData);
+  // Snapshot must be immutable during submission lifecycle
+  const [formData] = useState(() => ({ ...storeFormData }));
   const { resetSignup } = useSignupActions();
   const { setAuth } = useAuthActions();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const data = useSignupStore((state) => state.formData);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    if (!data.email) {
+    if (!storeFormData.email && !isSuccess && !isLoading) {
       router.replace("/signup/basic-info");
     }
-  }, [data, router]);
+  }, [storeFormData.email, isSuccess, isLoading, router]);
 
-  const handleSignup = async (data: SignupFormData) => {
+  const handleSignup = async (signupData: SignupFormData) => {
     setIsLoading(true);
     setServerError(null);
 
     try {
-      const { data: resData, error } = await authServices.signup(data);
+      const { data: resData, error } = await authServices.signup(signupData);
 
       if (error) {
         let translatedError = error;
@@ -64,8 +66,9 @@ function ConfirmationPage() {
         return;
       }
       if (resData) {
-        const { accessToken } = resData;
-        setAuth(accessToken);
+        const { accessToken, pendingReviewContracts } = resData;
+        setIsSuccess(true);
+        setAuth(accessToken, pendingReviewContracts);
         await queryClient.invalidateQueries({
           queryKey: ["currentUser"],
         });
@@ -81,7 +84,10 @@ function ConfirmationPage() {
 
   const isUsernameError = serverError?.includes("اسم المستخدم");
   const isEmailError = serverError?.includes("البريد");
-  const goToStepOne = () => router.push("/signup/basic-info");
+  const goToStepOne = () => {
+    if (isLoading) return;
+    router.push("/signup/basic-info");
+  };
 
   return (
     <motion.div
@@ -155,7 +161,8 @@ function ConfirmationPage() {
           />
           <button
             onClick={goToStepOne}
-            className={`absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isUsernameError ? "bg-red-100 text-red-600 animate-pulse" : "hover:bg-neutral-100 text-neutral-400"}`}
+            disabled={isLoading}
+            className={`absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isUsernameError ? "bg-red-100 text-red-600 animate-pulse" : "hover:bg-neutral-100 text-neutral-400"} ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <Edit2 size={16} />
           </button>
@@ -173,7 +180,8 @@ function ConfirmationPage() {
           />
           <button
             onClick={goToStepOne}
-            className={`absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isEmailError ? "bg-red-100 text-red-600 animate-pulse" : "hover:bg-neutral-100 text-neutral-400"}`}
+            disabled={isLoading}
+            className={`absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${isEmailError ? "bg-red-100 text-red-600 animate-pulse" : "hover:bg-neutral-100 text-neutral-400"} ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <Edit2 size={16} />
           </button>
@@ -202,7 +210,8 @@ function ConfirmationPage() {
               serverError.includes("اسم المستخدم")) && (
               <button
                 onClick={goToStepOne}
-                className="text-red-800 underline font-bold mt-1 text-right w-fit hover:cursor-pointer"
+                disabled={isLoading}
+                className={`text-red-800 underline font-bold mt-1 text-right w-fit hover:cursor-pointer ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 اضغط هنا للعودة وتعديل البيانات
               </button>

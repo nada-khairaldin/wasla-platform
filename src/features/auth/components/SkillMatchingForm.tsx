@@ -2,7 +2,6 @@
 import React, { memo, useCallback, useMemo, useState } from "react";
 import { X, Plus, Check } from "lucide-react";
 import InputField from "../../../components/ui/InputField";
-import { useCreateSkill } from "../../skills/hooks/useCreateSkill";
 
 interface AvailableSkill {
   id: number;
@@ -40,8 +39,6 @@ function SkillMatchingForm({
   const [newSkill, setNewSkill] = useState<string>("");
   const [error, setError] = useState(false);
 
-  const { mutate: createSkill } = useCreateSkill();
-
   const selectedSkillsSet = useMemo(() => {
     return new Set(selectedSkills);
   }, [selectedSkills]);
@@ -78,10 +75,6 @@ function SkillMatchingForm({
       if (selectedSkills.includes(trimmedSkill)) {
         setError(true);
       } else {
-        if (!availableSkills.some((skill) => skill.name === trimmedSkill)) {
-          // Optimistically create skill in backend
-          createSkill({ name: trimmedSkill, category: "GENERAL" });
-        }
         // Add immediately to selected skills
         onSkillsChange([...selectedSkills, trimmedSkill]);
         setNewSkill("");

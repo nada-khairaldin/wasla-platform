@@ -7,6 +7,7 @@ export interface UserLogin {
 export interface AuthResponse {
   user: UserLogin;
   accessToken: string;
+  pendingReviewContracts?: number[];
 }
 
 export type ForgotPasswordPayload = {

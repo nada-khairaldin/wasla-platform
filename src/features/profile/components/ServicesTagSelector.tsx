@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { X, Plus, Search } from "lucide-react";
 import { getSkillIcon } from "@/src/utils/skillIcons";
 import { useSkills } from "@/src/features/skills";
-import { useCreateSkill } from "@/src/features/skills/hooks/useCreateSkill";
 
 interface ServicesTagSelectorProps {
   label: string;
@@ -12,6 +11,7 @@ interface ServicesTagSelectorProps {
   onChange: (tags: string[]) => void;
   addButtonLabel: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
@@ -22,12 +22,12 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
     onChange,
     addButtonLabel,
     placeholder = "البحث في الخدمات...",
+    disabled = false,
   } = props;
   
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { mutate: createSkill } = useCreateSkill();
   
   // Load approved skills from backend
   const { data: dbSkills = [] } = useSkills();
@@ -96,9 +96,8 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
       return;
     }
 
-    // Optimistic UX: add immediately and create in catalog in background.
+    // Add locally to the draft array
     handleAdd(trimmed);
-    createSkill({ name: trimmed, category: "GENERAL" });
   };
 
   // Filter suggestions from localServices list
@@ -132,8 +131,9 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
             <span>{tag}</span>
             <button
               type="button"
+              disabled={disabled}
               onClick={() => handleRemove(tag)}
-              className="p-0.5 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer"
+              className="p-0.5 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="إزالة"
             >
               <X size={12} className="text-[#8fa8be] hover:text-primary-600" />
@@ -144,15 +144,16 @@ export default function ServicesTagSelector(props: ServicesTagSelectorProps) {
         {/* Dotted Add Button */}
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-neutral-300 text-neutral-500 hover:text-primary-600 hover:border-primary-600 rounded-full text-xs transition-all cursor-pointer bg-white font-medium"
+          className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-neutral-300 text-neutral-500 hover:text-primary-600 hover:border-primary-600 rounded-full text-xs transition-all cursor-pointer bg-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={13} />
           <span>{addButtonLabel}</span>
         </button>
 
         {/* Search Dropdown */}
-        {isOpen && (
+        {isOpen && !disabled && (
           <div className="absolute top-full right-0 left-0 mt-2 bg-white rounded-xl shadow-2xl border border-primary-50 z-1000 p-3 animate-in fade-in slide-in-from-top-2 flex flex-col gap-2">
             {/* Search Input */}
             <div className="relative w-full">

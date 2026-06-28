@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ArrowRight, Lock, Contact, HandHeart, ShoppingBasket, AlertOctagon } from "lucide-react";
 import ServicesTagSelector from "./ServicesTagSelector";
 import { Skeleton } from "@/src/components/ui/Skeleton";
@@ -31,6 +31,8 @@ export default function EditProfileForm(props: EditProfileFormProps) {
 
   const [username, setUsername] = useState("");
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const isInitialized = useRef(false);
+  const currentUsernameRef = useRef<string | null>(null);
 
   const {
     register,
@@ -57,16 +59,22 @@ export default function EditProfileForm(props: EditProfileFormProps) {
 
 
   useEffect(() => {
-    if (initialData) {
-      reset({
-        name: initialData.name || "",
-        bio: initialData.bio || "",
-        requiredSkills: initialData.requiredSkills || [],
-        offeredSkills: initialData.offeredSkills || [],
-      });
-      setUsername(initialData.username || "");
+    if (initialData && !isPending) {
+      const userChanged = currentUsernameRef.current !== initialData.username;
+      
+      if (!isInitialized.current || userChanged) {
+        reset({
+          name: initialData.name || "",
+          bio: initialData.bio || "",
+          requiredSkills: initialData.requiredSkills || [],
+          offeredSkills: initialData.offeredSkills || [],
+        });
+        setUsername(initialData.username || "");
+        isInitialized.current = true;
+        currentUsernameRef.current = initialData.username || "";
+      }
     }
-  }, [initialData, reset]);
+  }, [initialData, isPending, reset]);
 
   const handleBack = () => {
     if (isDirty) {
@@ -182,9 +190,10 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                   <input
                     id="fullName"
                     type="text"
+                    disabled={isPending}
                     placeholder="أدخل اسمك الكامل"
                     {...register("name")}
-                    className={`w-full rounded-xl border p-3.5 focus:border-primary-500 outline-none bg-white text-neutral-800 text-right font-cairo transition-all text-sm font-medium ${errors.name ? "border-error-500 focus:border-error-500" : "border-neutral-200"
+                    className={`w-full rounded-xl border p-3.5 focus:border-primary-500 outline-none bg-white text-neutral-800 text-right font-cairo transition-all text-sm font-medium disabled:bg-neutral-50/50 disabled:text-neutral-400 disabled:cursor-not-allowed ${errors.name ? "border-error-500 focus:border-error-500" : "border-neutral-200"
                       }`}
                   />
                   {errors.name && <p className="text-error-500 text-xs mt-1 text-right">{errors.name.message}</p>}
@@ -216,9 +225,10 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                 </label>
                 <textarea
                   id="bio"
+                  disabled={isPending}
                   placeholder="اكتب نبذة مختصرة عن مهاراتك وخبراتك..."
                   {...register("bio")}
-                  className={`w-full rounded-xl border p-3.5 outline-none focus:border-primary-500 transition-all bg-white text-neutral-800 text-right min-h-[110px] resize-none font-cairo text-sm ${errors.bio ? "border-error-500 focus:border-error-500" : "border-neutral-200"
+                  className={`w-full rounded-xl border p-3.5 outline-none focus:border-primary-500 transition-all bg-white text-neutral-800 text-right min-h-[110px] resize-none font-cairo text-sm disabled:bg-neutral-50/50 disabled:text-neutral-400 disabled:cursor-not-allowed ${errors.bio ? "border-error-500 focus:border-error-500" : "border-neutral-200"
                     }`}
                 />
 
@@ -246,6 +256,7 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                   selectedTags={offeredSkills}
                   onChange={handleOfferedSkillsChange}
                   icon={<HandHeart className="w-5 h-5 shrink-0" />}
+                  disabled={isPending}
                 />
                 {errors.offeredSkills && (
                   <p className="text-error-500 text-xs text-right mt-1">{errors.offeredSkills.message}</p>
@@ -261,6 +272,7 @@ export default function EditProfileForm(props: EditProfileFormProps) {
                   selectedTags={requiredSkills}
                   onChange={handleRequiredSkillsChange}
                   icon={<ShoppingBasket className="w-5 h-5 shrink-0" />}
+                  disabled={isPending}
                 />
                 {errors.requiredSkills && (
                   <p className="text-error-500 text-xs text-right mt-1">{errors.requiredSkills.message}</p>
@@ -273,7 +285,8 @@ export default function EditProfileForm(props: EditProfileFormProps) {
               <button
                 type="button"
                 onClick={handleBack}
-                className="px-10 py-3 rounded-full border border-primary-600 text-primary-600 hover:bg-primary-50/50 transition-all font-bold font-cairo cursor-pointer text-center text-sm min-w-[150px]"
+                disabled={isPending}
+                className="px-10 py-3 rounded-full border border-primary-600 text-primary-600 hover:bg-primary-50/50 transition-all font-bold font-cairo cursor-pointer text-center text-sm min-w-[150px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 إلغاء
               </button>

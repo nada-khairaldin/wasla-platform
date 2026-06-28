@@ -153,7 +153,7 @@ function MessagesPageContent() {
         postId: activeConversation.postId,
         providerId: providerId,
         duration: data.timeCredits,
-        contractEndDate: new Date(data.maxEndDate).toISOString(),
+        contractEndDate: data.maxEndDate,
       });
       toast.success("تم انشاء العقد بنجاح");
       setIsContractModalOpen(false);

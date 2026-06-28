@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Star, MessageSquare, Briefcase, Loader2, AlertCircle } from "lucide-react";
+import { Star, Briefcase, Loader2, AlertCircle } from "lucide-react";
 import { Exchange } from "@/src/features/profile/services/profileServices";
 import { useSubmitReview } from "../hooks/useSubmitReview";
 import toast from "react-hot-toast";
@@ -81,20 +81,6 @@ export function RatingModal({ contract, currentUserId, open = true, onClose }: R
         rating,
         comment: comment.trim() || undefined,
       });
-
-      // Save to localStorage as a cache so the modal disappears immediately without relying solely on backend updates
-      try {
-        const keys = [`reviewed_${currentUserId}`, `reviewed_exchanges_${currentUserId}`, "reviewed_contract_ids"];
-        for (const k of keys) {
-          const reviewedIds = JSON.parse(localStorage.getItem(k) || "[]");
-          if (!reviewedIds.includes(contract.id)) {
-            reviewedIds.push(contract.id);
-            localStorage.setItem(k, JSON.stringify(reviewedIds));
-          }
-        }
-      } catch (e) {
-        console.error("Failed to save reviewed contract ID to localStorage:", e);
-      }
 
       // Dispatch a custom event so the global layout can hide the modal instantly
       if (typeof window !== "undefined") {
