@@ -9,10 +9,10 @@ import { authServices } from "@/src/features/auth/services/authService";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import {
   useUserProfile,
-  useUserReviews,
   useWalletHistory,
   useDeleteAccount,
 } from "@/src/features/profile/hooks";
+import { useUserReviews } from "@/src/features/reviews/hooks";
 import { useSavedPosts, useSaveToggle } from "@/src/features/posts/hooks";
 import {
   mapProfileRecentExchangeToContract,

@@ -13,12 +13,13 @@ interface PublicReviewsSectionProps {
 }
 
 function StarRating({ rating }: { rating: number }) {
+  const scaledRating = rating / 2;
   return (
     <div className="flex gap-0.5 justify-end">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className={`w-3 h-3 sm:w-4 sm:h-4 ${i < rating ? "fill-secondary-500 text-secondary-500" : "fill-neutral-200 text-neutral-200"}`}
+          className={`w-3 h-3 sm:w-4 sm:h-4 ${i < scaledRating ? "fill-amber-400 text-amber-400" : "fill-neutral-200 text-neutral-200"}`}
         />
       ))}
     </div>

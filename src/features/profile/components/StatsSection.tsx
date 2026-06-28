@@ -27,6 +27,7 @@ function StatCard(props: StatCardProps) {
 
 export default function StatsSection(props: StatsSectionProps) {
   const { rating, maxRating = 5, servicesReceived, servicesProvided } = props;
+  const displayRating = rating > 5 ? rating / 2 : rating;
 
   return (
     <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 sm:p-6" dir="rtl">
@@ -51,7 +52,7 @@ export default function StatsSection(props: StatsSectionProps) {
         <StatCard
           icon={<Star className="w-5 h-5 sm:w-6 sm:h-6 fill-secondary-500 text-secondary-500" />}
           label="التقييم"
-          value={rating === 0 ? `0/${maxRating}` : `${rating}/${maxRating}`}
+          value={rating === 0 ? `0/${maxRating}` : `${displayRating.toFixed(1)}/${maxRating}`}
         />
       </div>
     </div>

@@ -1,6 +1,7 @@
 export * from "./useUserProfile";
-export * from "./useUserReviews";
+export { useUserReviews } from "@/src/features/reviews/hooks/useUserReviews";
 export * from "./useUserExchanges";
 export * from "./useUpdateProfile";
 export * from "./useWalletHistory";
 export * from "./useDeleteAccount";
+

@@ -1,5 +1,6 @@
 import { SavedPost } from "@/src/features/posts/type";
-import { Exchange, ApiReview, WalletTransaction } from "../services/profileServices";
+import { Exchange, WalletTransaction } from "../services/profileServices";
+import { ApiReview } from "@/src/features/reviews/types";
 import { UserProfile } from "@/src/types";
 import { Transaction, Contract, Review, SavedService } from "../types";
 

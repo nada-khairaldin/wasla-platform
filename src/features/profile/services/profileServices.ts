@@ -10,23 +10,7 @@ export interface BasicProfileResponse {
 }
 
 
-export interface ApiReview {
-  id: number;
-  rating: number;
-  comment: string;
-  createdAt: string;
-  reviewer: {
-    id: number;
-    username: string;
-    name: string;
-    profilePicture: string;
-  };
-}
-
-export interface ReviewsResponse {
-  reviews: ApiReview[];
-  nextCursor: number | null;
-}
+import { ApiReview, ReviewsResponse } from "@/src/features/reviews/types";
 
 export interface Exchange {
   id: number;
@@ -44,6 +28,7 @@ export interface Exchange {
   canceledAt: string | null;
   createdAt: string;
   updatedAt: string;
+  reviews?: ApiReview[];
   requester: {
     id: number;
     username: string;

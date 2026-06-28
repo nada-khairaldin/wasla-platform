@@ -8,7 +8,7 @@ import PublicReviewsSection from "./components/PublicReviewsSection";
 import RecentContracts from "@/src/features/profile/components/RecentContracts";
 import { Skeleton } from "@/src/components/ui/Skeleton";
 import { useUserProfile } from "@/src/features/profile/hooks/useUserProfile";
-import { useUserReviews } from "@/src/features/profile/hooks/useUserReviews";
+import { useUserReviews } from "@/src/features/reviews/hooks";
 import { mapProfileRecentExchangeToContract, mapApiReviewToReview } from "@/src/features/profile/utils/profileMappers";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";

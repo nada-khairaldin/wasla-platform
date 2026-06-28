@@ -32,6 +32,7 @@ function StatCard(props: StatCardProps) {
 
 export default function PublicStatsSection(props: PublicStatsSectionProps) {
   const { servicesProvided, servicesReceived, rating } = props;
+  const displayRating = rating > 5 ? rating / 2 : rating;
 
   return (
     <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 sm:p-6" dir="rtl">
@@ -42,9 +43,9 @@ export default function PublicStatsSection(props: PublicStatsSectionProps) {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
         <StatCard
-          icon={<Star className="w-5 h-5 sm:w-6 sm:h-6 fill-secondary-500 text-secondary-500" />}
+          icon={<Star className="w-5 h-5 sm:w-6 sm:h-6 fill-amber-400 text-amber-400" />}
           label="التقييم"
-          value={`${rating.toFixed(1)}/5`}
+          value={`${displayRating.toFixed(1)}/5`}
         />
         <StatCard
           icon={<CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-success-600" />}

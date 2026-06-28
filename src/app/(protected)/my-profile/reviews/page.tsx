@@ -2,19 +2,25 @@
 import { useRouter } from "next/navigation";
 import { ArrowRight, Star, MessageSquare, ChevronDown, Loader2 } from "lucide-react";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
-import { useUserReviews } from "@/src/features/profile/hooks/useUserReviews";
+import { useUserReviews } from "@/src/features/reviews/hooks";
 import { getInitials } from "@/src/utils";
 import { Skeleton } from "@/src/components/ui/Skeleton";
 
-function StarRating({ rating }: { rating: number }) {
+function StarRating({ rating, maxStars = 5 }: { rating: number; maxStars?: number }) {
+  const displayRating = rating > maxStars ? rating / 2 : rating;
+  const validRating = Math.max(0, Math.min(displayRating, maxStars));
   return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`w-4 h-4 ${i < rating ? "fill-secondary-500 text-secondary-500" : "fill-neutral-200 text-neutral-200"}`}
-        />
-      ))}
+    <div className="flex gap-0.5 flex-row-reverse justify-end">
+      {Array.from({ length: maxStars }).map((_, i) => {
+        const starIndex = maxStars - 1 - i;
+        const isFilled = starIndex < validRating;
+        return (
+          <Star
+            key={i}
+            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFilled ? "fill-amber-400 text-amber-400" : "fill-neutral-100 text-neutral-200"}`}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -38,7 +44,7 @@ export default function ReviewsPage() {
   // Calculate average rating and total counts
   const totalReviews = displayReviews.length;
   const averageRating = totalReviews > 0
-    ? (displayReviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
+    ? (displayReviews.reduce((acc, r) => acc + (r.rating > 5 ? r.rating / 2 : r.rating), 0) / totalReviews).toFixed(1)
     : "0.0";
 
   const isLoading = (isUserLoading || isReviewsLoading) && displayReviews.length === 0 && !error;
@@ -129,7 +135,7 @@ export default function ReviewsPage() {
                 <div className="flex justify-center mt-2">
                   <StarRating rating={Math.round(Number(averageRating))} />
                 </div>
-                <p className="text-xs text-neutral-400 mt-2">متوسط التقييم العام</p>
+                <p className="text-xs text-neutral-400 mt-2">متوسط التقييم العام (من 5)</p>
               </div>
               <div className="h-px sm:h-16 w-16 sm:w-px bg-neutral-100"></div>
               <div>
