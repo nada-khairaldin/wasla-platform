@@ -13,7 +13,8 @@ interface PublicReviewsSectionProps {
 }
 
 function StarRating({ rating }: { rating: number }) {
-  const scaledRating = rating / 2;
+  const displayRating = rating > 5 ? rating / 2 : rating;
+  const scaledRating = Math.max(0, Math.min(displayRating, 5));
   return (
     <div className="flex gap-0.5 justify-end">
       {Array.from({ length: 5 }).map((_, i) => (

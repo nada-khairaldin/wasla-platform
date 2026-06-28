@@ -3,19 +3,23 @@ import { Star, MessageSquare, Briefcase, Loader2, AlertCircle } from "lucide-rea
 import { Exchange } from "@/src/features/profile/services/profileServices";
 import { useSubmitReview } from "../hooks/useSubmitReview";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface RatingModalProps {
   contract: Exchange;
   currentUserId: number;
+  open?: boolean;
+  onClose?: () => void;
 }
 
-export function RatingModal({ contract, currentUserId }: RatingModalProps) {
+export function RatingModal({ contract, currentUserId, open = true, onClose }: RatingModalProps) {
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   const submitMutation = useSubmitReview();
+  const queryClient = useQueryClient();
 
   // ─── Preconditions & Context Extraction ───
   const isProvider = contract.providerId === currentUserId;
@@ -60,6 +64,8 @@ export function RatingModal({ contract, currentUserId }: RatingModalProps) {
     };
   }, []);
 
+  if (!open) return null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating < 1 || rating > 5) {
@@ -78,13 +84,48 @@ export function RatingModal({ contract, currentUserId }: RatingModalProps) {
 
       // Save to localStorage as a cache so the modal disappears immediately without relying solely on backend updates
       try {
-        const reviewedIds = JSON.parse(localStorage.getItem("reviewed_contract_ids") || "[]");
-        if (!reviewedIds.includes(contract.id)) {
-          reviewedIds.push(contract.id);
-          localStorage.setItem("reviewed_contract_ids", JSON.stringify(reviewedIds));
+        const keys = [`reviewed_${currentUserId}`, `reviewed_exchanges_${currentUserId}`, "reviewed_contract_ids"];
+        for (const k of keys) {
+          const reviewedIds = JSON.parse(localStorage.getItem(k) || "[]");
+          if (!reviewedIds.includes(contract.id)) {
+            reviewedIds.push(contract.id);
+            localStorage.setItem(k, JSON.stringify(reviewedIds));
+          }
         }
       } catch (e) {
         console.error("Failed to save reviewed contract ID to localStorage:", e);
+      }
+
+      // Dispatch a custom event so the global layout can hide the modal instantly
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("review-submitted", {
+            detail: { contractId: contract.id },
+          })
+        );
+      }
+
+      // Close the modal instantly
+      if (onClose) {
+        onClose();
+      }
+
+      // Optimistically update query client Exchanges cache
+      try {
+        queryClient.setQueryData<Exchange[]>(["userExchanges", undefined], (old) => {
+          if (!old) return old;
+          return old.map((ex) => {
+            if (ex.id === contract.id) {
+              return {
+                ...ex,
+                reviews: [...(ex.reviews || []), { reviewerId: currentUserId, reviewer: { id: currentUserId } }]
+              } as Exchange;
+            }
+            return ex;
+          });
+        });
+      } catch (e) {
+        console.error("Failed to update query cache:", e);
       }
 
       toast.success("تم إرسال تقييمك بنجاح! شكرًا لك.");

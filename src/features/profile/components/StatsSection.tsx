@@ -50,7 +50,7 @@ export default function StatsSection(props: StatsSectionProps) {
           value={servicesReceived}
         />
         <StatCard
-          icon={<Star className="w-5 h-5 sm:w-6 sm:h-6 fill-secondary-500 text-secondary-500" />}
+          icon={<Star className="w-5 h-5 sm:w-6 sm:h-6 fill-amber-400 text-amber-400" />}
           label="التقييم"
           value={rating === 0 ? `0/${maxRating}` : `${displayRating.toFixed(1)}/${maxRating}`}
         />

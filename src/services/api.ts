@@ -35,44 +35,103 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+let refreshPromise: Promise<string> | null = null;
+let isRedirectingToLogin = false;
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     if (originalRequest.url?.includes("/auth/refresh")) {
-      Cookies.remove("token");
-      if (
-        typeof window !== "undefined" &&
-        !window.location.pathname.includes("/login")
-      ) {
-        window.location.href = "/login";
+      const responseData = error.response?.data;
+      const isExpiredOrInvalid =
+        error.response?.status === 403 &&
+        responseData &&
+        responseData.message === "Invalid or expired token";
+
+      if (isExpiredOrInvalid && !isRedirectingToLogin) {
+        isRedirectingToLogin = true;
+        try {
+          const { useAuthStore } = await import("@/src/features/auth/store/useAuthStore");
+          useAuthStore.getState().actions.logout();
+        } catch {
+          Cookies.remove("token");
+          if (
+            typeof window !== "undefined" &&
+            !window.location.pathname.includes("/login")
+          ) {
+            window.location.href = "/login";
+          }
+        }
+        setTimeout(() => {
+          isRedirectingToLogin = false;
+        }, 5000);
       }
       return Promise.reject(error);
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
       try {
-        const res = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-          {},
-          { withCredentials: true },
-        );
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            try {
+              const res = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+                {},
+                { withCredentials: true },
+              );
 
-        console.log("✅ Refresh response:", res.data);
-        const { accessToken } = res.data;
-        const { useAuthStore } =
-          await import("@/src/features/auth/store/useAuthStore");
-        useAuthStore.getState().actions.setAuth(accessToken);
+              console.log("✅ Refresh response:", res.data);
+              const { accessToken } = res.data;
+              const { useAuthStore } =
+                await import("@/src/features/auth/store/useAuthStore");
+              useAuthStore.getState().actions.setAuth(accessToken);
 
+              api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+              return accessToken;
+            } finally {
+              refreshPromise = null;
+            }
+          })();
+        }
+
+        const accessToken = await refreshPromise;
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
         console.log("🚀 Retrying original request:", originalRequest.url);
         return api(originalRequest);
       } catch (refreshError) {
         console.log("❌ Refresh failed:", refreshError);
-        Cookies.remove("token");
+
+        let isExplicitlyInvalid = false;
+        if (axios.isAxiosError(refreshError)) {
+          const responseData = refreshError.response?.data as { message?: string } | undefined;
+          isExplicitlyInvalid =
+            refreshError.response?.status === 403 &&
+            responseData?.message === "Invalid or expired token";
+        }
+
+        if (isExplicitlyInvalid && !isRedirectingToLogin) {
+          isRedirectingToLogin = true;
+          try {
+            const { useAuthStore } = await import("@/src/features/auth/store/useAuthStore");
+            useAuthStore.getState().actions.logout();
+          } catch {
+            Cookies.remove("token");
+            if (
+              typeof window !== "undefined" &&
+              !window.location.pathname.includes("/login")
+            ) {
+              window.location.href = "/login";
+            }
+          }
+          setTimeout(() => {
+            isRedirectingToLogin = false;
+          }, 5000);
+        }
+
         return Promise.reject(refreshError);
       }
     }

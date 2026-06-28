@@ -10,6 +10,7 @@ export function useAcceptContract() {
       queryClient.invalidateQueries({ queryKey: ["userExchanges"] });
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["posts_and_feed"] });
     },
   });
 }

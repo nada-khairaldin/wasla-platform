@@ -21,6 +21,7 @@ import {
 import { Skeleton } from "../../../../components/ui/Skeleton";
 import { useCreateConversation, useConversationForPost } from "@/src/features/messages/hooks";
 import { useUserActions } from "@/src/hooks/useUserActions";
+import { useUserProfile } from "@/src/features/profile/hooks";
 
 export default function ServiceDetailPage() {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function ServiceDetailPage() {
   const { data: savedPosts } = useSavedPosts();
   const { mutate: toggleSave } = useSaveToggle();
   const { navigateToProfile, isSelf, canMessage, isLoading: isUserLoading } = useUserActions(post?.userId || post?.user?.id);
+  const { data: userProfile } = useUserProfile(post?.userId || post?.user?.id);
   const isSaved = savedPosts?.some((sp) => sp.postId === postId) ?? false;
   const { hasConversation, conversationId } = useConversationForPost(postId);
   const createConversation = useCreateConversation();
@@ -246,8 +248,15 @@ export default function ServiceDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2.5 py-1 rounded-lg border border-amber-100 shadow-inner">
-                  <Star size={13} fill="currentColor" />
-                  <span className="text-xs font-black font-cairo">9.5</span>
+                  <Star size={13} fill="currentColor" className="fill-amber-400 text-amber-400" />
+                  <span className="text-xs font-black font-cairo">
+                    {userProfile?.profile?.trustRating?.count && userProfile.profile.trustRating.count > 0
+                      ? (userProfile.profile.trustRating.average > 5
+                          ? userProfile.profile.trustRating.average / 2
+                          : userProfile.profile.trustRating.average
+                        ).toFixed(1)
+                      : "0.0"}
+                  </span>
                 </div>
               </div>
             </div>
