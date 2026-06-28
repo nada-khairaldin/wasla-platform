@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Star,
   ArrowLeft,
+  MapPin,
 } from "lucide-react";
 import Button from "@/src/components/ui/Button";
 import DetailItem from "@/src/features/posts/components/DetailItem";
@@ -224,6 +225,13 @@ export default function ServiceDetailPage() {
                   label="طريقة تقديمها"
                   value={serviceModeLabel}
                 />
+                {post.serviceMode === "OFFLINE" && (post.city || post.area) && (
+                  <DetailItem
+                    icon={<MapPin size={18} className="text-primary-600" />}
+                    label="الموقع"
+                    value={[post.city, post.area].filter(Boolean).join(" - ")}
+                  />
+                )}
               </div>
             </div>
 

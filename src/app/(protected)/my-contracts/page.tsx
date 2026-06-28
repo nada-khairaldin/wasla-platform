@@ -2,10 +2,11 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FileX, PlusCircle, Loader2 } from "lucide-react";
+import { FileX, PlusCircle, Loader2, HelpCircle } from "lucide-react";
 import { ContractStatus } from "@/src/features/contracts/contract.types";
 import { ContractStatusTabs } from "@/src/features/contracts/components/ContractStatusTabs";
 import { ContractCard } from "@/src/features/contracts/components/ContractCard";
+import { ContractsHowItWorksReferenceSheet } from "@/src/features/contracts/components/ContractsHowItWorksReferenceSheet";
 import { useInfiniteUserExchanges } from "@/src/features/profile/hooks/useInfiniteUserExchanges";
 import { useIntersectionObserver } from "@/src/hooks/useIntersectionObserver";
 import { CompletedContractsHeader } from "@/src/features/contracts/components/completed/CompletedContractsHeader";
@@ -30,6 +31,8 @@ function ContractsPageContent({
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const statusParam = searchParams.get("status");
+
+  const [isReferenceOpen, setIsReferenceOpen] = useState(false);
 
   const activeTab = (tabParam === "pending" || tabParam === "active" || tabParam === "completed")
     ? (tabParam as ContractStatus)
@@ -170,7 +173,16 @@ function ContractsPageContent({
       dir="rtl"
     >
       <div className="max-w-[1440px] mx-auto flex flex-col gap-6">
-        <h1 className="text-3xl font-bold text-neutral-900">ادارة العقود</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold text-neutral-900">ادارة العقود</h1>
+          <button 
+            onClick={() => setIsReferenceOpen(true)}
+            className="flex items-center gap-2 text-sm font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 px-4 py-2.5 rounded-xl transition-colors w-fit"
+          >
+            <HelpCircle size={18} />
+            <span>كيف يعمل نظام العقود في Wasla؟</span>
+          </button>
+        </div>
         <ContractStatusTabs active={activeTab} onChange={handleTabChange} />
 
         {activeTab === "completed" ? (
@@ -272,6 +284,11 @@ function ContractsPageContent({
             </div>
           )}
         </div>
+        
+        <ContractsHowItWorksReferenceSheet 
+          isOpen={isReferenceOpen} 
+          onClose={() => setIsReferenceOpen(false)} 
+        />
       </div>
     </div>
   );
