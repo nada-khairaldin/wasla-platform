@@ -19,7 +19,7 @@ export function useContractDetails(contractId: string) {
       title: ex.post?.title || "عقد خدمة",
       seekerName: ex.requester?.full_name || ex.requester?.username || "المستفيد",
       providerName: ex.provider?.full_name || ex.provider?.username || "المزود",
-      serviceType: ex.post?.category === "OFFER" ? "عرض خدمة" : "طلب خدمة",
+      serviceType: ex.post?.category || "غير محدد",
       deliveryType: ex.post?.service_mode === "ONLINE" ? "أونلاين" : "حضوري" as "أونلاين" | "أوفلاين",
       status: ex.status?.toLowerCase() as ContractStatus,
       proposedEndDate: ex.proposedEndDate,

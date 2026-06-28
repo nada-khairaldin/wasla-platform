@@ -39,7 +39,7 @@ export function ContractActivityTimeline({ events }: ContractActivityTimelinePro
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-4 max-h-[380px] overflow-y-auto pl-1">
+    <div className="flex-1 flex flex-col gap-5 max-h-[380px] overflow-y-auto custom-scrollbar-thin pl-3 pr-2 py-2">
       {events.map((event, index) => {
         return (
           <motion.div 

@@ -44,7 +44,7 @@ export interface Exchange {
   post: {
     id: number;
     title: string;
-    category: "OFFER" | "REQUEST";
+    category: string;
     service_mode: "ONLINE" | "OFFLINE";
   };
 }
@@ -119,7 +119,7 @@ export const profileServices = {
     });
   },
 
-  getUserExchanges: (params?: { status?: string; role?: string }) => {
+  getUserExchanges: (params?: { status?: string; role?: string; page?: number; limit?: number }) => {
     return apiRequest<ExchangesResponse>({
       method: "GET",
       url: "/exchanges",

@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FileX, PlusCircle } from "lucide-react";
+import { FileX, PlusCircle, Loader2 } from "lucide-react";
 import { ContractStatus } from "@/src/features/contracts/contract.types";
 import { ContractStatusTabs } from "@/src/features/contracts/components/ContractStatusTabs";
 import { ContractCard } from "@/src/features/contracts/components/ContractCard";
-import { useUserExchanges } from "@/src/features/profile/hooks/useUserExchanges";
+import { useInfiniteUserExchanges } from "@/src/features/profile/hooks/useInfiniteUserExchanges";
+import { useIntersectionObserver } from "@/src/hooks/useIntersectionObserver";
 import { CompletedContractsHeader } from "@/src/features/contracts/components/completed/CompletedContractsHeader";
 import { CompletedStatsRow } from "@/src/features/contracts/components/completed/CompletedStatsRow";
 import { CompletedContractCard } from "@/src/features/contracts/components/completed/CompletedContractCard";
@@ -62,7 +63,27 @@ function ContractsPageContent({
   const { data: currentUser } = useCurrentUser();
   const currentUserId = currentUser?.user?.userId;
 
-  const { data: userExchanges, isLoading } = useUserExchanges();
+  const { 
+    data: infiniteData, 
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteUserExchanges();
+
+  const userExchanges = useMemo(() => {
+    if (!infiniteData) return [];
+    return infiniteData.pages.flatMap((page) => page?.data || []);
+  }, [infiniteData]);
+
+  const [loadMoreRef, isIntersecting] = useIntersectionObserver<HTMLDivElement>({ threshold: 0.1 });
+
+  useEffect(() => {
+    if (isIntersecting && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [isIntersecting, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const acceptMutation = useAcceptContract();
   const rejectMutation = useRejectContract();
 
@@ -97,7 +118,7 @@ function ContractsPageContent({
       title: ex.post.title || "عقد خدمة",
       seekerName: ex.requester.full_name || ex.requester.username,
       providerName: ex.provider.full_name || ex.provider.username,
-      serviceType: ex.post.category === "OFFER" ? "عرض خدمة" : "طلب خدمة",
+      serviceType: ex.post.category || "غير محدد",
       deliveryType: (ex.post.service_mode === "ONLINE" ? "أونلاين" : "حضوري") as "أونلاين" | "أوفلاين" | "حضوري",
       status: ex.status.toLowerCase() as ContractStatus,
       stats: {
@@ -172,7 +193,7 @@ function ContractsPageContent({
                 const completedContract: import("@/src/features/contracts/contract.types").CompletedContract = {
                   id: contract.id,
                   title: contract.title,
-                  serviceDescription: contract.serviceType,
+                  serviceDescription: isProvider ? "أنت مقدم الخدمة" : "أنت طالب الخدمة",
                   date: contract.stats?.endDate || "—",
                   durationText: `${contract.stats?.totalHours || 0} ساعة`,
                   otherPartyName,
@@ -241,6 +262,16 @@ function ContractsPageContent({
             )}
           </>
         )}
+        
+        {/* Infinite Scroll Sentinel */}
+        <div ref={loadMoreRef} className="w-full py-8 flex flex-col items-center justify-center">
+          {isFetchingNextPage && (
+            <div className="flex items-center gap-2 text-neutral-500 text-sm font-bold animate-pulse">
+              <Loader2 className="w-5 h-5 animate-spin text-primary-500" />
+              <span>جاري تحميل المزيد من العقود...</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

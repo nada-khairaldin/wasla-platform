@@ -24,6 +24,7 @@ interface WorkSessionsListProps {
   onReject?: (sessionId: string | number) => void;
   isConfirming?: boolean;
   isRejecting?: boolean;
+  isArchived?: boolean;
 }
 const ITEMS_PER_PAGE = 4;
 type PaginationToken = number | "dots";
@@ -75,7 +76,8 @@ export function WorkSessionsList({
   onConfirm, 
   onReject, 
   isConfirming, 
-  isRejecting 
+  isRejecting,
+  isArchived
 }: WorkSessionsListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -231,7 +233,7 @@ export function WorkSessionsList({
                     </td>
                     <td className="py-4 px-6 text-left">
                       {isPending ? (
-                        isSeeker ? (
+                        (isSeeker && !isArchived) ? (
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => onConfirm?.(session.id)}
@@ -249,7 +251,9 @@ export function WorkSessionsList({
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs font-semibold text-neutral-400">بانتظار موافقة المستفيد</span>
+                          <span className="text-xs font-semibold text-neutral-400">
+                            {isArchived ? "لا يمكن التعديل" : "بانتظار موافقة المستفيد"}
+                          </span>
                         )
                       ) : (
                         <span className="text-neutral-300 font-bold">—</span>

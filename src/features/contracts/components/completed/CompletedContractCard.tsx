@@ -31,7 +31,8 @@ export function CompletedContractCard({ contract, onViewDetails }: CompletedCont
   }
   
   const handleCardClick = () => {
-    if (!isRejected && onViewDetails) {
+    if (contract.status === "مرفوض") return;
+    if (onViewDetails) {
       onViewDetails(contract.id);
     }
   };
@@ -39,7 +40,7 @@ export function CompletedContractCard({ contract, onViewDetails }: CompletedCont
   return (
     <div 
       onClick={handleCardClick}
-      className={`w-full bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 text-right transition-all duration-300 ${!isRejected ? "cursor-pointer hover:shadow-[0_4px_24px_rgb(0,0,0,0.06)] group" : ""}`}
+      className={`w-full bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.04)] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 text-right transition-all duration-300 ${contract.status === "مرفوض" ? "cursor-default" : "cursor-pointer hover:shadow-[0_4px_24px_rgb(0,0,0,0.06)] group"}`}
     >
       
       {/* Right Section: Status Icon + Status Label + Title */}
@@ -72,7 +73,7 @@ export function CompletedContractCard({ contract, onViewDetails }: CompletedCont
       <div className="hidden md:block w-px h-16 bg-neutral-100 shrink-0"></div>
 
       {/* Middle Section: Other Party */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between md:justify-end gap-6 md:gap-8 flex-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between md:justify-start gap-6 md:gap-8 flex-1">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${otherPartyBg}`}>
             {contract.otherPartyInitials}
@@ -104,7 +105,7 @@ export function CompletedContractCard({ contract, onViewDetails }: CompletedCont
       </div>
       
       {/* Left Section: Action */}
-      {!isRejected && (
+      {contract.status !== "مرفوض" && (
         <>
           <div className="hidden md:block w-px h-16 bg-neutral-100 shrink-0"></div>
           <div className="flex flex-col items-end md:items-center justify-center w-full md:w-auto mt-2 md:mt-0 pl-2 md:h-16 shrink-0">

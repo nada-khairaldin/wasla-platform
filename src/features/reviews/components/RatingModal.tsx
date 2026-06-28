@@ -27,7 +27,7 @@ export function RatingModal({ contract, currentUserId, open = true, onClose }: R
   const otherPartyName = otherParty?.full_name || otherParty?.username || "عضو وصلة";
   const otherPartyAvatar = otherParty?.profile_image;
   const otherPartyInitials = otherPartyName.substring(0, 2);
-  const categoryText = contract.post?.category === "OFFER" ? "عرض خدمة" : "طلب خدمة";
+  const categoryText = contract.post?.category || "غير محدد";
   const providerName = contract.provider?.full_name || contract.provider?.username || "مزود الخدمة";
   const requesterName = contract.requester?.full_name || contract.requester?.username || "مستفيد الخدمة";
 

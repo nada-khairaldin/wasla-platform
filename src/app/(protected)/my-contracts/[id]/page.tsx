@@ -377,14 +377,16 @@ export default function ContractDetailsPage() {
   );
 
   const normalizedStatus = contract?.status?.toUpperCase() || "";
+  const isExpired = normalizedStatus === "EXPIRED" || (contract?.status as string) === "منتهي";
+  const isArchived = ["COMPLETED", "مكتمل", "مكتملة", "DISPUTED", "انتهى بنزاع", "CANCELED", "ملغي", "REJECTED", "مرفوض", "EXPIRED", "منتهي"].includes(normalizedStatus) || isExpired;
   const hasPendingProposal = 
     (!!contract?.proposedEndDate || proposeDeadlineMutation.isPending) && 
-    normalizedStatus !== "COMPLETED";
+    !isArchived;
 
   const canEditDeadline = 
     isProvider && 
     (normalizedStatus === "IN_PROGRESS" || normalizedStatus === "WAITING_CONFIRMATION") && 
-    !hasPendingProposal;
+    !hasPendingProposal && !isArchived;
 
   const handleProposeDeadlineSubmit = async (proposedEndDate: string) => {
     try {
@@ -531,7 +533,7 @@ export default function ContractDetailsPage() {
             </button>
             <div className="flex flex-col md:flex-row md:items-center justify-between w-full mt-6 gap-4">
               <h1 className="text-3xl md:text-h3 font-black text-neutral-900">تفاصيل العقد</h1>
-              {isProvider && (
+              {isProvider && !isArchived && (
                 <button 
                   onClick={openAddSessionModal}
                   className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-primary-500 hover:bg-primary-600 active:scale-95 transition-all shadow-sm w-full md:w-auto"
@@ -546,7 +548,14 @@ export default function ContractDetailsPage() {
           <div className="bg-neutral-50 rounded-2xl p-6 shadow-sm flex items-center gap-5 justify-between mt-6 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-5 flex-1 min-w-0">
               <div className="space-y-3">
-                <h2 className="text-xl font-bold text-neutral-900 leading-snug">{contract.title}</h2>
+                <h2 className="text-xl font-bold text-neutral-900 leading-snug flex items-center flex-wrap gap-2">
+                  {contract.title}
+                  {isArchived && (
+                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                      {contract.status}
+                    </span>
+                  )}
+                </h2>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-neutral-400 font-medium">
                   <span className="flex items-center gap-1">
                     <Briefcase size={13} className="text-neutral-300"/> مجال الخدمة:
@@ -569,7 +578,7 @@ export default function ContractDetailsPage() {
           </div>
 
           {/* ─── Warning Banner for Approaching Deadline ─── */}
-          {deadlineApproachingNotification && (
+          {deadlineApproachingNotification && !isArchived && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3 animate-in fade-in duration-300">
               <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
               <div className="space-y-1">
@@ -670,6 +679,7 @@ export default function ContractDetailsPage() {
                 onReject={handleRejectSession}
                 isConfirming={confirmMutation.isPending}
                 isRejecting={rejectMutation.isPending}
+                isArchived={isArchived}
               />
             )}
           </div>
