@@ -67,8 +67,8 @@ export const RecommendedCarousel = ({ posts }: RecommendedCarouselProps) => {
           className="pb-14 pt-12"
         >
           {posts.map((post) => (
-            <SwiperSlide key={post.id} className="h-full py-2">
-              <div className="custom-post-wrapper text-neutral-900">
+            <SwiperSlide key={post.id} className="h-auto py-2">
+              <div className="custom-post-wrapper text-neutral-900 h-full">
                 <PostCard post={post} isRecommended={true} />
               </div>
             </SwiperSlide>
@@ -101,6 +101,10 @@ export const RecommendedCarousel = ({ posts }: RecommendedCarouselProps) => {
         }
         .recommended-swiper-container .swiper-slide {
           height: auto !important;
+          display: flex !important;
+        }
+        .recommended-swiper-container .swiper-wrapper {
+          align-items: stretch !important;
         }
 
         .custom-post-wrapper {

@@ -1,4 +1,4 @@
-export type NotificationCategory = "all" | "contracts" | "sessions" | "ratings" | "chat";
+export type NotificationCategory = "all" | "contracts" | "sessions" | "chat";
 
 export interface Notification {
   id: string;
@@ -8,7 +8,7 @@ export interface Notification {
   description: string;
   time: string;
   isRead: boolean;
-  iconType: "contract" | "offer" | "message" | "rating" | "session";
+  iconType: "contract" | "offer" | "message" | "session";
   data?: unknown;
   createdAt?: string;
 }

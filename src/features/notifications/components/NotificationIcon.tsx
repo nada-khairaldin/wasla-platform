@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, MessageCircle, Star, Briefcase } from "lucide-react";
+import { FileText, CheckCircle, MessageCircle, Briefcase } from "lucide-react";
 import { Notification } from "../notificationTypes ";
 
 interface NotificationIconProps {
@@ -21,11 +21,7 @@ const iconConfig = {
     bg: "bg-[#e9eef2]",
     color: "text-[#215479]",
   },
-  rating: {
-    Icon: Star,
-    bg: "bg-[#fef4e6]",
-    color: "text-[#f79009]",
-  },
+
   session: {
     Icon: Briefcase,
     bg: "bg-[#e9eef2]",

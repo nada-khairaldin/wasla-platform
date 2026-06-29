@@ -21,6 +21,12 @@ export const reviewService = {
       payload,
     });
     if (error) {
+      if (status === 409) {
+        throw new Error("لقد قمت بتقييم هذا العقد مسبقاً");
+      }
+      if (status === 400) {
+        throw new Error("لا يمكن إرسال التقييم لهذا العقد في حالته الحالية");
+      }
       throw new Error(error);
     }
     return data;

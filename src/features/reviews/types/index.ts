@@ -29,6 +29,6 @@ export interface Review {
 
 export interface SubmitReviewPayload {
   serviceExchangeId: number;
-  rating: number; // 1-10
+  rating: number; // 1-5
   comment?: string;
 }

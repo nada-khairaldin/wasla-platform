@@ -27,6 +27,8 @@ export default function SavedServicesSection(props: SavedServicesSectionProps) {
   const { services, onUnsave, onViewAll } = props;
   const isEmpty = services.length === 0;
 
+  const displayedServices = services.slice(-2);
+
   return (
     <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 sm:p-6" dir="rtl">
       {/* Header Row — Title on the right, Link on the left */}
@@ -46,7 +48,7 @@ export default function SavedServicesSection(props: SavedServicesSectionProps) {
         <EmptySaved />
       ) : (
         <div className="flex flex-col">
-          {services.map((service, index) => (
+          {displayedServices.map((service, index) => (
             <div
               key={service.id}
               className={`flex items-center justify-between gap-3 pb-5 sm:pb-6 last:pb-0 ${index > 0 ? "pt-5 sm:pt-6 border-t border-neutral-100/60" : "min-h-[115px] sm:min-h-[125px]"}`}

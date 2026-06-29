@@ -11,7 +11,6 @@ const TABS: Tab[] = [
   { key: "all", label: "الكل" },
   { key: "contracts", label: "العقود" },
   { key: "sessions", label: "جلسات العمل" },
-  { key: "ratings", label: "التقييمات" },
 ];
 
 interface NotificationTabsProps {

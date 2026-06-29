@@ -1,14 +1,17 @@
 import { create } from "zustand";
 import Cookies from "js-cookie";
+import { PendingReviewContract } from "../types";
 
 interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
-  pendingReviewContracts: number[];
+  pendingReviewContracts: PendingReviewContract[];
   actions: {
-    setAuth: (token: string, pendingReviewContracts?: number[]) => void;
+    setAuth: (token: string, pendingReviewContracts?: PendingReviewContract[]) => void;
     setPendingReviewContracts: (
-      contracts: number[] | ((prev: number[]) => number[])
+      contracts:
+        | PendingReviewContract[]
+        | ((prev: PendingReviewContract[]) => PendingReviewContract[])
     ) => void;
     logout: () => void;
   };
@@ -20,14 +23,18 @@ export const useAuthStore = create<AuthState>()((set) => ({
   pendingReviewContracts: [],
 
   actions: {
-    setAuth: (token, pendingReviewContracts = []) => {
+    setAuth: (token, pendingReviewContracts) => {
       Cookies.set("token", token, {
         expires: 1 / 96,
         path: "/",
         sameSite: "lax",
       });
 
-      set({ token, isAuthenticated: true, pendingReviewContracts });
+      set((state) => ({
+        token,
+        isAuthenticated: true,
+        pendingReviewContracts: pendingReviewContracts ?? state.pendingReviewContracts,
+      }));
     },
 
     setPendingReviewContracts: (contracts) => {

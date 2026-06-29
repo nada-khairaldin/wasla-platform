@@ -272,16 +272,17 @@ export const SearchModal = () => {
       if (isLoadingPosts) return <SearchLoadingState />;
       if (isPostsError) return <SearchErrorState onRetry={refetchPosts} />;
       const hasPostFilters = Object.values(postFilters).some(v => v !== undefined && v !== "");
-      if (!postsData?.posts?.length) return <SearchEmptyState query={debouncedQuery} onResetFilters={handleResetPostFilters} hasFilters={hasPostFilters} />;
+      const publishedPosts = postsData?.posts?.filter(p => !p.status || p.status === "PUBLISHED") || [];
+      if (!publishedPosts.length) return <SearchEmptyState query={debouncedQuery} onResetFilters={handleResetPostFilters} hasFilters={hasPostFilters} />;
       
-      const sortedPosts = [...postsData.posts];
+      const sortedPosts = [...publishedPosts];
       if (postSort === "newest") {
         sortedPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       }
       
       return (
         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="flex flex-col">
-          {renderToolbar(postsData.posts.length, "منشور", true)}
+          {renderToolbar(publishedPosts.length, "منشور", true)}
           {renderActiveFilters()}
           <PostsResults posts={sortedPosts} onNavigate={closeModal} />
         </motion.div>

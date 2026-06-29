@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, Method } from "axios";
 import Cookies from "js-cookie";
+import type { RefreshAuthResponse } from "@/src/features/auth/types";
 
 interface ApiRequestProps<P = unknown> {
   method: Method;
@@ -84,10 +85,10 @@ api.interceptors.response.use(
               );
 
               console.log("✅ Refresh response:", res.data);
-              const { accessToken } = res.data;
+              const { accessToken, pendingReviewContracts } = res.data as RefreshAuthResponse;
               const { useAuthStore } =
                 await import("@/src/features/auth/store/useAuthStore");
-              useAuthStore.getState().actions.setAuth(accessToken);
+              useAuthStore.getState().actions.setAuth(accessToken, pendingReviewContracts);
 
               api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
               return accessToken;

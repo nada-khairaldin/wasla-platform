@@ -1,5 +1,4 @@
 "use client";
-import { useState, useEffect } from "react";
 import AppNavbar from "../../components/layout/ProtectedAppNavbar";
 import Footer from "../../components/layout/Footer";
 import UserBootstrap from "@/src/features/auth/components/UserBootstrap";
@@ -15,19 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Connect Socket.IO at the app level — user is "online" on any authenticated page
   useGlobalSocket();
 
-  // Centralized Review Gate hooks
-  const { shouldShow, eligibleExchange, currentUserId, reviewResolved } = useReviewGate();
-
-  // Controlled modal open state (initialized to false)
-  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
-
-  // Sync state strictly with shouldShow from the gate to avoid duplicate reopen loops
-  useEffect(() => {
-    if (!reviewResolved) return;
-    setTimeout(() => {
-      setIsRatingModalOpen(shouldShow);
-    }, 0);
-  }, [shouldShow, reviewResolved]);
+  const { shouldShow, eligibleExchange, currentUserId } = useReviewGate();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -36,11 +23,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-grow relative">{children}</main>
       {!isChatPage && <Footer />}
 
-      {/* Controlled RatingModal global overlay */}
-      {reviewResolved && isRatingModalOpen && eligibleExchange && currentUserId && (
+      {shouldShow && eligibleExchange && currentUserId && (
         <RatingModal
-          open={isRatingModalOpen}
-          onClose={() => setIsRatingModalOpen(false)}
+          key={eligibleExchange.id}
+          open
           contract={eligibleExchange}
           currentUserId={currentUserId}
         />

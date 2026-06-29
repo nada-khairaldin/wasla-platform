@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Post, PostStatus } from "../../../features/posts/type";
-import { useDeletePost, useMyPosts, useUpdatePost } from "../../../features/posts/hooks";
+import { useDeletePost, useMyPosts } from "../../../features/posts/hooks";
 import { PostCard } from "../../../features/posts/components/PostCard";
 import { PostFormModal } from "../../../features/posts/components/PostFormModal";
-import { ArchiveX, Plus, Trash2, X, Archive, RotateCcw } from "lucide-react";
+import { ArchiveX, Plus, Trash2, X } from "lucide-react";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { ContractStatusTabs } from "../../../features/contracts/components/ContractStatusTabs";
 import toast from "react-hot-toast";
@@ -18,12 +18,10 @@ export default function MyPostsPage() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [postIdToDelete, setPostIdToDelete] = useState<number | null>(null);
-  const [postIdToArchive, setPostIdToArchive] = useState<number | null>(null);
-  const [postIdToRestore, setPostIdToRestore] = useState<number | null>(null);
+
   
   const { data: posts = [], isLoading, isError, error } = useMyPosts();
   const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
-  const { mutate: updatePost, isPending: isUpdating } = useUpdatePost();
 
   const filteredPosts = posts.filter(p => p.status === activeTab);
 
@@ -57,33 +55,7 @@ export default function MyPostsPage() {
     }
   };
 
-  const handleExecuteArchive = () => {
-    if (postIdToArchive !== null) {
-      updatePost(
-        { postId: postIdToArchive, postData: { status: "ARCHIVED" } },
-        {
-          onSuccess: () => {
-            setPostIdToArchive(null);
-            toast.success("تم أرشفة المنشور بنجاح");
-          }
-        }
-      );
-    }
-  };
 
-  const handleExecuteRestore = () => {
-    if (postIdToRestore !== null) {
-      updatePost(
-        { postId: postIdToRestore, postData: { status: "PUBLISHED" } },
-        {
-          onSuccess: () => {
-            setPostIdToRestore(null);
-            toast.success("تمت إعادة نشر المنشور");
-          }
-        }
-      );
-    }
-  };
 
   const getEmptyStateText = () => {
     switch (activeTab) {
@@ -191,8 +163,6 @@ export default function MyPostsPage() {
                     post={post}
                     onEdit={activeTab !== "ARCHIVED" ? handleOpenEdit : undefined}
                     onDelete={handleDeleteTrigger}
-                    onArchive={activeTab === "PUBLISHED" ? () => setPostIdToArchive(post.id) : undefined}
-                    onRestore={activeTab === "ARCHIVED" ? () => setPostIdToRestore(post.id) : undefined}
                   />
                 </motion.div>
               ))}
@@ -278,101 +248,7 @@ export default function MyPostsPage() {
         </div>
       )}
 
-      {postIdToArchive !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div
-            className="bg-white w-full max-w-[600px] rounded-2xl p-6 shadow-xl border border-neutral-100 text-right space-y-6 animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* الهيدر */}
-            <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
-              <div className="flex items-center gap-2.5 text-primary-600">
-                <div className="p-2 bg-primary-50 rounded-xl">
-                  <Archive size={20} />
-                </div>
-                <h3 className="font-cairo font-black text-lg text-primary-600">
-                  تأكيد أرشفة المنشور
-                </h3>
-              </div>
-              <button
-                onClick={() => setPostIdToArchive(null)}
-                className="text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 active:scale-90 p-1.5 rounded-lg transition-all"
-              >
-                <X size={18} />
-              </button>
-            </div>
 
-            <p className="text-neutral-500 font-cairo text-sm leading-relaxed">
-              هل تريد أرشفة هذا المنشور؟ سيتم إخفاؤه من المنشورات النشطة ويمكنك استعادته لاحقًا.
-            </p>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={handleExecuteArchive}
-                disabled={isUpdating}
-                className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white font-cairo font-bold text-sm py-3 rounded-xl transition-all shadow-md active:scale-98"
-              >
-                {isUpdating ? "جاري الأرشفة..." : "أرشفة"}
-              </button>
-              <button
-                onClick={() => setPostIdToArchive(null)}
-                disabled={isUpdating}
-                className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 font-cairo font-bold text-sm py-3 rounded-xl transition-all active:scale-98"
-              >
-                إلغاء
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {postIdToRestore !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div
-            className="bg-white w-full max-w-[600px] rounded-2xl p-6 shadow-xl border border-neutral-100 text-right space-y-6 animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* الهيدر */}
-            <div className="flex items-center justify-between border-b border-neutral-50 pb-3">
-              <div className="flex items-center gap-2.5 text-primary-600">
-                <div className="p-2 bg-primary-50 rounded-xl">
-                  <RotateCcw size={20} />
-                </div>
-                <h3 className="font-cairo font-black text-lg text-primary-600">
-                  إعادة نشر المنشور؟
-                </h3>
-              </div>
-              <button
-                onClick={() => setPostIdToRestore(null)}
-                className="text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 active:scale-90 p-1.5 rounded-lg transition-all"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <p className="text-neutral-500 font-cairo text-sm leading-relaxed">
-              سيعود هذا المنشور إلى المنشورات النشطة.
-            </p>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                onClick={handleExecuteRestore}
-                disabled={isUpdating}
-                className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-300 text-white font-cairo font-bold text-sm py-3 rounded-xl transition-all shadow-md active:scale-98"
-              >
-                {isUpdating ? "جاري الإعادة..." : "تأكيد"}
-              </button>
-              <button
-                onClick={() => setPostIdToRestore(null)}
-                disabled={isUpdating}
-                className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 font-cairo font-bold text-sm py-3 rounded-xl transition-all active:scale-98"
-              >
-                إلغاء
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

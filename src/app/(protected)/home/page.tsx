@@ -107,6 +107,7 @@ export default function HomePage() {
 
   const filteredPosts = useMemo(() => {
     return regularPosts.filter((post) => {
+      if (post.status && post.status !== "PUBLISHED") return false;
       const postType = post.category === "REQUEST" ? "طلب" : "عرض";
       const matchesType =
         activeFilters.type === "الكل" || postType === activeFilters.type;

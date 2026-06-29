@@ -29,6 +29,8 @@ export default function ReviewsSection(props: ReviewsSectionProps) {
   const { reviews, onViewAll } = props;
   const { navigateToProfile } = useProfileNavigation();
 
+  const displayedReviews = reviews.slice(-2);
+
   return (
     <div className="rounded-2xl bg-white border border-neutral-100 shadow-sm p-4 sm:p-6" dir="rtl">
       {/* Header Row — Title on the right, Link on the left */}
@@ -39,14 +41,14 @@ export default function ReviewsSection(props: ReviewsSectionProps) {
         </h2>
         {reviews.length > 0 && (
           <Link href="/my-profile/reviews" className="text-xs sm:text-sm text-primary-500 hover:underline">
-            عرض الكل
+            مشاهدة الكل
           </Link>
         )}
       </div>
 
       <div className="flex flex-col">
         {reviews.length > 0 ? (
-          reviews.map((review, index) => (
+          displayedReviews.map((review, index) => (
             <div
               key={review.id}
               className={`flex flex-col pb-5 last:pb-0 ${index > 0 ? "pt-5 border-t border-neutral-100/60" : ""}`}

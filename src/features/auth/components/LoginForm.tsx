@@ -44,13 +44,10 @@ function LoginForm() {
       await queryClient.invalidateQueries({
         queryKey: ["currentUser"],
       });
-
-
     }
 
     setIsLoading(false);
   };
-
 
   const {
     register,
@@ -120,16 +117,6 @@ function LoginForm() {
             أنشئ حساب جديد
           </Link>
         </p>
-
-        <div className="relative flex items-center py-4">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="flex-shrink mx-4 text-gray-400">أو</span>
-          <div className="flex-grow border-t border-gray-300"></div>
-        </div>
-
-        <Button size="lg" variant="outline">
-          تسجيل الدخول باستخدام جوجل
-        </Button>
       </form>
     </div>
   );

@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { useAuthStore } from "@/src/features/auth/store/useAuthStore";
-import { contractService } from "@/src/features/contracts/api/contractService";
+import { PendingReviewContract } from "@/src/features/auth/types";
+import { mapPendingReviewContractToExchange } from "../utils/mapPendingReviewContract";
 
 export interface ReviewGateEngineParams {
-  pendingReviewContracts: number[];
+  pendingReviewContracts: PendingReviewContract[];
 }
 
 /**
@@ -14,37 +14,53 @@ export interface ReviewGateEngineParams {
 export function shouldShowReviewModal({
   pendingReviewContracts,
 }: ReviewGateEngineParams): boolean {
-  return pendingReviewContracts && pendingReviewContracts.length > 0;
+  return pendingReviewContracts.length > 0;
 }
 
 /**
  * useReviewGate React Hook (Centralized State Coordinator)
  */
 export function useReviewGate() {
-  const { data: currentUser } = useCurrentUser();
-  const currentUserId = currentUser?.user?.userId ? Number(currentUser.user.userId) : undefined;
+  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
+  const currentUserId = currentUser?.user?.userId
+    ? Number(currentUser.user.userId)
+    : undefined;
 
   const pendingReviewContracts = useAuthStore((state) => state.pendingReviewContracts);
-  const setPendingReviewContracts = useAuthStore((state) => state.actions.setPendingReviewContracts);
+  const setPendingReviewContracts = useAuthStore(
+    (state) => state.actions.setPendingReviewContracts,
+  );
 
-  const firstContractId = pendingReviewContracts && pendingReviewContracts.length > 0 ? pendingReviewContracts[0] : undefined;
+  const currentPendingContract =
+    pendingReviewContracts.length > 0 ? pendingReviewContracts[0] : null;
 
-  // Query details for the first contract in the queue
-  const { data: contractData, isLoading: isContractLoading } = useQuery({
-    queryKey: ["reviewContractDetails", firstContractId],
-    queryFn: () => contractService.getContractById(firstContractId!),
-    enabled: !!firstContractId,
-    staleTime: 0,
-  });
+  const eligibleExchange = useMemo(() => {
+    if (!currentPendingContract || !currentUserId || !currentUser?.user) {
+      return null;
+    }
 
-  const eligibleExchange = contractData?.exchange || null;
-  const shouldShow = pendingReviewContracts.length > 0 && !!eligibleExchange;
+    return mapPendingReviewContractToExchange(currentPendingContract, {
+      userId: currentUserId,
+      username: currentUser.user.username,
+      full_name: currentUser.user.full_name,
+    });
+  }, [currentPendingContract, currentUser, currentUserId]);
 
-  const markAsReviewed = useCallback((exchangeId: number) => {
-    setPendingReviewContracts((prev) => prev.filter((id) => id !== exchangeId));
-  }, [setPendingReviewContracts]);
+  const shouldShow =
+    !isUserLoading &&
+    pendingReviewContracts.length > 0 &&
+    !!currentUserId &&
+    !!eligibleExchange;
 
-  // Listen to the window "review-submitted" custom event for instant reaction
+  const markAsReviewed = useCallback(
+    (contractId: number) => {
+      setPendingReviewContracts((prev) =>
+        prev.filter((contract) => contract.id !== contractId),
+      );
+    },
+    [setPendingReviewContracts],
+  );
+
   useEffect(() => {
     const handleReviewSubmitted = (e: Event) => {
       const customEvent = e as CustomEvent<{ contractId: number }>;
@@ -52,19 +68,18 @@ export function useReviewGate() {
         markAsReviewed(customEvent.detail.contractId);
       }
     };
+
     window.addEventListener("review-submitted", handleReviewSubmitted);
     return () => {
       window.removeEventListener("review-submitted", handleReviewSubmitted);
     };
   }, [markAsReviewed]);
 
-  const reviewResolved = !firstContractId || !isContractLoading;
-
   return {
     shouldShow,
     eligibleExchange,
+    currentPendingContract,
     markAsReviewed,
     currentUserId,
-    reviewResolved,
   };
 }

@@ -21,7 +21,7 @@ export interface GetNotificationsResponse {
 
 export const mapNotificationPayloadToUI = (payload: NotificationPayload): Notification => {
   let category: Exclude<NotificationCategory, "all"> = "contracts";
-  let iconType: "contract" | "offer" | "message" | "rating" | "session" = "contract";
+  let iconType: "contract" | "offer" | "message" | "session" = "contract";
 
   const type = payload.type;
   if (
@@ -41,13 +41,6 @@ export const mapNotificationPayloadToUI = (payload: NotificationPayload): Notifi
   ) {
     category = "sessions";
     iconType = "session";
-  } else if (
-    type === "RATING_RECEIVED" ||
-    type === "RATING_REQUESTED" ||
-    type.startsWith("RATING_")
-  ) {
-    category = "ratings";
-    iconType = "rating";
   } else if (
     type === "NEW_MESSAGE" ||
     type === "CONVERSATION_STARTED"
