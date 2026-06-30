@@ -1,4 +1,9 @@
 import { useState } from "react";
+import {
+  getTomorrowApiDateString,
+  parseLocalDate,
+  toApiDateString,
+} from "@/src/utils/date";
 
 interface ProposeDeadlineModalProps {
   isOpen: boolean;
@@ -25,10 +30,7 @@ export function ProposeDeadlineModal({
 
   if (!isOpen) return null;
 
-  // Tomorrow check
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDateStr = tomorrow.toISOString().split("T")[0];
+  const minDateStr = getTomorrowApiDateString();
 
   const handleContinue = () => {
     setError(null);
@@ -44,10 +46,8 @@ export function ProposeDeadlineModal({
       return;
     }
 
-    const selectedDate = new Date(proposedDate);
+    const selectedDate = parseLocalDate(proposedDate);
     const currentDate = new Date();
-    // Reset hours to compare dates only
-    selectedDate.setHours(0, 0, 0, 0);
     currentDate.setHours(0, 0, 0, 0);
 
     if (selectedDate <= currentDate) {
@@ -59,7 +59,7 @@ export function ProposeDeadlineModal({
   };
 
   const handleConfirmSubmit = () => {
-    onSubmit(new Date(proposedDate).toISOString());
+    onSubmit(toApiDateString(proposedDate));
   };
 
   const handleClose = () => {
@@ -71,7 +71,7 @@ export function ProposeDeadlineModal({
   };
 
   const formattedSelectedDate = proposedDate
-    ? new Date(proposedDate).toLocaleDateString("ar-EG", {
+    ? parseLocalDate(proposedDate).toLocaleDateString("ar-EG", {
         day: "2-digit",
         month: "long",
         year: "numeric",

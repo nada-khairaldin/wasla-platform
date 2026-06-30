@@ -1,12 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { contractService } from "../services/contractService";
+import { ApiDateString } from "@/src/utils/date";
 import toast from "react-hot-toast";
 
 export const useProposeDeadline = (exchangeId: string | number | undefined) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (proposedEndDate: string) => {
+    mutationFn: (proposedEndDate: ApiDateString) => {
       if (!exchangeId) throw new Error("Exchange ID is required");
       return contractService.proposeDeadline(Number(exchangeId), proposedEndDate);
     },

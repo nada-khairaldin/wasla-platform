@@ -1,5 +1,6 @@
 import { apiRequest } from "@/src/services/api";
 import { Exchange } from "@/src/features/profile/services/profileServices";
+import { ApiDateString, toApiDateString } from "@/src/utils/date";
 
 export interface CreateContractPayload {
   postId: number;
@@ -18,6 +19,11 @@ export interface CreateContractResponse {
     contractEndDate: string;
     status: string;
   };
+}
+
+export interface ProposeDeadlinePayload {
+  /** Contract end date in YYYY-MM-DD format (date only, no time or timezone). */
+  proposedEndDate: ApiDateString;
 }
 
 class ApiError extends Error {
@@ -71,10 +77,13 @@ export const contractService = {
     return data!;
   },
   proposeDeadline: async (id: number, proposedEndDate: string): Promise<unknown> => {
-    const { data, error, status } = await apiRequest<unknown, { proposedEndDate: string }>({
+    const payload: ProposeDeadlinePayload = {
+      proposedEndDate: toApiDateString(proposedEndDate),
+    };
+    const { data, error, status } = await apiRequest<unknown, ProposeDeadlinePayload>({
       method: "post",
       url: `/exchanges/${id}/deadline`,
-      payload: { proposedEndDate },
+      payload,
     });
     throwApiError(error, status);
     return data!;
