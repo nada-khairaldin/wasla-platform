@@ -30,7 +30,7 @@ function MessagesPageContent() {
   const isMounted = useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false
+    () => false,
   );
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -82,14 +82,8 @@ function MessagesPageContent() {
   useChatSocket(activeChat?.roomId ?? null);
 
   // Fetch messages for the active conversation
-  const {
-    messages: displayMessages,
-    isLoading: isMessagesLoading,
-  } = useMessages(
-    activeChat?.roomId ?? null,
-    activePerson?.isOnline ?? false
-  );
-
+  const { messages: displayMessages, isLoading: isMessagesLoading } =
+    useMessages(activeChat?.roomId ?? null, activePerson?.isOnline ?? false);
 
   // Send message mutation
   const sendMessageMutation = useSendMessage();
@@ -119,35 +113,51 @@ function MessagesPageContent() {
   };
 
   const isPostOwner = currentUserId === postData?.userId;
-  
+
   // Strict Role Logic based on Offer/Request
   let providerId = 0;
   let seekerId = 0;
-  
+
   if (postData) {
     if (postData.category === "OFFER") {
       providerId = postData.userId;
-      seekerId = isPostOwner ? (activeConversation?.participants.find(p => p.userId !== postData.userId)?.userId || 0) : currentUserId;
+      seekerId = isPostOwner
+        ? activeConversation?.participants.find(
+            (p) => p.userId !== postData.userId,
+          )?.userId || 0
+        : currentUserId;
     } else {
       // REQUEST
-      providerId = isPostOwner ? (activeConversation?.participants.find(p => p.userId !== postData.userId)?.userId || 0) : currentUserId;
+      providerId = isPostOwner
+        ? activeConversation?.participants.find(
+            (p) => p.userId !== postData.userId,
+          )?.userId || 0
+        : currentUserId;
       seekerId = postData.userId;
     }
   }
 
   const isSeeker = currentUserId === seekerId;
-  const hasActiveContract = 
-    !!(activeConversation as { exchange?: unknown })?.exchange || 
+  const hasActiveContract =
+    !!(activeConversation as { exchange?: unknown })?.exchange ||
     !!(postData as { exchange?: unknown })?.exchange ||
-    (userExchanges?.some(e => e.postId === activeConversation?.postId && !["CANCELED", "REJECTED"].includes(e.status)) ?? false);
-  
-  const showContractButton = Boolean(
-    isSeeker && 
-    currentUserId
-  );
+    (userExchanges?.some(
+      (e) =>
+        e.postId === activeConversation?.postId &&
+        !["CANCELED", "REJECTED"].includes(e.status),
+    ) ??
+      false);
+
+  const showContractButton = Boolean(isSeeker && currentUserId);
 
   const handleContractSubmit = async (data: ContractFormValues) => {
-    if (!activeConversation?.postId || !postData || !currentUserId || !providerId) return;
+    if (
+      !activeConversation?.postId ||
+      !postData ||
+      !currentUserId ||
+      !providerId
+    )
+      return;
     try {
       await createContractMutation.mutateAsync({
         postId: activeConversation.postId,
@@ -158,15 +168,26 @@ function MessagesPageContent() {
       toast.success("تم انشاء العقد بنجاح");
       setIsContractModalOpen(false);
     } catch (error: unknown) {
-      const err = error as Error & { response?: { status: number, data?: { message?: string } } };
-      if (err?.response?.status === 409 || err?.message?.includes("already exists") || err?.message?.includes("active")) {
-         toast.error("يوجد عقد نشط أو معلق مسبقاً لهذه الخدمة");
-      } else if (err?.response?.status === 400 && err?.response?.data?.message === "Insufficient time credits") {
-         toast.error("رصيدك غير كافٍ لإنشاء هذا العقد");
+      const err = error as Error & {
+        response?: { status: number; data?: { message?: string } };
+      };
+      if (
+        err?.response?.status === 409 ||
+        err?.message?.includes("already exists") ||
+        err?.message?.includes("active")
+      ) {
+        toast.error("يوجد عقد نشط أو معلق مسبقاً لهذه الخدمة");
+      } else if (
+        err?.response?.status === 400 &&
+        err?.response?.data?.message === "Insufficient time credits"
+      ) {
+        toast.error("رصيدك غير كافٍ لإنشاء هذا العقد");
       } else if (err?.response?.status === 400) {
-         toast.error("بيانات غير صالحة. الرجاء التأكد من صحة المدخلات.");
+        toast.error("بيانات غير صالحة. الرجاء التأكد من صحة المدخلات.");
       } else {
-         toast.error(err?.response?.data?.message || err?.message || "حدث خطأ غير متوقع");
+        toast.error(
+          err?.response?.data?.message || err?.message || "حدث خطأ غير متوقع",
+        );
       }
     }
   };
@@ -176,24 +197,48 @@ function MessagesPageContent() {
   }
 
   if (!isConversationsLoading && personFolders.length === 0) {
-    return <MessagesEmptyState onBrowseServices={() => {}} />;
+    return (
+      <MessagesEmptyState
+        onBrowseServices={() => {
+          router.push("/home");
+        }}
+      />
+    );
   }
 
-  const currentUserDisplayName = currentUserProfile?.profile?.name || currentUserProfile?.profile?.username || currentUser?.user?.full_name || currentUser?.user?.username || "";
+  const currentUserDisplayName =
+    currentUserProfile?.profile?.name ||
+    currentUserProfile?.profile?.username ||
+    currentUser?.user?.full_name ||
+    currentUser?.user?.username ||
+    "";
 
-  const providerName = providerId === currentUserId 
-    ? (currentUserDisplayName ? `${currentUserDisplayName} (أنا)` : "(أنا)") 
-    : (providerId === postData?.userId ? (postData?.user?.full_name || postData?.user?.username || "") : activePerson?.personName || "");
+  const providerName =
+    providerId === currentUserId
+      ? currentUserDisplayName
+        ? `${currentUserDisplayName} (أنا)`
+        : "(أنا)"
+      : providerId === postData?.userId
+        ? postData?.user?.full_name || postData?.user?.username || ""
+        : activePerson?.personName || "";
 
-  const seekerNameValue = seekerId === currentUserId 
-    ? (currentUserDisplayName ? `${currentUserDisplayName} (أنا)` : "(أنا)") 
-    : (seekerId === postData?.userId ? (postData?.user?.full_name || postData?.user?.username || "") : activePerson?.personName || "");
+  const seekerNameValue =
+    seekerId === currentUserId
+      ? currentUserDisplayName
+        ? `${currentUserDisplayName} (أنا)`
+        : "(أنا)"
+      : seekerId === postData?.userId
+        ? postData?.user?.full_name || postData?.user?.username || ""
+        : activePerson?.personName || "";
 
   const contractInitialData = {
-    postTitle: postData?.title || activeRoom?.postTitle || "عنوان الخدمة المتفق عليها",
+    postTitle:
+      postData?.title || activeRoom?.postTitle || "عنوان الخدمة المتفق عليها",
     providerName: providerName,
     seekerName: seekerNameValue,
-    serviceMode: (postData?.serviceMode?.toLowerCase() as "online" | "offline") || "online",
+    serviceMode:
+      (postData?.serviceMode?.toLowerCase() as "online" | "offline") ||
+      "online",
     timeCredits: postData?.assignedTimeCredits || 2,
   };
 
@@ -277,7 +322,6 @@ function MessagesPageContent() {
         )}
       </div>
 
-   
       <ContractModal
         isOpen={isContractModalOpen}
         onClose={() => setIsContractModalOpen(false)}
@@ -295,11 +339,15 @@ function MessagesPageContent() {
 
 export default function MessagesPage() {
   return (
-    <Suspense fallback={
-      <div className="flex-1 flex items-center justify-center bg-neutral-50/20 h-[calc(100vh-85px)]">
-        <div className="text-neutral-400 text-sm font-medium animate-pulse">جاري تحميل المحادثات...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex-1 flex items-center justify-center bg-neutral-50/20 h-[calc(100vh-85px)]">
+          <div className="text-neutral-400 text-sm font-medium animate-pulse">
+            جاري تحميل المحادثات...
+          </div>
+        </div>
+      }
+    >
       <MessagesPageContent />
     </Suspense>
   );
