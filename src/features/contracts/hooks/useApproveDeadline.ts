@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { contractService } from "../services/contractService";
+import { Exchange } from "@/src/features/profile/services/profileServices";
+import {
+  syncDeadlineApproachingNotifications,
+} from "@/src/features/notifications/utils/deadlineNotifications";
 import toast from "react-hot-toast";
 
 export const useApproveDeadline = (exchangeId: string | number | undefined) => {
@@ -16,11 +20,43 @@ export const useApproveDeadline = (exchangeId: string | number | undefined) => {
     },
     onSuccess: () => {
       toast.success("تم قبول المقترح وتحديث تاريخ الانتهاء");
+
+      if (!exchangeId) return;
+
+      const contractId = String(exchangeId);
+
+      queryClient.setQueryData<{ exchange: Exchange }>(
+        ["contractDetails", contractId],
+        (old) => {
+          if (!old?.exchange) return old;
+
+          const approvedEndDate =
+            old.exchange.proposedEndDate ?? old.exchange.contractEndDate;
+
+          return {
+            ...old,
+            exchange: {
+              ...old.exchange,
+              contractEndDate: approvedEndDate,
+              proposedEndDate: null,
+            },
+          };
+        }
+      );
+
+      const updatedEndDate = queryClient.getQueryData<{ exchange: Exchange }>([
+        "contractDetails",
+        contractId,
+      ])?.exchange?.contractEndDate;
+
+      syncDeadlineApproachingNotifications(queryClient, contractId, updatedEndDate);
     },
     onSettled: () => {
       if (exchangeId) {
-        queryClient.invalidateQueries({ queryKey: ["contractDetails", String(exchangeId)] });
+        const contractId = String(exchangeId);
+        queryClient.invalidateQueries({ queryKey: ["contractDetails", contractId] });
         queryClient.invalidateQueries({ queryKey: ["userExchanges"] });
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
       }
     },
   });

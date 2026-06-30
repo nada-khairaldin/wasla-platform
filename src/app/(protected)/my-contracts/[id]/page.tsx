@@ -29,6 +29,8 @@ import { useApproveDeadline } from "@/src/features/contracts/hooks/useApproveDea
 import { useRejectDeadline } from "@/src/features/contracts/hooks/useRejectDeadline";
 import { ProposeDeadlineModal } from "@/src/features/contracts/components/ProposeDeadlineModal";
 import { useNotifications } from "@/src/features/notifications/hooks/useNotifications";
+import { findDeadlineApproachingNotification } from "@/src/features/notifications/utils/deadlineNotifications";
+import { isDeadlineApproaching } from "@/src/features/contracts/utils/deadlineUtils";
 
 export default function ContractDetailsPage() {
   const params = useParams();
@@ -94,20 +96,10 @@ export default function ContractDetailsPage() {
 
   const { notifications } = useNotifications();
 
-  const deadlineApproachingNotification = notifications?.find((n) => {
-    if (n.type !== "DEADLINE_APPROACHING") return false;
-
-    let payloadData: Record<string, unknown> = {};
-    if (typeof n.data === "string") {
-      try {
-        payloadData = JSON.parse(n.data);
-      } catch {}
-    } else if (n.data && typeof n.data === "object") {
-      payloadData = n.data as Record<string, unknown>;
-    }
-
-    return String(payloadData.contractId) === String(contract?.id);
-  });
+  const deadlineApproachingNotification = useMemo(
+    () => findDeadlineApproachingNotification(notifications, contract?.id),
+    [notifications, contract?.id]
+  );
 
   const sessionsList = sessionsData || [];
 
@@ -388,6 +380,11 @@ export default function ContractDetailsPage() {
     (normalizedStatus === "IN_PROGRESS" || normalizedStatus === "WAITING_CONFIRMATION") && 
     !hasPendingProposal && !isArchived;
 
+  const shouldShowDeadlineWarning =
+    !!deadlineApproachingNotification &&
+    !isArchived &&
+    isDeadlineApproaching(contract?.contractEndDate);
+
   const handleProposeDeadlineSubmit = async (proposedEndDate: string) => {
     try {
       await proposeDeadlineMutation.mutateAsync(proposedEndDate);
@@ -578,7 +575,7 @@ export default function ContractDetailsPage() {
           </div>
 
           {/* ─── Warning Banner for Approaching Deadline ─── */}
-          {deadlineApproachingNotification && !isArchived && (
+          {shouldShowDeadlineWarning && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3 animate-in fade-in duration-300">
               <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
               <div className="space-y-1">

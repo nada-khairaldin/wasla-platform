@@ -6,6 +6,7 @@ import { getSocket, disconnectSocket } from "../services/socketService";
 import { useConversations } from "./useConversations";
 import { notificationService, mapNotificationPayloadToUI } from "@/src/features/notifications/services/notificationService";
 import type { NotificationPayload } from "@/src/features/notifications/services/notificationService";
+import { syncDeadlineApproachingNotifications } from "@/src/features/notifications/utils/deadlineNotifications";
 import { Notification } from "@/src/features/notifications/notificationTypes ";
 import type { Exchange } from "@/src/features/profile/services/profileServices";
 import type {
@@ -240,6 +241,16 @@ export function useGlobalSocket() {
                 });
               }
             );
+
+            const effectiveEndDate =
+              contractEndDate !== undefined
+                ? contractEndDate
+                : queryClient.getQueryData<{ exchange: Exchange }>([
+                    "contractDetails",
+                    contractId,
+                  ])?.exchange?.contractEndDate;
+
+            syncDeadlineApproachingNotifications(queryClient, contractId, effectiveEndDate);
           }
         }
 
