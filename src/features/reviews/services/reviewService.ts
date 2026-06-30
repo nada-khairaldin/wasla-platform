@@ -15,20 +15,40 @@ export const reviewService = {
   },
 
   submitReview: async (payload: SubmitReviewPayload) => {
-    const { data, error, status } = await apiRequest<{ review: ApiReview }, SubmitReviewPayload>({
+    const { data, error, status } = await apiRequest<
+      { review: ApiReview },
+      SubmitReviewPayload
+    >({
       method: "POST",
       url: "/reviews",
       payload,
     });
+
     if (error) {
-      if (status === 409) {
-        throw new Error("لقد قمت بتقييم هذا العقد مسبقاً");
+      switch (status) {
+        case 409:
+          throw new Error("لقد قمت بتقييم هذا العقد مسبقاً");
+
+        case 404:
+          throw new Error("العقد غير موجود");
+
+        case 403:
+          throw new Error("غير مصرح لك بإجراء هذا التقييم");
+
+        case 401:
+          throw new Error("يجب تسجيل الدخول من جديد");
+
+        case 400: {
+          const backendMessage = (error as any)?.errors?.[0]?.message;
+
+          throw new Error(backendMessage || "البيانات المدخلة غير صحيحة");
+        }
+
+        default:
+          throw new Error("حدث خطأ غير متوقع");
       }
-      if (status === 400) {
-        throw new Error("لا يمكن إرسال التقييم لهذا العقد في حالته الحالية");
-      }
-      throw new Error(error);
     }
+
     return data;
   },
 };
