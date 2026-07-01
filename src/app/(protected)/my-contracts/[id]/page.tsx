@@ -30,7 +30,7 @@ import { useRejectDeadline } from "@/src/features/contracts/hooks/useRejectDeadl
 import { ProposeDeadlineModal } from "@/src/features/contracts/components/ProposeDeadlineModal";
 import { useNotifications } from "@/src/features/notifications/hooks/useNotifications";
 import { findDeadlineApproachingNotification } from "@/src/features/notifications/utils/deadlineNotifications";
-import { isDeadlineApproaching } from "@/src/features/contracts/utils/deadlineUtils";
+import { useDeadlineApproaching } from "@/src/features/contracts/hooks/useDeadlineApproaching";
 
 export default function ContractDetailsPage() {
   const params = useParams();
@@ -380,10 +380,9 @@ export default function ContractDetailsPage() {
     (normalizedStatus === "IN_PROGRESS" || normalizedStatus === "WAITING_CONFIRMATION") && 
     !hasPendingProposal && !isArchived;
 
-  const shouldShowDeadlineWarning =
-    !!deadlineApproachingNotification &&
-    !isArchived &&
-    isDeadlineApproaching(contract?.contractEndDate);
+  const isDeadlineWithin24Hours = useDeadlineApproaching(contract?.contractEndDate);
+
+  const shouldShowDeadlineWarning = !isArchived && isDeadlineWithin24Hours;
 
   const handleProposeDeadlineSubmit = async (proposedEndDate: string) => {
     try {
@@ -580,10 +579,11 @@ export default function ContractDetailsPage() {
               <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
               <div className="space-y-1">
                 <h4 className="font-bold text-red-900 text-sm">
-                  {deadlineApproachingNotification.title || "اقترب موعد انتهاء العقد"}
+                  {deadlineApproachingNotification?.title || "اقترب موعد انتهاء العقد"}
                 </h4>
                 <p className="text-xs text-red-700 leading-relaxed">
-                  {deadlineApproachingNotification.description}
+                  {deadlineApproachingNotification?.description ||
+                    "يتبقى أقل من 24 ساعة على تاريخ انتهاء العقد. يرجى إتمام المتطلبات أو تمديد الموعد."}
                 </p>
               </div>
             </div>

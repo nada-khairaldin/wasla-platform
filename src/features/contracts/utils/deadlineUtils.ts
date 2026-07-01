@@ -1,36 +1,41 @@
 import { parseLocalDate } from "@/src/utils/date";
 
-/** Days before contract end date when the "deadline approaching" warning applies. */
-export const DEADLINE_APPROACHING_THRESHOLD_DAYS = 7;
+/** Show the warning when the contract end is within this many milliseconds. */
+export const DEADLINE_APPROACHING_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
-function toLocalDay(dateValue: string | Date): Date {
-  if (typeof dateValue === "string") {
-    const dateOnly = dateValue.split("T")[0];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-      return parseLocalDate(dateOnly);
-    }
-    return new Date(dateValue);
+/**
+ * Resolves the contract maximum end date to an absolute instant.
+ * Date-only values (YYYY-MM-DD) are treated as end of that local calendar day.
+ */
+export function parseContractEndDateTime(endDate: string): Date {
+  const dateOnly = endDate.split("T")[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly) && !endDate.includes("T")) {
+    const endOfDay = parseLocalDate(dateOnly);
+    endOfDay.setHours(23, 59, 59, 999);
+    return endOfDay;
   }
-  return dateValue;
+
+  return new Date(endDate);
 }
 
-/** Whole calendar days from today until the contract end date (negative if past due). */
-export function daysUntilDeadline(endDate: string | Date): number {
-  const endDay = toLocalDay(endDate);
-  endDay.setHours(0, 0, 0, 0);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return Math.ceil((endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+/** Milliseconds from `now` until the contract end (negative if already past). */
+export function millisecondsUntilDeadline(
+  endDate: string | Date,
+  now: Date = new Date()
+): number {
+  const deadline =
+    typeof endDate === "string" ? parseContractEndDateTime(endDate) : endDate;
+  return deadline.getTime() - now.getTime();
 }
 
-/** True when the end date is today or within the approaching threshold (and not past due). */
+/** True when the contract end is in the future and within the 24-hour threshold. */
 export function isDeadlineApproaching(
   endDate: string | null | undefined,
-  thresholdDays: number = DEADLINE_APPROACHING_THRESHOLD_DAYS
+  now: Date = new Date(),
+  thresholdMs: number = DEADLINE_APPROACHING_THRESHOLD_MS
 ): boolean {
   if (!endDate) return false;
-  const days = daysUntilDeadline(endDate);
-  return days >= 0 && days <= thresholdDays;
+
+  const remainingMs = millisecondsUntilDeadline(endDate, now);
+  return remainingMs > 0 && remainingMs <= thresholdMs;
 }
